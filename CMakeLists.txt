@@ -44,6 +44,7 @@ find_package(catch2  2.2.2  REQUIRED)
 find_package(OpenCV 4 REQUIRED)
 find_package(trompeloeil REQUIRED)
 find_package(jsonformoderncpp 3.7.0 REQUIRED)
+find_package(Doxygen)
 
 add_subdirectory(doc)
 add_subdirectory(src)
