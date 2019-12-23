@@ -1,5 +1,5 @@
 default:
-  image: $CI_REGISTRY_IMAGE:$IMAGE_VERSION
+  image: $CI_REGISTRY_IMAGE
 
 stages:
   - build
