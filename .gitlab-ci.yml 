@@ -4,7 +4,7 @@ stages:
   - build
   - test
 
-build:
+build_with_uts:
   stage: build
   before_script:
     - mkdir build
@@ -14,11 +14,11 @@ build:
     - make -j
   artifacts:
     paths:
-      - build
+      - build/
 
 ut:
   stage: test
   dependencies:
-    - build
+    - build_with_uts
   script:
     - ctest .
