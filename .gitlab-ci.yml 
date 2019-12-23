@@ -1,5 +1,4 @@
-default:
-  image: $CI_REGISTRY_IMAGE:$IMAGE_VERSION
+image: registry.gitlab.com/marcin-ochman/modular-slam
 
 stages:
   - build
