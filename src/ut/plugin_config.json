@@ -1,0 +1,11 @@
+{
+    "plugins": [
+        {
+            "library": "",
+            "factoryMethods": {
+                "loopDetection": "",
+                "loopClosure": ""
+            }
+        }
+    ]
+}

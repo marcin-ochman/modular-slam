@@ -1,0 +1,25 @@
+default:
+  image: $CI_REGISTRY_IMAGE:$IMAGE_VERSION
+
+stages:
+  - build
+  - test
+
+build:
+  stage: build
+  before_script:
+    - mkdir build
+    - cd build
+  script:
+    - cmake .. -DCMAKE_BUILD_TYPE=Debug
+    - make -j
+  artifacts:
+    paths:
+      - build
+
+ut:
+  stage: test
+  dependencies:
+    - build
+  script:
+    - ctest .

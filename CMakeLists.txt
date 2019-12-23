@@ -46,5 +46,8 @@ find_package(trompeloeil REQUIRED)
 find_package(jsonformoderncpp 3.7.0 REQUIRED)
 find_package(Doxygen)
 
+add_library(modular_slam INTERFACE)
+target_include_directories(modular_slam INTERFACE include)
+
 add_subdirectory(doc)
 add_subdirectory(src)
