@@ -1,15 +1,4 @@
 image: registry.gitlab.com/marcin-ochman/modular-slam
-DOCKER_AUTH_CONFIG: "{
-\"auths\": {
-  \"registry.gitlab.com\": {
-    \"auth\": \"bWFyY2luLW9jaG1hbjpnaXRsYWJfTWFyX09jaF8xOTkz\"
-    }
-    },
-    \"HttpHeaders\": {
-      \"User-Agent\": \"Docker-Client/19.03.5 (linux)\"
-    }
-  }"
-
 
 stages:
   - build
