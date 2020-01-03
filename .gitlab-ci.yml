@@ -2,6 +2,7 @@ image: registry.gitlab.com/marcin-ochman/modular-slam
 
 stages:
   - build
+  - test
 
 build_with_uts:
   stage: build
@@ -14,3 +15,12 @@ build_with_uts:
   artifacts:
     paths:
       - build/
+
+run_uts:
+  stage: test
+  dependencies:
+    - build_with_uts
+  before_script:
+    - cd build
+  script:
+    - make test
