@@ -10,8 +10,9 @@ SCENARIO("Loading plugins")
     {
         REQUIRE(true);
 
-        WHEN("Loading library") {
-          // loadFactoryMethod<int>("", "factory");
+        WHEN("Loading library")
+        {
+            // loadFactoryMethod<int>("", "factory");
         }
     }
 }

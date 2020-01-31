@@ -46,8 +46,11 @@ find_package(trompeloeil REQUIRED)
 find_package(jsonformoderncpp 3.7.0 REQUIRED)
 find_package(Doxygen)
 
+add_subdirectory(doc)
+
 add_library(modular_slam INTERFACE)
 target_include_directories(modular_slam INTERFACE include)
 
-add_subdirectory(doc)
-add_subdirectory(src)
+add_executable(loop_detection_test src/ut/loop_detection_test.cpp src/ut/plugin_loader_test.cpp)
+target_link_libraries(loop_detection_test PRIVATE Catch2::Catch2 modular_slam boost::boost dl)
+ParseAndAddCatchTests(loop_detection_test)

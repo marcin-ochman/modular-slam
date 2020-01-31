@@ -11,7 +11,7 @@ namespace bf = boost::filesystem;
 namespace dll = boost::dll;
 
 template <typename BlockType>
-using BlockFactoryCreator = BlockType*();
+using BlockFactoryCreator = std::unique_ptr<BlockType>();
 
 template <typename BlockType>
 using BlockFactoryCreatorBoostFunction = boost::function<BlockFactoryCreator<BlockType>>;
