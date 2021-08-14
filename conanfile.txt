@@ -1,10 +1,9 @@
 [requires]
 Catch2/2.11.0@catchorg/stable
-trompeloeil/v32@rollbear/stable
+trompeloeil/39
 jsonformoderncpp/3.7.0@vthiery/stable
-boost/1.71.0@conan/stable
-zlib/1.2.11@conan/stable
-opencv/4.1.1@conan/stable
+boost/1.76.0
+opencv/4.5.2
 
 [generators]
 cmake_find_package

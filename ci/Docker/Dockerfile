@@ -1,19 +1,24 @@
-FROM ubuntu:18.04
+FROM ubuntu:20.04
+
+ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get -y update && \
     apt-get install -y \
     cmake \
-    g++-8 \
-    gcc-8 \
+    g++ \
+    gcc \
     gdb \
     gdbserver \
     htop \
     less \
-    python3 \
-    python3-pip \
+    pip \
     valgrind \
     vim \
+    libgtk2.0-dev \
     && rm -rf /var/lib/apt/lists/*
 
-RUN pip3 install \
+RUN pip install \
     conan
+
+COPY conanfile.txt conanfile.txt
+RUN conan install conanfile.txt
