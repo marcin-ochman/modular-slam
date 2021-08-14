@@ -15,6 +15,8 @@ RUN apt-get -y update && \
     valgrind \
     vim \
     libgtk2.0-dev \
+    doxygen \
+    graphviz \
     && rm -rf /var/lib/apt/lists/*
 
 RUN pip install \
