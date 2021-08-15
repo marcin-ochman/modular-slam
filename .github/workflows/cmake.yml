@@ -17,6 +17,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+      with:
+        submodules: recursive
 
     - name: Configure CMake
       shell: bash
@@ -32,11 +34,11 @@ jobs:
 
     - name: Generate Docs
       run: cd build; make doc; cd -;
-      if: endsWith(github.ref, 'master')
+      # if: endsWith(github.ref, 'master')
 
     - name: Deploy
       uses: JamesIves/github-pages-deploy-action@4.1.4
-      if: endsWith(github.ref, 'master')
+      # if: endsWith(github.ref, 'master')
       with:
         branch: gh-pages
         folder: build/doc/doxygen/html/
