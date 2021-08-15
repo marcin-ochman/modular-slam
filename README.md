@@ -10,8 +10,7 @@ Modular SLAM is written in C++17 and Python3. It's designed to work as separate 
 Modular SLAM uses Conan to manage their dependencies. To install conan:
 
 ```
-pip3 install conan # for default python2 in the system
-pip install conan # for default python3 in the system
+pip install conan
 ```
 
 Afterwards, go to Modular SLAM directory and type:

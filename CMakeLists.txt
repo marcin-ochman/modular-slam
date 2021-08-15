@@ -39,7 +39,7 @@ conan_cmake_run(
 include(${CMAKE_BINARY_DIR}/conan_paths.cmake)
 
 find_package(Threads)
-find_package(boost 1.66.0 REQUIRED COMPONENTS program_options log)
+find_package(Boost 1.66.0 REQUIRED COMPONENTS program_options log)
 find_package(Catch2 2.11.0  REQUIRED)
 find_package(OpenCV 4 REQUIRED)
 find_package(trompeloeil REQUIRED)
