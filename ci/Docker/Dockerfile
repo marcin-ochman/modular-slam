@@ -9,6 +9,7 @@ RUN apt-get -y update && \
     gcc \
     gdb \
     gdbserver \
+    git \
     htop \
     less \
     pip \
@@ -17,10 +18,8 @@ RUN apt-get -y update && \
     libgtk2.0-dev \
     doxygen \
     graphviz \
+    rsync \
     && rm -rf /var/lib/apt/lists/*
 
 RUN pip install \
     conan
-
-COPY conanfile.txt conanfile.txt
-RUN conan install conanfile.txt
