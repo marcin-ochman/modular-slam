@@ -1,0 +1,44 @@
+name: CMake
+
+on: [push, pull_request]
+
+env:
+  BUILD_TYPE: Release
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    environment: modular-slam-ci
+    container:
+      image: ghcr.io/marcin-ochman/modular-slam:0.0.1
+      credentials:
+        username: marcin-ochman
+        password: ${{ secrets.container_registry_token }}
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
+
+    - name: Configure CMake
+      shell: bash
+      run: mkdir build; cd build;  cmake -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} ..; cd -
+
+    - name: Build
+      shell: bash
+      run: cd build; make -j; cd -
+
+    - name: Test
+      working-directory: ${{github.workspace}}/build
+      run: ctest -C ${{env.BUILD_TYPE}}
+
+    - name: Generate Docs
+      run: cd build; make doc; cd -;
+      if: endsWith(github.ref, 'master')
+
+    - name: Deploy
+      uses: JamesIves/github-pages-deploy-action@4.1.4
+      if: endsWith(github.ref, 'master')
+      with:
+        branch: gh-pages
+        folder: build/doc/doxygen/html/
