@@ -60,4 +60,3 @@ target_compile_definitions(plugin_loader_test PRIVATE DUMMY_DIR="${DUMMY_OUTPUT_
 target_link_libraries(plugin_loader_test PRIVATE Catch2::Catch2 modular_slam Boost::Boost dl)
 
 ParseAndAddCatchTests(plugin_loader_test)
-ParseAndAddCatchTests(loop_detection_test)
