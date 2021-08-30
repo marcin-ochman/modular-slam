@@ -39,7 +39,7 @@ conan_cmake_run(
 include(${CMAKE_BINARY_DIR}/conan_paths.cmake)
 
 find_package(Threads)
-find_package(boost 1.71.0 REQUIRED COMPONENTS program_options log dll filesystem)
+find_package(Boost 1.76.0 REQUIRED COMPONENTS program_options log system filesystem)
 find_package(Catch2 2.11.0  REQUIRED)
 find_package(OpenCV 4 REQUIRED)
 find_package(trompeloeil REQUIRED)
@@ -52,5 +52,5 @@ add_library(modular_slam INTERFACE)
 target_include_directories(modular_slam INTERFACE include)
 
 add_executable(loop_detection_test src/ut/loop_detection_test.cpp src/ut/plugin_loader_test.cpp)
-target_link_libraries(loop_detection_test PRIVATE Catch2::Catch2 modular_slam boost::boost dl)
+target_link_libraries(loop_detection_test PRIVATE Catch2::Catch2 modular_slam Boost::Boost dl)
 ParseAndAddCatchTests(loop_detection_test)
