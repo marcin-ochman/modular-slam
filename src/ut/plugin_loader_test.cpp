@@ -1,5 +1,10 @@
+#define CATCH_CONFIG_MAIN
+
 #include "modular_slam/plugin_loader.hpp"
+#include <boost/filesystem.hpp>
 #include <catch2/catch.hpp>
+
+using boost::filesystem::path;
 
 namespace mslam
 {
@@ -8,11 +13,14 @@ SCENARIO("Loading plugins")
 {
     GIVEN("DLL library with factory method")
     {
-        REQUIRE(true);
+        const path dummyLibDir{DUMMY_DIR};
+        const auto libPath = dummyLibDir / "libdummy.so";
 
+        auto factoryFunction = loadFactoryMethod<int>(libPath.string(), "dummyPluginFactory");
         WHEN("Loading library")
         {
-            // loadFactoryMethod<int>("", "factory");
+            REQUIRE(!factoryFunction.empty());
+            REQUIRE(factoryFunction() == nullptr);
         }
     }
 }

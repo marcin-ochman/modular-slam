@@ -1,18 +1,11 @@
 #define CATCH_CONFIG_MAIN
 
+#include <boost/dll/alias.hpp>
 #include <catch2/catch.hpp>
 
-
-SCENARIO("Dummy Scenario")
+std::unique_ptr<int> intFactory()
 {
-  GIVEN("Dummy given")
-    {
-      WHEN("Dummy when")
-        {
-          THEN("Dummy then")
-            {
-              REQUIRE(true);
-            }
-        }
-    }
+    return nullptr;
 }
+
+BOOST_DLL_ALIAS(intFactory, dummyPluginFactory)

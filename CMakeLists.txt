@@ -49,8 +49,15 @@ find_package(Doxygen)
 add_subdirectory(doc)
 
 add_library(modular_slam INTERFACE)
-target_include_directories(modular_slam INTERFACE include)
+add_library(dummy SHARED src/ut/dummy.cpp)
 
-add_executable(loop_detection_test src/ut/loop_detection_test.cpp src/ut/plugin_loader_test.cpp)
-target_link_libraries(loop_detection_test PRIVATE Catch2::Catch2 modular_slam Boost::Boost dl)
+
+target_include_directories(modular_slam INTERFACE include)
+get_target_property(DUMMY_OUTPUT_DIR dummy LIBRARY_OUTPUT_DIRECTORY)
+
+add_executable(plugin_loader_test src/ut/plugin_loader_test.cpp)
+target_compile_definitions(plugin_loader_test PRIVATE DUMMY_DIR="${DUMMY_OUTPUT_DIR}")
+target_link_libraries(plugin_loader_test PRIVATE Catch2::Catch2 modular_slam Boost::Boost dl)
+
+ParseAndAddCatchTests(plugin_loader_test)
 ParseAndAddCatchTests(loop_detection_test)
