@@ -33,6 +33,7 @@
 
 # CMake
 cmake-build-*/
+build/
 
 # User-specific stuff
 .idea/**/workspace.xml

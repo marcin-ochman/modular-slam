@@ -12,7 +12,7 @@ SCENARIO("Loop detection with ORB features")
     {
         std::array<mslam::Frame, 3> testFrames = {1, 2, 3};
 
-        LoopDetection* loopDetection = nullptr;
+        // LoopDetection* loopDetection = nullptr;
 
         for(auto& frame : testFrames)
         {
