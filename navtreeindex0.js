@@ -2,7 +2,7 @@ var NAVTREEINDEX0 =
 {
 "dummy_8cpp.html":[1,0,0],
 "dummy_8cpp.html#a656eb5868e824d59f489f910db438420":[1,0,0,0],
-"dummy_8cpp.html#a8440219891a90ab5b5df865b1aee2f0e":[1,0,0,1],
+"dummy_8cpp.html#ab8c52cbb6c37524995f57787bd99b560":[1,0,0,1],
 "files.html":[1,0],
 "globals.html":[1,1,0],
 "globals_defs.html":[1,1,2],
@@ -15,5 +15,8 @@ var NAVTREEINDEX0 =
 "namespacemembers_func.html":[0,1,1],
 "namespacemslam.html":[0,0,0],
 "namespaces.html":[0,0],
-"pages.html":[]
+"pages.html":[],
+"plugin__loader__test_8cpp.html":[1,0,2],
+"plugin__loader__test_8cpp.html#a656eb5868e824d59f489f910db438420":[1,0,2,0],
+"plugin__loader__test_8cpp.html#a8672a26d350271c50cdb5377db4ccce6":[1,0,2,1]
 };
