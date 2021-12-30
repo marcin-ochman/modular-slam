@@ -1,6 +1,5 @@
 [requires]
 catch2/2.13.7
-trompeloeil/39
 jsonformoderncpp/3.7.0
 boost/1.76.0
 opencv/4.5.2
