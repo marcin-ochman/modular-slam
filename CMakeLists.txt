@@ -43,7 +43,7 @@ add_library(modular_slam INTERFACE)
 add_library(dummy SHARED src/ut/dummy.cpp)
 
 target_include_directories(modular_slam INTERFACE include)
-get_target_property(DUMMY_OUTPUT_DIR dummy LIBRARY_OUTPUT_DIRECTORY)
+get_target_property(DUMMY_OUTPUT_DIR dummy BINARY_DIR)
 
 add_executable(plugin_loader_test src/ut/plugin_loader_test.cpp)
 target_compile_definitions(plugin_loader_test PRIVATE DUMMY_DIR="${DUMMY_OUTPUT_DIR}")
