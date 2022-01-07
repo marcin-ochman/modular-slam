@@ -1,12 +1,13 @@
 #ifndef MODULAR_SLAM_HPP_
 #define MODULAR_SLAM_HPP_
 
+#include "modular_slam/types.hpp"
 #include "modular_slam/loop_detection.hpp"
+#include "modular_slam/odometry.hpp"
 
+namespace mslam
+{
 
-namespace mslam {
-
-  using Frame = int; // TODO: change it
 
 }
 

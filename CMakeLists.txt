@@ -33,20 +33,25 @@ include(ParseAndAddCatchTests)
 find_package(Threads)
 find_package(Boost 1.71.0 REQUIRED COMPONENTS program_options system filesystem)
 find_package(Catch2 2.13.0  REQUIRED)
-find_package(OpenCV 4 REQUIRED)
+find_package(OpenCV 4 REQUIRED COMPONENTS core imgproc video)
 find_package(nlohmann_json REQUIRED)
+find_package(Eigen3 REQUIRED)
 find_package(Doxygen)
 
 add_subdirectory(doc)
 
-add_library(modular_slam INTERFACE)
+add_library(modular_slam src/odometry.cpp)
 add_library(dummy SHARED src/ut/dummy.cpp)
 
-target_include_directories(modular_slam INTERFACE include)
+target_include_directories(modular_slam PUBLIC include)
 get_target_property(DUMMY_OUTPUT_DIR dummy BINARY_DIR)
+target_link_libraries(modular_slam PUBLIC opencv_core opencv_imgproc Eigen3::Eigen)
 
 add_executable(plugin_loader_test src/ut/plugin_loader_test.cpp)
 target_compile_definitions(plugin_loader_test PRIVATE DUMMY_DIR="${DUMMY_OUTPUT_DIR}")
 target_link_libraries(plugin_loader_test PRIVATE Catch2::Catch2 modular_slam Boost::boost Boost::filesystem dl)
+
+add_executable(odometry_test src/ut/odometry_test.cpp)
+target_link_libraries(odometry_test PRIVATE Catch2::Catch2 modular_slam)
 
 ParseAndAddCatchTests(plugin_loader_test)

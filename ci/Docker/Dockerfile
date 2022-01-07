@@ -21,11 +21,8 @@ RUN apt-get -y update && \
     rsync \
     libva-dev \
     libopencv-dev \
-    python3-opencv \
     libboost-all-dev \
     nlohmann-json3-dev \
     catch2 \
+    libeigen3-dev \
     && rm -rf /var/lib/apt/lists/*
-
-RUN pip install \
-    conan
