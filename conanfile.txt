@@ -1,9 +1,9 @@
 [requires]
 catch2/2.13.7
 trompeloeil/39
-jsonformoderncpp/3.7.0
+nlohmann_json/3.10.5
 boost/1.76.0
-opencv/4.5.2
+opencv/4.5.5
 
 [generators]
 cmake_find_package

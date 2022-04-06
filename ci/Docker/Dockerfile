@@ -19,7 +19,8 @@ RUN apt-get -y update && \
     doxygen \
     graphviz \
     rsync \
+    libopencv-dev \
+    libboost-all-dev \
+    nlohmann-json3-dev \
+    catch2 \
     && rm -rf /var/lib/apt/lists/*
-
-RUN pip install \
-    conan

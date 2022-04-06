@@ -28,22 +28,15 @@ elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
 endif()
 
 include(CTest)
-include(Conan)
 include(ParseAndAddCatchTests)
 
-conan_cmake_run(
-  CONANFILE conanfile.txt
-  BASIC_SETUP
-  BUILD missing)
-
-include(${CMAKE_BINARY_DIR}/conan_paths.cmake)
-
 find_package(Threads)
-find_package(Boost 1.76.0 REQUIRED COMPONENTS program_options log system filesystem)
+find_package(Boost 1.74.0 REQUIRED COMPONENTS program_options log system filesystem)
 find_package(Catch2 2.11.0  REQUIRED)
 find_package(OpenCV 4 REQUIRED)
-find_package(trompeloeil REQUIRED)
-find_package(jsonformoderncpp 3.7.0 REQUIRED)
+# find_package(trompeloeil REQUIRED)
+find_package(nlohmann_json 3.10.5 REQUIRED)
+
 find_package(Doxygen)
 
 add_subdirectory(doc)
@@ -57,6 +50,6 @@ get_target_property(DUMMY_OUTPUT_DIR dummy LIBRARY_OUTPUT_DIRECTORY)
 
 add_executable(plugin_loader_test src/ut/plugin_loader_test.cpp)
 target_compile_definitions(plugin_loader_test PRIVATE DUMMY_DIR="${DUMMY_OUTPUT_DIR}")
-target_link_libraries(plugin_loader_test PRIVATE Catch2::Catch2 modular_slam Boost::Boost dl)
+target_link_libraries(plugin_loader_test PRIVATE Catch2::Catch2 modular_slam Boost::boost Boost::filesystem dl)
 
 ParseAndAddCatchTests(plugin_loader_test)
