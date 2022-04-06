@@ -3,11 +3,25 @@
 #include "modular_slam/odometry.hpp"
 #include <catch2/catch.hpp>
 
-SCENARIO("")
+SCENARIO("Testing OrbBasic")
 {
-    GIVEN("")
+    GIVEN("OrbBasicOdometry")
     {
+        mslam::odom::OrbBasicOdometry orbOdom;
 
-        WHEN("") { REQUIRE(true); }
+        WHEN("Called for the first time")
+        {
+            const std::vector<cv::KeyPoint> keypoints;
+            auto transform = orbOdom.estimatePose(keypoints);
+            REQUIRE(transform == std::nullopt);
+        }
+
+        WHEN("Called for the second time")
+        {
+            const std::vector<cv::KeyPoint> keypoints;
+            auto transform = orbOdom.estimatePose(keypoints);
+
+            REQUIRE(transform != std::nullopt);
+        }
     }
 }

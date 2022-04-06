@@ -1,8 +1,8 @@
 #ifndef TYPES_HPP_
 #define TYPES_HPP_
 
-#include <Eigen/Geometry>
 #include <Eigen/Dense>
+#include <Eigen/Geometry>
 
 #include <opencv2/core.hpp>
 #include <type_traits>
@@ -10,18 +10,37 @@
 namespace mslam
 {
 
+enum class DeviceType
+{
+    RGB,
+    STEREO_RGB,
+    RGBD,
+    RGBD_IMU
+};
+
 constexpr bool gpu_acceleration = false;
 
 using Frame = std::conditional_t<gpu_acceleration, cv::UMat, cv::Mat>;
 
-template <typename T = float>
-using Vector3 = Eigen::Matrix<T, 3, 1>;
+struct RgbdSensorData
+{
+    Frame rgb;
+    Frame depth;
+};
 
-template <typename T = float>
-using Quaternion = Eigen::Quaternion<T>;
+struct ImuSensorData
+{
+};
 
-template <typename T = float>
-using Transform3 = Eigen::Transform<T, 3, Eigen::Affine>;
+struct RgbdImuSensorData
+{
+    RgbdSensorData rgbd;
+    ImuSensorData imu;
+};
+
+using Vector3 = Eigen::Matrix<float, 3, 1>;
+using Quaternion = Eigen::Quaternion<float>;
+using Transform = Eigen::Transform<float, 3, Eigen::Affine>;
 
 } // namespace mslam
 

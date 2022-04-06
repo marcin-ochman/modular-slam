@@ -2,17 +2,28 @@
 #define ODOMETRY_HPP
 
 #include "modular_slam/types.hpp"
+#include "modular_slam/utils.hpp"
+#include <optional>
 
 namespace mslam
 {
 namespace odom
 {
 
-class Odom
+template <typename OdometryChildType>
+class Odometry
 {
+};
+
+class OrbBasicOdometry : public Odometry<OrbBasicOdometry>
+{
+
   public:
-    virtual void registerNextFrame(const Frame& newFrame) = 0;
-    virtual Transform3<float> calculateTransform() = 0;
+    using OrbKeypoints = std::vector<cv::KeyPoint>;
+    std::optional<Transform> estimatePose(const OrbKeypoints& keypoints);
+
+  private:
+    OrbKeypoints previousKeypoints;
 };
 
 } // namespace odom
