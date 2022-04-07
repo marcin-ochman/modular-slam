@@ -21,6 +21,7 @@ option(GEN_DOCS "Generate documentation" OFF)
 set(CXX_GNU_COMPILE_FLAGS "-Wall -pedantic -Wextra ")
 set(CXX_CLANG_COMPILE_FLAGS "-Wall -pedantic -Wextra")
 
+
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
   list(APPEND CMAKE_CXX_FLAGS  ${CXX_GNU_COMPILE_FLAGS})
 elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
@@ -46,10 +47,10 @@ add_library(dummy SHARED src/ut/dummy.cpp)
 
 
 target_include_directories(modular_slam INTERFACE include)
-get_target_property(DUMMY_OUTPUT_DIR dummy LIBRARY_OUTPUT_DIRECTORY)
+# get_target_property(DUMMY_OUTPUT_DIR dummy LOCATION)
 
 add_executable(plugin_loader_test src/ut/plugin_loader_test.cpp)
-target_compile_definitions(plugin_loader_test PRIVATE DUMMY_DIR="${DUMMY_OUTPUT_DIR}")
+target_compile_definitions(plugin_loader_test PRIVATE DUMMY_DIR="$<TARGET_FILE_DIR:dummy>")
 target_link_libraries(plugin_loader_test PRIVATE Catch2::Catch2 modular_slam Boost::boost Boost::filesystem dl)
 
 ParseAndAddCatchTests(plugin_loader_test)
