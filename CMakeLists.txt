@@ -36,17 +36,18 @@ find_package(Boost 1.74.0 REQUIRED COMPONENTS program_options log system filesys
 find_package(Catch2 2.11.0  REQUIRED)
 find_package(OpenCV 4 REQUIRED)
 # find_package(trompeloeil REQUIRED)
+find_package(realsense2 REQUIRED)
 find_package(nlohmann_json 3.10.5 REQUIRED)
 
 find_package(Doxygen)
 
 add_subdirectory(doc)
 
-add_library(modular_slam INTERFACE)
+add_library(modular_slam src/realsense_camera.cpp)
 add_library(dummy SHARED src/ut/dummy.cpp)
 
 
-target_include_directories(modular_slam INTERFACE include)
+target_include_directories(modular_slam PUBLIC include)
 # get_target_property(DUMMY_OUTPUT_DIR dummy LOCATION)
 
 add_executable(plugin_loader_test src/ut/plugin_loader_test.cpp)

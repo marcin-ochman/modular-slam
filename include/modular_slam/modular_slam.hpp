@@ -3,11 +3,19 @@
 
 #include "modular_slam/loop_detection.hpp"
 
+namespace mslam
+{
 
-namespace mslam {
+using RgbFrame = int; // TODO: change it
+struct DepthFrame
+{
+};
 
-  using Frame = int; // TODO: change it
+struct RgbdFrame
+{
+    RgbFrame rgb;
+};
 
-}
+} // namespace mslam
 
 #endif /* MODULAR_SLAM_HPP_ */
