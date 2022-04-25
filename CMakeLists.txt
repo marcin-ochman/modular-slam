@@ -38,6 +38,7 @@ find_package(OpenCV 4 REQUIRED)
 # find_package(trompeloeil REQUIRED)
 find_package(realsense2 REQUIRED)
 find_package(nlohmann_json 3.10.5 REQUIRED)
+find_package(Qt6 COMPONENTS Widgets)
 
 find_package(Doxygen)
 
@@ -46,12 +47,31 @@ add_subdirectory(doc)
 add_library(modular_slam src/realsense_camera.cpp)
 add_library(dummy SHARED src/ut/dummy.cpp)
 
-
 target_include_directories(modular_slam PUBLIC include)
+target_link_libraries(modular_slam PRIVATE ${realsense2_LIBRARY}
+
+
+   opencv_core
+        opencv_video
+        opencv_imgproc
+opencv_highgui
+
+
+  )
 # get_target_property(DUMMY_OUTPUT_DIR dummy LOCATION)
 
 add_executable(plugin_loader_test src/ut/plugin_loader_test.cpp)
 target_compile_definitions(plugin_loader_test PRIVATE DUMMY_DIR="$<TARGET_FILE_DIR:dummy>")
-target_link_libraries(plugin_loader_test PRIVATE Catch2::Catch2 modular_slam Boost::boost Boost::filesystem dl)
+target_link_libraries(plugin_loader_test PRIVATE Catch2::Catch2 modular_slam Boost::boost Boost::filesystem dl )
+
+add_executable(mslam_viewer src/app/viewer.cpp)
+target_link_libraries(mslam_viewer PRIVATE Qt6::Widgets ${realsense2_LIBRARY} modular_slam
+
+   opencv_core
+        opencv_video
+        opencv_imgproc
+opencv_highgui
+
+  )
 
 ParseAndAddCatchTests(plugin_loader_test)

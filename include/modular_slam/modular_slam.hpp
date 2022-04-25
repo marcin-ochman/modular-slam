@@ -2,19 +2,27 @@
 #define MODULAR_SLAM_HPP_
 
 #include "modular_slam/loop_detection.hpp"
+#include <cstdint>
+#include <vector>
 
 namespace mslam
 {
 
-using RgbFrame = int; // TODO: change it
+struct RgbFrame
+{
+    std::vector<uint8_t> rgbData;
+};
+
 struct DepthFrame
+{
+    std::vector<uint16_t> depthData;
+};
+
+struct RgbdFrame : RgbFrame, DepthFrame
 {
 };
 
-struct RgbdFrame
-{
-    RgbFrame rgb;
-};
+// cv::Mat toCvMat();
 
 } // namespace mslam
 

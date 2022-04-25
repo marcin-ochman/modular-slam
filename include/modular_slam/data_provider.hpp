@@ -10,9 +10,9 @@ template <typename DataType>
 class DataProvider
 {
   public:
-    virtual bool init();
-    virtual bool fetch();
-    virtual std::shared_ptr<DataType> recentData() const;
+    virtual bool init() = 0;
+    virtual bool fetch() = 0;
+    virtual std::shared_ptr<DataType> recentData() const = 0;
 };
 
 } // namespace mslam
