@@ -32,6 +32,8 @@ int main(int argc, char* argv[])
         cv::convertScaleAbs(depthFrame, img_color, 255.0 / 4000);
         applyColorMap(img_color, img_color, cv::COLORMAP_HOT);
 
+        cv::addWeighted(img_color, 0.7, rgbFrame, 0.3, 0, img_color);
+
         cv::imshow("RGB", img_color);
         cv::waitKey(30);
     }

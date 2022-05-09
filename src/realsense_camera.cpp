@@ -1,10 +1,10 @@
 #include "modular_slam/realsense_camera.hpp"
 #include "modular_slam/modular_slam.hpp"
+#include "opencv2/core.hpp"
+#include "opencv2/imgproc.hpp"
 #include <algorithm>
 #include <cassert>
 #include <cstdint>
-#include "opencv2/core.hpp"
-#include "opencv2/imgproc.hpp"
 
 namespace mslam
 {
@@ -34,12 +34,12 @@ bool RealSenseCamera::fetch()
     newRgbdFrame->rgbData.resize(rgbMemorySize);
     newRgbdFrame->depthData.resize(depthMemorySize);
 
-    std::copy_n(reinterpret_cast<const uint16_t*>(depth_frame.get_data()), depth_frame.get_data_size(), newRgbdFrame->depthData.begin());
+    std::copy_n(reinterpret_cast<const uint16_t*>(depth_frame.get_data()), depth_frame.get_data_size(),
+                newRgbdFrame->depthData.begin());
 
     cv::Mat rgbMatFrame{rgb_frame.get_height(), rgb_frame.get_width(), CV_8UC3,
-                     const_cast<void*>(rgb_frame.get_data())},
-      bgrFrame{rgb_frame.get_height(), rgb_frame.get_width(), CV_8UC3,
-                     newRgbdFrame->rgbData.data()};
+                        const_cast<void*>(rgb_frame.get_data())},
+        bgrFrame{rgb_frame.get_height(), rgb_frame.get_width(), CV_8UC3, newRgbdFrame->rgbData.data()};
 
     cv::cvtColor(rgbMatFrame, bgrFrame, cv::COLOR_RGBA2BGR);
 

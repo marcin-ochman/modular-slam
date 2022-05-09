@@ -64,7 +64,8 @@ add_executable(plugin_loader_test src/ut/plugin_loader_test.cpp)
 target_compile_definitions(plugin_loader_test PRIVATE DUMMY_DIR="$<TARGET_FILE_DIR:dummy>")
 target_link_libraries(plugin_loader_test PRIVATE Catch2::Catch2 modular_slam Boost::boost Boost::filesystem dl )
 
-add_executable(mslam_viewer src/app/viewer.cpp)
+add_executable(mslam_viewer src/app/viewer/viewer.cpp src/app/viewer/viewer_main_window.cpp)
+target_include_directories(mslam_viewer PRIVATE include)
 target_link_libraries(mslam_viewer PRIVATE Qt6::Widgets ${realsense2_LIBRARY} modular_slam
 
    opencv_core
