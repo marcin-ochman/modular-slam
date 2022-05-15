@@ -21,9 +21,6 @@ class RealSenseCamera : public Camera<RgbdFrame>
 
     std::shared_ptr<RgbdFrame> rgbd;
     rs2::align align_to_color{RS2_STREAM_COLOR};
-
-    // rs2::frameset data;
-    // rs2::align align_to_color(RS2_STREAM_COLOR);
 };
 } // namespace mslam
 

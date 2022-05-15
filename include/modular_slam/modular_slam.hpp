@@ -5,24 +5,12 @@
 #include <cstdint>
 #include <vector>
 
+#include "modular_slam/types.hpp"
+
 namespace mslam
 {
 
-struct RgbFrame
-{
-    std::vector<uint8_t> rgbData;
-};
 
-struct DepthFrame
-{
-    std::vector<uint16_t> depthData;
-};
-
-struct RgbdFrame : RgbFrame, DepthFrame
-{
-};
-
-// cv::Mat toCvMat();
 
 } // namespace mslam
 

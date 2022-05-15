@@ -1,9 +1,7 @@
+#include "viewer_main_window.hpp"
 #include "modular_slam/realsense_camera.hpp"
 #include <QApplication>
 #include <QMainWindow>
-
-// #include <librealsense2/h/rs_sensor.h>
-// #include <librealsense2/rs.hpp>
 
 #include <cstdint>
 #include <iostream>
@@ -13,28 +11,36 @@
 #include <limits>
 #include <opencv2/core/hal/interface.h>
 #include <opencv2/imgproc.hpp>
+#include <qapplication.h>
 
 int main(int argc, char* argv[])
 {
-    mslam::RealSenseCamera rsCamera;
+    QApplication app{argc, argv};
+    auto mainWindow = new mslam::ViewerMainWindow{};
+    mainWindow->show();
 
-    rsCamera.init();
+    // mslam::RealSenseCamera rsCamera;
 
-    while(true)
-    {
-        rsCamera.fetch();
+    // rsCamera.init();
 
-        auto rgbd = rsCamera.recentData();
+    // while(true)
+    // {
+    //     rsCamera.fetch();
 
-        cv::Mat rgbFrame{720, 1280, CV_8UC3, rgbd->rgbData.data()};
-        cv::Mat depthFrame{720, 1280, CV_16UC1, rgbd->depthData.data()};
-        cv::Mat img_color;
-        cv::convertScaleAbs(depthFrame, img_color, 255.0 / 4000);
-        applyColorMap(img_color, img_color, cv::COLORMAP_HOT);
+    //     auto rgbd = rsCamera.recentData();
 
-        cv::addWeighted(img_color, 0.7, rgbFrame, 0.3, 0, img_color);
+    //     cv::Mat rgbFrame{720, 1280, CV_8UC3, rgbd->rgbData.data()};
+    //     cv::Mat depthFrame{720, 1280, CV_16UC1, rgbd->depthData.data()};
+    //     cv::Mat img_color;
+    //     cv::convertScaleAbs(depthFrame, img_color, 255.0 / 4000);
+    //     applyColorMap(img_color, img_color, cv::COLORMAP_HOT);
 
-        cv::imshow("RGB", img_color);
-        cv::waitKey(30);
-    }
+    //     cv::addWeighted(img_color, 0.7, rgbFrame, 0.3, 0, img_color);
+
+    //     cv::imshow("RGB", img_color);
+    //     cv::waitKey(30);
+    // }
+    //
+
+    return app.exec();
 }
