@@ -1,25 +1,36 @@
-FROM ubuntu:20.04
+FROM archlinux:base-devel
 
-ENV DEBIAN_FRONTEND=noninteractive
 
-RUN apt-get -y update && \
-    apt-get install -y \
+RUN pacman -Sy --noconfirm \
+    base-devel \
+    boost \
+    catch2 \
     cmake \
-    g++ \
+    doxygen \
     gcc \
     gdb \
-    gdbserver \
     git \
-    htop \
-    less \
-    pip \
-    valgrind \
-    vim \
-    libgtk2.0-dev \
-    doxygen \
+    glu \
+    go \
     graphviz \
+    htop \
+    nlohmann-json \
+    opencv \
+    python-pip \
     rsync \
-    && rm -rf /var/lib/apt/lists/*
+    qt5 \
+    valgrind \
+    vim
 
-RUN pip install \
-    conan
+RUN useradd builduser -m \
+  && passwd -d builduser \
+  && cd /home/builduser \
+  && (printf 'builduser ALL=(ALL) ALL\n' | tee -a /etc/sudoers)
+
+
+RUN git clone https://aur.archlinux.org/yay.git yay.git && chown builduser -R yay.git && cd yay.git  && sudo -u builduser bash -c "makepkg -si --noconfirm" && cd - && rm -rf yay.git
+
+USER builduser
+RUN yay -S --noconfirm librealsense
+
+USER root
