@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: modular-slam-ci
     container:
-      image: ghcr.io/marcin-ochman/modular-slam:0.0.2
+      image: ghcr.io/marcin-ochman/modular-slam:0.0.3-arch
       credentials:
         username: marcin-ochman
         password: ${{ secrets.container_registry_token }}

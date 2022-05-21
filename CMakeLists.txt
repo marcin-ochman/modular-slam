@@ -41,7 +41,7 @@ find_package(Catch2 2.11.0 REQUIRED)
 find_package(OpenCV 4 REQUIRED)
 find_package(realsense2 REQUIRED)
 find_package(nlohmann_json 3.10.5 REQUIRED)
-find_package(Qt6 COMPONENTS Widgets)
+find_package(Qt5 COMPONENTS Widgets)
 
 find_package(Doxygen)
 
@@ -73,8 +73,6 @@ target_link_libraries(
   opencv_core
 )
 
-
 add_subdirectory(src/app)
-
 
 parseandaddcatchtests(plugin_loader_test data_provider_test)
