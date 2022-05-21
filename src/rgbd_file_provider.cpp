@@ -49,7 +49,10 @@ bool RgbdFileProvider::init()
 bool RgbdFileProvider::fetch()
 {
     if(currentIndex >= rgbPaths.size())
+    {
+        recentFrame = nullptr;
         return false;
+    }
 
     const auto& rgbImagePath = rgbPaths[currentIndex];
     const auto& depthPath = depthPaths[currentIndex];

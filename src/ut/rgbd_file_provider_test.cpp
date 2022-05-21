@@ -58,6 +58,10 @@ SCENARIO("Data provider is RgbdFileProvider")
             REQUIRE(std::equal(nextRgbd->depthData.begin(), nextRgbd->depthData.begin() + 307200,
                                refMatDepth.ptr<std::uint16_t>()));
         }
+
+        REQUIRE_FALSE(fileProvider.fetch());
+        auto lastRgbd = fileProvider.recentData();
+        THEN("New RGB-D depth was not read and is not valid") { REQUIRE(lastRgbd == nullptr); }
     }
 }
 
