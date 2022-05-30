@@ -1,6 +1,5 @@
-#define CATCH_CONFIG_MAIN
-
 #include "modular_slam/rgbd_file_provider.hpp"
+#include <cstddef>
 
 #include <algorithm>
 #include <catch2/catch.hpp>
@@ -32,12 +31,13 @@ SCENARIO("Data provider is RgbdFileProvider")
             auto refMatRgb = cv::imread((rgbDirPath / "0000.png").string());
             auto refMatDepth = cv::imread((depthDirPath / "0000.png").string(), cv::IMREAD_ANYDEPTH);
 
-            REQUIRE(rgbd->rgbData.size() == refMatRgb.size().height * refMatRgb.size().width * refMatRgb.channels());
+            REQUIRE(rgbd->rgbData.size() ==
+                    static_cast<std::size_t>(refMatRgb.size().height * refMatRgb.size().width * refMatRgb.channels()));
             REQUIRE(std::equal(rgbd->rgbData.begin(), rgbd->rgbData.end(), refMatRgb.ptr()));
 
-            REQUIRE(rgbd->depthData.size() == refMatDepth.size().height * refMatDepth.size().width);
-            REQUIRE(std::equal(rgbd->depthData.begin(), rgbd->depthData.begin() + 307200,
-                               refMatDepth.ptr<std::uint16_t>()));
+            REQUIRE(rgbd->depthData.size() ==
+                    static_cast<std::size_t>(refMatDepth.size().height * refMatDepth.size().width));
+            REQUIRE(std::equal(rgbd->depthData.begin(), rgbd->depthData.end(), refMatDepth.ptr<std::uint16_t>()));
         }
 
         REQUIRE(fileProvider.fetch());
@@ -51,10 +51,11 @@ SCENARIO("Data provider is RgbdFileProvider")
             auto refMatDepth = cv::imread((depthDirPath / "0001.png").string(), cv::IMREAD_ANYDEPTH);
 
             REQUIRE(nextRgbd->rgbData.size() ==
-                    refMatRgb.size().height * refMatRgb.size().width * refMatRgb.channels());
+                    static_cast<std::size_t>(refMatRgb.size().height * refMatRgb.size().width * refMatRgb.channels()));
             REQUIRE(std::equal(nextRgbd->rgbData.begin(), nextRgbd->rgbData.end(), refMatRgb.ptr()));
 
-            REQUIRE(nextRgbd->depthData.size() == refMatDepth.size().height * refMatDepth.size().width);
+            REQUIRE(nextRgbd->depthData.size() ==
+                    static_cast<std::size_t>(refMatDepth.size().height * refMatDepth.size().width));
             REQUIRE(std::equal(nextRgbd->depthData.begin(), nextRgbd->depthData.begin() + 307200,
                                refMatDepth.ptr<std::uint16_t>()));
         }

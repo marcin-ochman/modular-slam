@@ -42,6 +42,7 @@ find_package(OpenCV 4 REQUIRED)
 find_package(realsense2 REQUIRED)
 find_package(nlohmann_json 3.10.5 REQUIRED)
 find_package(Qt5 COMPONENTS Widgets)
+find_package(Ceres REQUIRED)
 
 find_package(Doxygen)
 
@@ -54,25 +55,24 @@ add_library(dummy SHARED src/ut/dummy.cpp)
 target_include_directories(modular_slam PUBLIC include)
 target_link_libraries(
   modular_slam PRIVATE ${realsense2_LIBRARY}
-
-
   opencv_core
   opencv_video
   opencv_imgproc
   opencv_highgui
+  Ceres::ceres
 )
 
-add_executable(plugin_loader_test src/ut/plugin_loader_test.cpp)
-target_compile_definitions(plugin_loader_test PRIVATE DUMMY_DIR="$<TARGET_FILE_DIR:dummy>")
-target_link_libraries(plugin_loader_test PRIVATE Catch2::Catch2 modular_slam Boost::boost Boost::filesystem dl)
+add_executable(modular_slam_tests src/ut/plugin_loader_test.cpp src/ut/rgbd_file_provider_test.cpp)
+target_compile_definitions(modular_slam_tests PRIVATE DUMMY_DIR="$<TARGET_FILE_DIR:dummy>" TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/data")
+target_link_libraries(modular_slam_tests PRIVATE Catch2::Catch2 modular_slam Boost::boost Boost::filesystem dl opencv_core)
 
-add_executable(data_provider_test src/ut/rgbd_file_provider_test.cpp)
-target_compile_definitions(data_provider_test PRIVATE TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/data")
-target_link_libraries(
-  data_provider_test PRIVATE Catch2::Catch2 modular_slam Boost::boost
-  opencv_core
-)
+# add_executable(data_provider_test)
+# target_compile_definitions(data_provider_test)
+# target_link_libraries(
+#   data_provider_test PRIVATE Catch2::Catch2 modular_slam Boost::boost
+#   opencv_core
+# )
+
+parseandaddcatchtests(modular_slam_tests)
 
 add_subdirectory(src/app)
-
-parseandaddcatchtests(plugin_loader_test data_provider_test)

@@ -20,6 +20,10 @@ struct RgbdFrame : RgbFrame, DepthFrame
 {
 };
 
+struct RgbdiFrame : RgbdFrame
+{
+};
+
 template <typename T>
 class Slam
 {
