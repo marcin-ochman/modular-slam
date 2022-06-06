@@ -43,6 +43,7 @@ find_package(realsense2 REQUIRED)
 find_package(nlohmann_json 3.10.5 REQUIRED)
 find_package(Qt5 COMPONENTS Widgets)
 find_package(Ceres REQUIRED)
+find_package(trompeloeil)
 
 find_package(Doxygen)
 
@@ -62,16 +63,9 @@ target_link_libraries(
   Ceres::ceres
 )
 
-add_executable(modular_slam_tests src/ut/plugin_loader_test.cpp src/ut/rgbd_file_provider_test.cpp)
+add_executable(modular_slam_tests src/ut/plugin_loader_test.cpp src/ut/rgbd_file_provider_test.cpp src/ut/parameter_register_test.cpp)
 target_compile_definitions(modular_slam_tests PRIVATE DUMMY_DIR="$<TARGET_FILE_DIR:dummy>" TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/data")
-target_link_libraries(modular_slam_tests PRIVATE Catch2::Catch2 modular_slam Boost::boost Boost::filesystem dl opencv_core)
-
-# add_executable(data_provider_test)
-# target_compile_definitions(data_provider_test)
-# target_link_libraries(
-#   data_provider_test PRIVATE Catch2::Catch2 modular_slam Boost::boost
-#   opencv_core
-# )
+target_link_libraries(modular_slam_tests PRIVATE Catch2::Catch2 modular_slam Boost::boost Boost::filesystem dl opencv_core trompeloeil::trompeloeil)
 
 parseandaddcatchtests(modular_slam_tests)
 
