@@ -5,35 +5,21 @@
 #include "modular_slam/parameters_handler.hpp"
 #include "modular_slam/types.hpp"
 
-
-#include <cstdint>
-#include <vector>
-#include <memory>
 #include <any>
-
+#include <cstdint>
+#include <memory>
+#include <vector>
 
 namespace mslam
 {
 
 class SlamComponent
 {
-public:
-    SlamComponent(std::shared_ptr<ParametersHandlerInterface> handler): parametersHandler{handler} {}
+  public:
+    SlamComponent(std::shared_ptr<ParametersHandlerInterface> handler) : parametersHandler{handler} {}
 
-    template <typename T>
-    T getParameterAs(const std::string& name)
-    {
-        return std::any_cast<T>( parametersHandler->getParameter(name));
-    }
-
-    template <typename T>
-    bool setParameterAs(const std::string& name, const T& value)
-    {
-       return parametersHandler->setParameter(name, std::make_any(value));
-    }
-
-    private:
-        std::shared_ptr<ParametersHandlerInterface> parametersHandler;
+  private:
+    std::shared_ptr<ParametersHandlerInterface> parametersHandler;
 };
 
 } // namespace mslam

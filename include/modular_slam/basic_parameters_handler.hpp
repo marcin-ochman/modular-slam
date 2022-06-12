@@ -2,18 +2,33 @@
 #define MODULAR_SLAM_BASIC_PARAMETERS_HANDLER_HPP_
 
 #include "modular_slam/parameters_handler.hpp"
+#include <unordered_map>
 
 namespace mslam
 {
 
 class BasicParameterHandler : public ParametersHandlerInterface
 {
-    bool registerParameter() override { return true; }
-    bool setParameter(const std::string& name, const std::any value) override { return true; }
-    std::any getParameter(const std::string& name) const override { return std::make_any<std::string>(name); }
+  public:
+    bool registerParameter(const ParameterDefinition& paramDefinition, const ParameterValue& value) override;
+    bool setParameter(const std::string& name, const ParameterValue& value) override;
+    ParameterValue getParameter(const std::string& name) const override;
+
+  protected:
+    struct Parameter
+    {
+        ParameterValue currentValue;
+        ParameterDefinition definition;
+    };
+
+    bool registerNumberParameter(const ParameterDefinition& paramDefinition, float value);
+    bool registerChoiceParameter(const ParameterDefinition& paramDefinition, int value);
+
+    bool setNumberParameter(Parameter& param, float value);
+    bool setChoiceParameter(Parameter& param, int value);
 
   private:
-    std::map<std::string, std::any> parameters;
+    std::unordered_map<std::string, Parameter> parameters;
 };
 
 } // namespace mslam

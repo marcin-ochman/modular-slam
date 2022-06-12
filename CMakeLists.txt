@@ -50,7 +50,13 @@ find_package(Doxygen)
 add_subdirectory(doc)
 
 
-add_library(modular_slam src/realsense_camera.cpp src/rgbd_file_provider.cpp)
+add_library(
+  modular_slam
+  src/realsense_camera.cpp
+  src/rgbd_file_provider.cpp
+  src/basic_parameters_handler.cpp
+  src/parameters_handler.cpp
+)
 add_library(dummy SHARED src/ut/dummy.cpp)
 
 target_include_directories(modular_slam PUBLIC include)

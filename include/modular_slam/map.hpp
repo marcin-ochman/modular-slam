@@ -11,7 +11,7 @@ namespace mslam
 class Map
 {
   public:
-    virtual bool optimize();
+    virtual bool globalOptimization();
 };
 
 } // namespace mslam
