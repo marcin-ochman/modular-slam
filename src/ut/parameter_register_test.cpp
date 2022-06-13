@@ -15,7 +15,7 @@ class ParametersHandlerMock : public ParametersHandlerInterface
     MAKE_MOCK2(registerParameter, bool(const ParameterDefinition& paramDefinition, const ParameterValue& value),
                override);
     MAKE_MOCK2(setParameter, bool(const std::string& name, const ParameterValue& value), override);
-    MAKE_CONST_MOCK1(getParameter, ParameterValue(const std::string& name), override);
+    MAKE_CONST_MOCK1(getParameter, std::optional<ParameterValue>(const std::string& name), override);
 };
 
 SCENARIO("Testing parameters handling")
@@ -29,16 +29,30 @@ SCENARIO("Testing parameters handling")
             {
                 REQUIRE_FALSE(parameterHandler.setParameter("/my/parameter", 0));
             }
+
+            THEN("Getting parameter is not valid")
+            {
+                auto value = parameterHandler.getParameter("my/parameter");
+                REQUIRE_FALSE(value.has_value());
+            }
         }
 
         WHEN("Parameter is registered")
         {
             ParameterDefinition definition = makeChoiceParameter("my/parameter", {0, 1, 2});
             parameterHandler.registerParameter(definition, 0);
+
             THEN("Setting parameter is valid when choice is ok")
             {
                 REQUIRE(parameterHandler.setParameter("my/parameter", 0));
                 REQUIRE_FALSE(parameterHandler.setParameter("my/parameter", 5));
+            }
+
+            THEN("Getting parameter is valid")
+            {
+                auto value = parameterHandler.getParameter("my/parameter");
+                REQUIRE(value.has_value());
+                REQUIRE(std::get<0>(value.value()) == 0);
             }
         }
     }

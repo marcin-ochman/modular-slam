@@ -12,7 +12,7 @@ class BasicParameterHandler : public ParametersHandlerInterface
   public:
     bool registerParameter(const ParameterDefinition& paramDefinition, const ParameterValue& value) override;
     bool setParameter(const std::string& name, const ParameterValue& value) override;
-    ParameterValue getParameter(const std::string& name) const override;
+    std::optional<ParameterValue> getParameter(const std::string& name) const override;
 
   protected:
     struct Parameter

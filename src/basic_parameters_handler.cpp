@@ -1,5 +1,6 @@
 #include "modular_slam/basic_parameters_handler.hpp"
 #include "modular_slam/parameters_handler.hpp"
+#include <optional>
 
 namespace mslam
 {
@@ -58,7 +59,13 @@ bool BasicParameterHandler::setChoiceParameter(Parameter& param, const int value
     return false;
 }
 
-ParameterValue BasicParameterHandler::getParameter(const std::string& name) const {}
+std::optional<ParameterValue> BasicParameterHandler::getParameter(const std::string& name) const
+{
+    auto it = parameters.find(name);
+    auto found = it != std::end(parameters);
+
+    return found ? std::make_optional(it->second.currentValue) : std::nullopt;
+}
 
 bool BasicParameterHandler::registerNumberParameter(const ParameterDefinition& paramDefinition, float value)
 {

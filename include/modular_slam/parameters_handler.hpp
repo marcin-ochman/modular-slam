@@ -1,6 +1,7 @@
 #ifndef PARAMETERS_HANDLER_HPP_
 #define PARAMETERS_HANDLER_HPP_
 
+#include <optional>
 #include <string>
 #include <unordered_map>
 #include <variant>
@@ -51,7 +52,7 @@ class ParametersHandlerInterface
     }
     virtual bool setParameter(const std::string& /*name*/, const ParameterValue& /*newValue*/) { return true; }
 
-    virtual ParameterValue getParameter(const std::string& /*name*/) const { return 0; }
+    virtual std::optional<ParameterValue> getParameter(const std::string& /*name*/) const { return 0; }
 
     virtual ~ParametersHandlerInterface() {}
 };
