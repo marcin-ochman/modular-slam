@@ -7,7 +7,6 @@ find_package(Catch2 2.11.0 REQUIRED)
 find_package(OpenCV 4 REQUIRED)
 find_package(realsense2 REQUIRED)
 find_package(nlohmann_json 3.10.5 REQUIRED)
-find_package(Qt6 COMPONENTS Widgets)
 find_package(Ceres REQUIRED)
 find_package(trompeloeil)
 find_package(Doxygen)
@@ -29,6 +28,7 @@ target_include_directories(
   $<BUILD_INTERFACE:${ModularSlam_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>
 )
+
 target_link_libraries(
   ModularSlam PRIVATE ${realsense2_LIBRARY}
   opencv_core
@@ -63,6 +63,6 @@ install(
 include(CMakePackageConfigHelpers)
 write_basic_package_version_file(ModularSlamConfigVersion.cmake COMPATIBILITY SameMajorVersion)
 install(
-  FILES ModularSlamConfig.cmake ${CMAKE_CURRENT_BINARY_DIR}/ModularSlamConfigVersion.cmake
+  FILES cmake/ModularSlamConfig.cmake ${CMAKE_CURRENT_BINARY_DIR}/ModularSlamConfigVersion.cmake
   DESTINATION lib/cmake/ModularSlam
 )

@@ -1,7 +1,8 @@
 #ifndef MAP_HPP_
 #define MAP_HPP_
 
-#include "modular_slam/modular_slam.hpp"
+#include "modular_slam/slam_component.hpp"
+
 namespace mslam
 {
 
