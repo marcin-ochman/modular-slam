@@ -19,6 +19,7 @@ RUN pacman -Sy --noconfirm \
     python-pip \
     rsync \
     qt5 \
+    qt6 \
     valgrind \
     vim
 
@@ -31,6 +32,6 @@ RUN useradd builduser -m \
 RUN git clone https://aur.archlinux.org/yay.git yay.git && chown builduser -R yay.git && cd yay.git  && sudo -u builduser bash -c "makepkg -si --noconfirm" && cd - && rm -rf yay.git
 
 USER builduser
-RUN yay -Syu --noconfirm librealsense ceres-solver
+RUN yay -Syu --noconfirm librealsense ceres-solver trompeloeil-git
 
 USER root

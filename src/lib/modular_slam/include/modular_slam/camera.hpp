@@ -5,15 +5,13 @@
 #include "modular_slam/data_provider.hpp"
 #include "modular_slam/modular_slam.hpp"
 
-
 namespace mslam
 {
 
 template <typename ImageType>
-class Camera : public DataProvider<ImageType>
+class Camera : public DataProviderInterface<ImageType>
 {
   public:
-
 };
 
 } // namespace mslam

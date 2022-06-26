@@ -85,7 +85,6 @@ bool BasicParameterHandler::registerNumberParameter(const ParameterDefinition& p
 
 bool BasicParameterHandler::registerChoiceParameter(const ParameterDefinition& paramDefinition, int value)
 {
-
     auto it = parameters.find(paramDefinition.name);
     auto result = false;
     auto found = it != std::end(parameters);

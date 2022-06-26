@@ -1,6 +1,7 @@
 #ifndef MAP_HPP_
 #define MAP_HPP_
 
+#include "modular_slam/modular_slam.hpp"
 namespace mslam
 {
 
@@ -8,7 +9,7 @@ namespace mslam
  *
  *
  */
-class Map
+class Map : public SlamComponent
 {
   public:
     virtual bool globalOptimization();
