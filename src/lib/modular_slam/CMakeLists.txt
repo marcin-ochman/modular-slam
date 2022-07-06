@@ -5,6 +5,7 @@ find_package(Threads)
 find_package(Boost 1.74.0 REQUIRED COMPONENTS program_options log system filesystem)
 find_package(Catch2 2.11.0 REQUIRED)
 find_package(OpenCV 4 REQUIRED)
+find_package(Eigen3 REQUIRED)
 find_package(realsense2 REQUIRED)
 find_package(nlohmann_json 3.10.5 REQUIRED)
 find_package(Ceres REQUIRED)
@@ -38,6 +39,7 @@ target_link_libraries(
   Ceres::ceres
   PUBLIC
   Boost::filesystem
+  Eigen3::Eigen
 )
 
 install(

@@ -12,7 +12,7 @@ bool isValidChoice(const std::vector<int>& choices, const int value)
 
 ParameterDefinition makeChoiceParameter(const std::string& name, const std::vector<int>& choices)
 {
-    ParameterDefinition definition{name, ParameterType::Choice, choices};
+    ParameterDefinition definition{name, ParameterType::Choice, choices, {}};
     return definition;
 }
 

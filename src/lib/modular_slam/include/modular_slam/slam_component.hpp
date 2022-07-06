@@ -17,6 +17,8 @@ class SlamComponent
         parametersHandler = std::move(newParameterHendler);
     }
 
+    virtual ~SlamComponent() {}
+
   private:
     std::shared_ptr<ParametersHandlerInterface> parametersHandler;
 };

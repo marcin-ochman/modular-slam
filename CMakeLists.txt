@@ -13,7 +13,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 option(GEN_DOCS "Generate documentation" OFF)
 
-set(CXX_GNU_COMPILE_FLAGS "-Wall -pedantic -Wextra ")
+set(CXX_GNU_COMPILE_FLAGS "-Wall -pedantic -Wextra")
 set(CXX_CLANG_COMPILE_FLAGS "-Wall -pedantic -Wextra")
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
