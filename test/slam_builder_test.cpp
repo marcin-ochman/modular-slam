@@ -3,6 +3,7 @@
 
 #include <catch2/catch.hpp>
 #include <catch2/trompeloeil.hpp>
+#include <trompeloeil.hpp>
 
 class ParameterHandlerMock : public mslam::ParametersHandlerInterface
 {
@@ -23,10 +24,18 @@ class RgbdiDataProviderMock : public mslam::DataProviderInterface<mslam::RgbdiFr
 
 class BackendMock : public mslam::BackendInterface<mslam::slam3d::State, mslam::Vector3d>
 {
+    MAKE_MOCK1(optimize,
+               void(std::shared_ptr<mslam::ConstraintsInterface<mslam::slam3d::State, mslam::Vector3d>>& constraints),
+               override);
 };
 
-class FrontendMock : public mslam::FrontendInterface<mslam::slam3d::State>
+class FrontendMock : public mslam::FrontendInterface<mslam::RgbdiFrame, mslam::slam3d::State, mslam::Vector3d>
 {
+  public:
+    using RetValue = std::shared_ptr<mslam::ConstraintsInterface<mslam::slam3d::State, mslam::Vector3d>>;
+    using Arg = std::shared_ptr<mslam::RgbdiFrame>;
+
+    MAKE_MOCK1(prepareConstraints, RetValue(Arg arg), override);
 };
 
 class MapMock : public mslam::MapInterface

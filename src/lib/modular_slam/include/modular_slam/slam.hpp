@@ -14,7 +14,7 @@ class Slam
 {
   public:
     using DataProviderInterfaceType = DataProviderInterface<SensorDataType>;
-    using FrontendInterfaceType = FrontendInterface<SensorStateType>;
+    using FrontendInterfaceType = FrontendInterface<SensorDataType, SensorStateType, LandmarkStateType>;
     using BackendInterfaceType = BackendInterface<SensorStateType, LandmarkStateType>;
     using SlamType = Slam<SensorDataType, SensorStateType, LandmarkStateType>;
 
@@ -44,6 +44,12 @@ class Slam
 template <typename SensorDataType, typename SensorStateType, typename LandmarkStateType>
 bool Slam<SensorDataType, SensorStateType, LandmarkStateType>::init()
 {
+    // parameterHandler->;
+    // dataProviderInterface->init();
+    // mapInterface->init();
+    // backendInterface->init();
+    // frontendInterface->init();
+
     return true;
 }
 

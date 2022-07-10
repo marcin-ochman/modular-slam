@@ -9,8 +9,11 @@ template <typename SensorStateType, typename LandmarkStateType>
 class ConstraintsInterface
 {
   public:
-    virtual void addObservation(std::shared_ptr<Observation<SensorStateType, LandmarkStateType>>);
-    virtual void addObservation();
+    virtual void addLandmarkConstraint(std::shared_ptr<Observation<SensorStateType, LandmarkStateType>>) = 0;
+    virtual void addKeyframeConstraint(std::shared_ptr<Observation<SensorStateType, LandmarkStateType>>) = 0;
+
+    virtual void allLandmarks() = 0;
+    virtual void allKeyframes() = 0;
 };
 
 } // namespace mslam

@@ -11,7 +11,7 @@ template <typename SensorDataType, typename SensorStateType, typename LandmarkSt
 class SlamBuilder
 {
   public:
-    using FrontendInterfaceType = FrontendInterface<SensorStateType>;
+    using FrontendInterfaceType = FrontendInterface<SensorDataType, SensorStateType, LandmarkStateType>;
     using BackendInterfaceType = BackendInterface<SensorStateType, LandmarkStateType>;
     using SlamType = Slam<SensorDataType, SensorStateType, LandmarkStateType>;
 
@@ -23,7 +23,8 @@ class SlamBuilder
         return *this;
     }
 
-    SlamBuilder& addFrontend(std::shared_ptr<FrontendInterface<SensorStateType>> frontend)
+    SlamBuilder&
+    addFrontend(std::shared_ptr<FrontendInterface<SensorDataType, SensorStateType, LandmarkStateType>> frontend)
     {
         frontendInterface = frontend;
         return *this;

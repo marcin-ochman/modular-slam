@@ -58,14 +58,6 @@ struct Keyframe
     StateType state;
 };
 
-template <typename KeyframeType, typename LandmarkStateType>
-struct Observation
-{
-    std::shared_ptr<KeyframeType> firstKeyframe;
-    std::shared_ptr<KeyframeType> secondKeyframe;
-    std::shared_ptr<Landmark<LandmarkStateType>> landmark;
-};
-
 namespace slam2d
 {
 using State = mslam::State<Vector2d, float>;
