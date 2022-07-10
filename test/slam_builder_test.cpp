@@ -1,5 +1,6 @@
+#include "modular_slam/rgbdi_frame.hpp"
+#include "modular_slam/slam3d_types.hpp"
 #include "modular_slam/slam_builder.hpp"
-#include "modular_slam/types.hpp"
 
 #include <catch2/catch.hpp>
 #include <catch2/trompeloeil.hpp>
@@ -38,8 +39,10 @@ class FrontendMock : public mslam::FrontendInterface<mslam::RgbdiFrame, mslam::s
     MAKE_MOCK1(prepareConstraints, RetValue(Arg arg), override);
 };
 
-class MapMock : public mslam::MapInterface
+class MapMock : public mslam::MapInterface<mslam::slam3d::State, mslam::Vector3d>
 {
+  public:
+    MAKE_MOCK1(updateByConstraints, bool(std::shared_ptr<MapMock::ConstraintsType> constraints), override);
 };
 
 SCENARIO("Building SLAM system")

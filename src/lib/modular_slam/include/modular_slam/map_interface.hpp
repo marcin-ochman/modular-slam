@@ -1,16 +1,19 @@
 #ifndef MSLAM_MAP_INTERFACE_HPP_
 #define MSLAM_MAP_INTERFACE_HPP_
 
+#include "modular_slam/constraints_interface.hpp"
 #include "modular_slam/slam_component.hpp"
 
 namespace mslam
 {
 
+template <typename SensorStateType, typename LandmarkStateType>
 class MapInterface : public SlamComponent
 {
   public:
-    // virtual bool addPartialMapConstraints();
-    // virtual bool globalOptimization();
+    using ConstraintsType = ConstraintsInterface<SensorStateType, LandmarkStateType>;
+
+    virtual bool updateByConstraints(std::shared_ptr<ConstraintsType> constraints) = 0;
 };
 
 } // namespace mslam

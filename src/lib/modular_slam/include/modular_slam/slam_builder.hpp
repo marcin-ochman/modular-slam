@@ -13,6 +13,7 @@ class SlamBuilder
   public:
     using FrontendInterfaceType = FrontendInterface<SensorDataType, SensorStateType, LandmarkStateType>;
     using BackendInterfaceType = BackendInterface<SensorStateType, LandmarkStateType>;
+    using MapType = MapInterface<SensorStateType, LandmarkStateType>;
     using SlamType = Slam<SensorDataType, SensorStateType, LandmarkStateType>;
 
     std::unique_ptr<SlamType> build();
@@ -36,7 +37,7 @@ class SlamBuilder
         return *this;
     }
 
-    SlamBuilder& addMap(std::shared_ptr<MapInterface> map)
+    SlamBuilder& addMap(std::shared_ptr<MapType> map)
     {
         mapInterface = map;
         return *this;
@@ -51,7 +52,7 @@ class SlamBuilder
   private:
     std::shared_ptr<ParametersHandlerInterface> parameterHandler;
     std::shared_ptr<DataProviderInterface<SensorDataType>> dataProviderInterface;
-    std::shared_ptr<MapInterface> mapInterface;
+    std::shared_ptr<MapType> mapInterface;
     std::shared_ptr<BackendInterfaceType> backendInterface;
     std::shared_ptr<FrontendInterfaceType> frontendInterface;
 };

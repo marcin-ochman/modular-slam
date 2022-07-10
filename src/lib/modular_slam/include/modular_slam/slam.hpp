@@ -17,11 +17,12 @@ class Slam
     using FrontendInterfaceType = FrontendInterface<SensorDataType, SensorStateType, LandmarkStateType>;
     using BackendInterfaceType = BackendInterface<SensorStateType, LandmarkStateType>;
     using SlamType = Slam<SensorDataType, SensorStateType, LandmarkStateType>;
+    using MapType = MapInterface<SensorStateType, LandmarkStateType>;
 
     Slam(std::shared_ptr<ParametersHandlerInterface> parameterHandler,
          std::shared_ptr<DataProviderInterfaceType> dataProviderInterface,
          std::shared_ptr<FrontendInterfaceType> frontendInterface,
-         std::shared_ptr<BackendInterfaceType> backendInterface, std::shared_ptr<MapInterface> mapInterface)
+         std::shared_ptr<BackendInterfaceType> backendInterface, std::shared_ptr<MapType> mapInterface)
     {
         this->parameterHandler = std::move(parameterHandler);
         this->dataProviderInterface = std::move(dataProviderInterface);
@@ -36,7 +37,7 @@ class Slam
   protected:
     std::shared_ptr<ParametersHandlerInterface> parameterHandler;
     std::shared_ptr<DataProviderInterface<SensorDataType>> dataProviderInterface;
-    std::shared_ptr<MapInterface> mapInterface;
+    std::shared_ptr<MapType> mapInterface;
     std::shared_ptr<BackendInterfaceType> backendInterface;
     std::shared_ptr<FrontendInterfaceType> frontendInterface;
 };

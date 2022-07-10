@@ -1,5 +1,4 @@
 #include "modular_slam/rgbd_file_provider.hpp"
-#include "modular_slam/types.hpp"
 #include <algorithm>
 #include <filesystem>
 #include <regex>

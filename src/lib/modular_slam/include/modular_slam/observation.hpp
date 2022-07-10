@@ -1,7 +1,9 @@
 #ifndef MSLAM_OBSERVATION_HPP_
 #define MSLAM_OBSERVATION_HPP_
 
-#include "modular_slam/types.hpp"
+#include <memory>
+
+#include "modular_slam/landmark.hpp"
 
 namespace mslam
 {

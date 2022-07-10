@@ -2,6 +2,7 @@
 #define REALSENSE_CAMERA_HPP_
 
 #include "modular_slam/camera.hpp"
+#include "modular_slam/rgbd_frame.hpp"
 #include <librealsense2/h/rs_sensor.h>
 #include <librealsense2/rs.hpp>
 

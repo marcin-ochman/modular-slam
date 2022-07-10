@@ -2,7 +2,7 @@
 #define RGBD_FILE_PROVIDER_H_
 
 #include "modular_slam/data_provider.hpp"
-#include "modular_slam/types.hpp"
+#include "modular_slam/rgbd_frame.hpp"
 
 #include <filesystem>
 #include <string>

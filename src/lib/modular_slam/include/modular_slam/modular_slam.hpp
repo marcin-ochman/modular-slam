@@ -3,7 +3,18 @@
 
 // Here put only public headers
 
+#include "modular_slam/keyframe.hpp"
 #include "modular_slam/slam_builder.hpp"
-#include "modular_slam/types.hpp"
+#include "modular_slam/state.hpp"
+
+namespace mslam
+{
+
+namespace slam2d
+{
+using State = mslam::State<Vector2d, float>;
+using Keyframe = mslam::Keyframe<State>;
+} // namespace slam2d
+} // namespace mslam
 
 #endif /* MSLAM_MODULAR_SLAM_HPP_ */
