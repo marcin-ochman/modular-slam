@@ -31,15 +31,17 @@ bool RealSenseCamera::fetch()
     auto depthMemorySize = depth_frame.get_height() * depth_frame.get_width() * depth_frame.get_bytes_per_pixel();
 
     auto newRgbdFrame = std::make_shared<RgbdFrame>();
-    newRgbdFrame->rgbData.resize(rgbMemorySize);
-    newRgbdFrame->depthData.resize(depthMemorySize);
+    newRgbdFrame->rgb.data.resize(rgbMemorySize);
+    newRgbdFrame->depth.data.resize(depthMemorySize);
+    newRgbdFrame->rgb.size.height = rgb_frame.get_height();
+    newRgbdFrame->rgb.size.width = rgb_frame.get_width();
 
     std::copy_n(reinterpret_cast<const uint16_t*>(depth_frame.get_data()), depth_frame.get_data_size(),
-                newRgbdFrame->depthData.begin());
+                newRgbdFrame->depth.data.begin());
 
     cv::Mat rgbMatFrame{rgb_frame.get_height(), rgb_frame.get_width(), CV_8UC3,
                         const_cast<void*>(rgb_frame.get_data())},
-        bgrFrame{rgb_frame.get_height(), rgb_frame.get_width(), CV_8UC3, newRgbdFrame->rgbData.data()};
+        bgrFrame{rgb_frame.get_height(), rgb_frame.get_width(), CV_8UC3, newRgbdFrame->rgb.data.data()};
 
     cv::cvtColor(rgbMatFrame, bgrFrame, cv::COLOR_RGBA2BGR);
 

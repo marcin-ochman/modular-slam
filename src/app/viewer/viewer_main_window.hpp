@@ -16,6 +16,9 @@ class ViewerMainWindow : public QMainWindow
   public:
     ViewerMainWindow(QWidget* parent = nullptr);
 
+  public slots:
+    void setImage(const QPixmap& pixmap) { ui->imageViewer->drawImage(pixmap); }
+
   private:
     std::unique_ptr<Ui::ViewerMainWindow> ui;
 };

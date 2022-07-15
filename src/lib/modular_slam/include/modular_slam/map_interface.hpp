@@ -11,9 +11,9 @@ template <typename SensorStateType, typename LandmarkStateType>
 class MapInterface : public SlamComponent
 {
   public:
-    using ConstraintsType = ConstraintsInterface<SensorStateType, LandmarkStateType>;
+    using Constraints = ConstraintsInterface<SensorStateType, LandmarkStateType>;
 
-    virtual bool updateByConstraints(std::shared_ptr<ConstraintsType> constraints) = 0;
+    virtual bool update(const Constraints& constraints) = 0;
 };
 
 } // namespace mslam

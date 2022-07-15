@@ -8,7 +8,7 @@ namespace mslam
 {
 struct DepthFrame
 {
-    std::vector<std::uint16_t> depthData;
+    std::vector<std::uint16_t> data;
 };
 
 } // namespace mslam

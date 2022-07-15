@@ -4,11 +4,14 @@
 #include <cstdint>
 #include <vector>
 
+#include "modular_slam/basic_types.hpp"
+
 namespace mslam
 {
 struct RgbFrame
 {
-    std::vector<std::uint8_t> rgbData;
+    std::vector<std::uint8_t> data;
+    Size size;
 };
 
 } // namespace mslam

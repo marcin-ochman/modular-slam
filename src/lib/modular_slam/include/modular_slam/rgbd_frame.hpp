@@ -9,8 +9,10 @@
 
 namespace mslam
 {
-struct RgbdFrame : RgbFrame, DepthFrame
+struct RgbdFrame
 {
+    RgbFrame rgb;
+    DepthFrame depth;
 };
 
 } // namespace mslam

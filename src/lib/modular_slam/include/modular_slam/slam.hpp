@@ -9,6 +9,15 @@
 namespace mslam
 {
 
+enum class SlamProcessResult
+{
+
+    Success,
+    NoDataAvailable,
+    NoConstraints,
+    Error
+};
+
 template <typename SensorDataType, typename SensorStateType, typename LandmarkStateType>
 class Slam
 {
@@ -25,40 +34,50 @@ class Slam
          std::shared_ptr<BackendInterfaceType> backendInterface, std::shared_ptr<MapType> mapInterface)
     {
         this->parameterHandler = std::move(parameterHandler);
-        this->dataProviderInterface = std::move(dataProviderInterface);
-        this->frontendInterface = std::move(frontendInterface);
-        this->backendInterface = std::move(backendInterface);
-        this->mapInterface = std::move(mapInterface);
+        this->dataProvider = std::move(dataProviderInterface);
+        this->frontend = std::move(frontendInterface);
+        this->backend = std::move(backendInterface);
+        this->map = std::move(mapInterface);
     }
 
     virtual bool init();
-    virtual bool process();
+    virtual SlamProcessResult process();
 
   protected:
     std::shared_ptr<ParametersHandlerInterface> parameterHandler;
-    std::shared_ptr<DataProviderInterface<SensorDataType>> dataProviderInterface;
-    std::shared_ptr<MapType> mapInterface;
-    std::shared_ptr<BackendInterfaceType> backendInterface;
-    std::shared_ptr<FrontendInterfaceType> frontendInterface;
+    std::shared_ptr<DataProviderInterface<SensorDataType>> dataProvider;
+    std::shared_ptr<MapType> map;
+    std::shared_ptr<BackendInterfaceType> backend;
+    std::shared_ptr<FrontendInterfaceType> frontend;
 };
 
 template <typename SensorDataType, typename SensorStateType, typename LandmarkStateType>
 bool Slam<SensorDataType, SensorStateType, LandmarkStateType>::init()
 {
-    // parameterHandler->;
-    // dataProviderInterface->init();
-    // mapInterface->init();
-    // backendInterface->init();
-    // frontendInterface->init();
+    auto result = dataProvider->init() && frontend->init() && backend->init() && map->init();
 
-    return true;
+    return result;
 }
 
 template <typename SensorDataType, typename SensorStateType, typename LandmarkStateType>
-bool Slam<SensorDataType, SensorStateType, LandmarkStateType>::process()
+SlamProcessResult Slam<SensorDataType, SensorStateType, LandmarkStateType>::process()
 {
+    auto isNewDataAvailable = dataProvider->fetch();
 
-    return true;
+    if(!isNewDataAvailable)
+        return SlamProcessResult::NoDataAvailable;
+
+    auto sensorData = dataProvider->recentData();
+    auto constraints = frontend->prepareConstraints(*sensorData);
+
+    if(constraints)
+        return SlamProcessResult::NoConstraints;
+
+    backend->optimize(*constraints);
+    frontend->update(*constraints);
+    map->update(/*sensorData,*/ *constraints);
+
+    return SlamProcessResult::Success;
 }
 
 } // namespace mslam

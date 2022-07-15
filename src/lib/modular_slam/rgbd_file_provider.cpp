@@ -63,11 +63,13 @@ bool RgbdFileProvider::fetch()
     auto depthMemorySize = frameSize.height * frameSize.width * depthMat.channels();
 
     auto newRgbdFrame = std::make_shared<RgbdFrame>();
-    newRgbdFrame->rgbData.resize(rgbMemorySize);
-    newRgbdFrame->depthData.resize(depthMemorySize);
+    newRgbdFrame->rgb.data.resize(rgbMemorySize);
+    newRgbdFrame->rgb.size.width = frameSize.width;
+    newRgbdFrame->rgb.size.height = frameSize.height;
+    newRgbdFrame->depth.data.resize(depthMemorySize);
 
-    cv::Mat rgbFrameView{frameSize.height, frameSize.width, CV_8UC3, newRgbdFrame->rgbData.data()};
-    cv::Mat depthFrameView{frameSize.height, frameSize.width, CV_16UC1, newRgbdFrame->depthData.data()};
+    cv::Mat rgbFrameView{frameSize.height, frameSize.width, CV_8UC3, newRgbdFrame->rgb.data.data()};
+    cv::Mat depthFrameView{frameSize.height, frameSize.width, CV_16UC1, newRgbdFrame->depth.data.data()};
 
     rgbMat.copyTo(rgbFrameView);
     depthMat.copyTo(depthFrameView);

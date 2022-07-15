@@ -10,7 +10,7 @@ template <typename SensorStateType, typename LandmarkStateType>
 class BackendInterface : public SlamComponent
 {
   public:
-    virtual void optimize(std::shared_ptr<ConstraintsInterface<SensorStateType, LandmarkStateType>>& constraints) = 0;
+    virtual void optimize(ConstraintsInterface<SensorStateType, LandmarkStateType>& constraints) = 0;
 };
 
 } // namespace mslam

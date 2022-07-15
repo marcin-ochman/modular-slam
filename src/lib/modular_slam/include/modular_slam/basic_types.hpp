@@ -17,6 +17,12 @@ using Vector2d = Eigen::Vector2f;
 using Vector3d = Eigen::Vector3f;
 using Quaternion = Eigen::Quaternionf;
 
+struct Size
+{
+    int width;
+    int height;
+};
+
 } // namespace mslam
 
 #endif // MSLAM_BASIC_TYPES_HPP_
