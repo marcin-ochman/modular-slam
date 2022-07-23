@@ -7,30 +7,41 @@
 #include <QOpenGLShader>
 #include <QOpenGLShaderProgram>
 #include <QOpenGLWidget>
+#include <qevent.h>
+#include <qpoint.h>
+
+#include "camera.hpp"
 
 class PointcloudViewer : public QOpenGLWidget, protected QOpenGLFunctions
 {
     Q_OBJECT
 
   public:
-    PointcloudViewer(QWidget* parent = nullptr) : QOpenGLWidget(parent) {}
-
+    PointcloudViewer(QWidget* parent = nullptr);
     ~PointcloudViewer();
 
   protected:
-    void initializeGL();         // initialization OpenGL
-    void resizeGL(int w, int h); // adjustment oeenGL The display window of
-    void paintGL();              // draw opengl Images
+    void initializeGL() override;
+    void resizeGL(int w, int h) override;
+    void paintGL() override;
+
+    void mouseMoveEvent(QMouseEvent* event) override;
+    void wheelEvent(QWheelEvent* event) override;
+    void handleCameraRotation(QMouseEvent* event);
+    void handleCameraMovement(QMouseEvent* event);
+
   private:
-    void InitShader();
-    void InitBuffer();
+    void initShader();
+    void initBuffer();
 
   private:
     QOpenGLShaderProgram shader;
     QOpenGLBuffer* vertexBuffer;
     QOpenGLBuffer* indexBuffer;
-    float viewPortWidth = 300;
-    float viewPortHeight = 300;
+
+    Camera camera;
+    std::optional<QPoint> oldMousePosition;
+    QTimer* updateTimer;
 };
 
 #endif // MSLAM_VIEWER_POINTCLOUD_VIEWER_HPP_

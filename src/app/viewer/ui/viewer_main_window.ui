@@ -13,7 +13,7 @@
   <property name="windowTitle">
    <string>MainWindow</string>
   </property>
-  <widget class="QWidget" name="centralwidget">
+  <widget class="PointcloudViewer" name="pointcloudViewer_2">
    <layout class="QVBoxLayout" name="verticalLayout"/>
   </widget>
   <widget class="QMenuBar" name="menubar">
@@ -57,28 +57,25 @@
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <widget class="QDockWidget" name="dockWidget">
+   <property name="accessibleName">
+    <string>RGB Viewer</string>
+   </property>
+   <property name="windowTitle">
+    <string>RGB Viewer</string>
+   </property>
    <attribute name="dockWidgetArea">
     <number>1</number>
    </attribute>
    <widget class="ImageViewer" name="imageViewer"/>
   </widget>
   <widget class="QDockWidget" name="dockWidget_2">
+   <property name="windowTitle">
+    <string>Depth Viewer</string>
+   </property>
    <attribute name="dockWidgetArea">
     <number>1</number>
    </attribute>
    <widget class="ImageViewer" name="depthViewer"/>
-  </widget>
-  <widget class="QDockWidget" name="dockWidget_3">
-   <property name="sizePolicy">
-    <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
-     <horstretch>0</horstretch>
-     <verstretch>0</verstretch>
-    </sizepolicy>
-   </property>
-   <attribute name="dockWidgetArea">
-    <number>2</number>
-   </attribute>
-   <widget class="PointcloudViewer" name="pointcloudViewer"/>
   </widget>
   <action name="actionExit">
    <property name="text">

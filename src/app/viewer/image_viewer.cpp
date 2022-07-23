@@ -1,25 +1,34 @@
+
 #include "image_viewer.hpp"
 
-void ImageViewer::drawImage(const QPixmap& pixmap)
+void ImageViewer::drawImage(const QPixmap& newPixmap)
 {
     setEnabled(true);
-    m_pixmap = pixmap;
-    m_ui.label_2->clear();
-    m_ui.label_2->setPixmap(pixmap);
-    scaleDrawnImage(m_ui.horizontalSlider->value());
+    pixmap = newPixmap;
+    ui.label->clear();
+    ui.label->setPixmap(pixmap);
+    if(ui.autoscaleCheckbox->isChecked())
+    {
+        auto heightPercent = static_cast<float>(ui.scrollArea->height()) / pixmap.height() * 100.0f;
+        auto widthPercent = static_cast<float>(ui.scrollArea->width()) / pixmap.width() * 100.0f;
+        scaleDrawnImage(std::min(heightPercent, widthPercent) * 0.9f);
+    }
+    else
+    {
+        scaleDrawnImage(ui.horizontalSlider->value());
+    }
 }
 
 void ImageViewer::scaleDrawnImage(int percent)
 {
-    m_ui.label_2->setScaledContents(true);
-    auto scaledWidth = m_pixmap.width() * percent / 100.0;
-    auto scaledHeight = m_pixmap.height() * percent / 100.0;
-
-    m_ui.label_2->setFixedSize(scaledWidth, scaledHeight);
+    ui.label->setScaledContents(true);
+    auto scaledWidth = pixmap.width() * percent / 100.0f;
+    auto scaledHeight = pixmap.height() * percent / 100.0f;
+    ui.label->setFixedSize(scaledWidth, scaledHeight);
 }
 
 void ImageViewer::initialize()
 {
-    m_ui.setupUi(this);
-    connect(m_ui.horizontalSlider, SIGNAL(valueChanged(int)), this, SLOT(scaleDrawnImage(int)));
+    ui.setupUi(this);
+    connect(ui.horizontalSlider, SIGNAL(valueChanged(int)), this, SLOT(scaleDrawnImage(int)));
 }

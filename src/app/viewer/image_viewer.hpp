@@ -15,9 +15,10 @@ class ImageViewer : public QWidget
     void drawImage(const QPixmap& pixmap);
 
   protected:
-    Ui::MainImageViewer m_ui;
-    QPixmap m_pixmap;
     void initialize();
+
+    Ui::MainImageViewer ui;
+    QPixmap pixmap;
 };
 
 #endif

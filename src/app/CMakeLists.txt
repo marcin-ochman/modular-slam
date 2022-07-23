@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.19)
 project(ModularSlamApplications VERSION 0.0.1)
 
 find_package(Qt6 COMPONENTS Widgets OpenGL OpenGLWidgets Gui REQUIRED)
+find_package(OpenGL REQUIRED)
+find_package(glm REQUIRED)
 
 if(NOT TARGET ModularSlam::ModularSlam)
   find_package(ModularSlam CONFIG REQUIRED)
@@ -40,6 +42,8 @@ target_link_libraries(
   Qt6::OpenGLWidgets
   Qt6::Gui
   ModularSlam::ModularSlam
+  OpenGL::GLU
+  glm
 )
 
 install(
