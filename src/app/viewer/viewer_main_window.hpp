@@ -1,6 +1,7 @@
 #ifndef VIEWER_MAIN_WINDOW_HPP_
 #define VIEWER_MAIN_WINDOW_HPP_
 
+#include "modular_slam/depth_frame.hpp"
 #include "ui_viewer_main_window.h"
 #include <QMainWindow>
 
@@ -17,7 +18,8 @@ class ViewerMainWindow : public QMainWindow
     ViewerMainWindow(QWidget* parent = nullptr);
 
   public slots:
-    void setImage(const QPixmap& pixmap) { ui->imageViewer->drawImage(pixmap); }
+    void setImage(const QImage& newImage) { ui->imageViewer->drawImage(newImage); }
+    void setDepthImage(const mslam::DepthFrame& newImage) { ui->depthImageViewer->drawImage(newImage); }
 
   private:
     std::unique_ptr<Ui::ViewerMainWindow> ui;

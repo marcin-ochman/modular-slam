@@ -4,6 +4,7 @@ project(ModularSlamApplications VERSION 0.0.1)
 find_package(Qt6 COMPONENTS Widgets OpenGL OpenGLWidgets Gui REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(glm REQUIRED)
+find_package(OpenCV 4 REQUIRED)
 
 if(NOT TARGET ModularSlam::ModularSlam)
   find_package(ModularSlam CONFIG REQUIRED)
@@ -13,11 +14,13 @@ qt_wrap_ui(
   MSLAM_VIEWER_UIS
   viewer/ui/viewer_main_window.ui
   viewer/ui/image_viewer.ui
+  viewer/ui/depth_image_viewer.ui
 )
 
 qt_wrap_cpp(
   MSLAM_VIEWER_HEADERS
   viewer/image_viewer.hpp
+  viewer/depth_image_viewer.hpp
   viewer/slam_thread.hpp
   viewer/pointcloud_viewer.hpp
 )
@@ -29,7 +32,9 @@ qt_add_executable(
   viewer/viewer.cpp
   viewer/viewer_main_window.cpp
   viewer/image_viewer.cpp
+  viewer/depth_image_viewer.cpp
   viewer/pointcloud_viewer.cpp
+  viewer/colorbar.cpp
 )
 
 add_executable(ModularSlam::Viewer ALIAS Viewer)
@@ -44,6 +49,8 @@ target_link_libraries(
   ModularSlam::ModularSlam
   OpenGL::GLU
   glm
+  opencv_core
+  opencv_imgproc
 )
 
 install(

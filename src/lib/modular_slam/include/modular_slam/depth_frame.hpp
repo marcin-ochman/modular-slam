@@ -4,11 +4,14 @@
 #include <cstdint>
 #include <vector>
 
+#include "modular_slam/basic_types.hpp"
+
 namespace mslam
 {
 struct DepthFrame
 {
     std::vector<std::uint16_t> data;
+    Size size;
 };
 
 } // namespace mslam

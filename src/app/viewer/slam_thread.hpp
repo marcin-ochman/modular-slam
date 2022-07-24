@@ -5,6 +5,7 @@
 #include <QPixmap>
 #include <QThread>
 
+#include "modular_slam/depth_frame.hpp"
 #include "modular_slam/realsense_camera.hpp"
 
 class SlamThread : public QThread
@@ -32,14 +33,16 @@ class SlamThread : public QThread
                 auto rgbd = dataProvider->recentData();
                 QImage image{rgbd->rgb.data.data(), rgbd->rgb.size.width, rgbd->rgb.size.height,
                              3 * rgbd->rgb.size.width, QImage::Format_BGR888};
-                emit newRgbImageAvailable(QPixmap::fromImage(image));
+
+                emit newRgbImageAvailable(image);
+                emit newDepthImageAvailable(rgbd->depth);
             }
         }
     }
 
   signals:
-    void newRgbImageAvailable(const QPixmap& pixmap);
-    void newDepthImageAvailable(const QPixmap& pixmap);
+    void newRgbImageAvailable(const QImage& pixmap);
+    void newDepthImageAvailable(const mslam::DepthFrame& depth);
 
   private:
     bool m_isRunning;

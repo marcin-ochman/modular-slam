@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>MainImageViewer</class>
- <widget class="QWidget" name="MainImageViewer">
+ <class>DepthImageViewer</class>
+ <widget class="QWidget" name="DepthImageViewer">
   <property name="enabled">
    <bool>false</bool>
   </property>
@@ -33,25 +33,55 @@
           <x>0</x>
           <y>0</y>
           <width>382</width>
-          <height>242</height>
+          <height>218</height>
          </rect>
         </property>
         <layout class="QHBoxLayout" name="horizontalLayout_2">
          <item>
-          <widget class="QLabel" name="label">
-           <property name="text">
-            <string>No image to display</string>
-           </property>
-           <property name="scaledContents">
-            <bool>false</bool>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignCenter</set>
-           </property>
-          </widget>
+          <layout class="QHBoxLayout" name="horizontalLayout_3">
+           <item>
+            <widget class="QLabel" name="label">
+             <property name="text">
+              <string>No image to display</string>
+             </property>
+             <property name="scaledContents">
+              <bool>false</bool>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignCenter</set>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="ColorBar" name="colorbar" native="true">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>100</width>
+               <height>16777215</height>
+              </size>
+             </property>
+            </widget>
+           </item>
+          </layout>
          </item>
         </layout>
        </widget>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="label_2">
+       <property name="text">
+        <string>(0, 0): 0</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
       </widget>
      </item>
      <item>
@@ -108,6 +138,14 @@
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>ColorBar</class>
+   <extends>QWidget</extends>
+   <header>colorbar.hpp</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections>
   <connection>
@@ -139,38 +177,6 @@
     <hint type="destinationlabel">
      <x>264</x>
      <y>282</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>autoscaleCheckbox</sender>
-   <signal>toggled(bool)</signal>
-   <receiver>spinBox</receiver>
-   <slot>setDisabled(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>349</x>
-     <y>275</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>97</x>
-     <y>275</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>autoscaleCheckbox</sender>
-   <signal>toggled(bool)</signal>
-   <receiver>horizontalSlider</receiver>
-   <slot>setDisabled(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>349</x>
-     <y>275</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>216</x>
-     <y>275</y>
     </hint>
    </hints>
   </connection>

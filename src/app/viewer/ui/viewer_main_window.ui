@@ -75,7 +75,7 @@
    <attribute name="dockWidgetArea">
     <number>1</number>
    </attribute>
-   <widget class="ImageViewer" name="depthViewer"/>
+   <widget class="DepthImageViewer" name="depthImageViewer"/>
   </widget>
   <action name="actionExit">
    <property name="text">
@@ -114,6 +114,12 @@
    <class>PointcloudViewer</class>
    <extends>QWidget</extends>
    <header>pointcloud_viewer.hpp</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>DepthImageViewer</class>
+   <extends>QWidget</extends>
+   <header>depth_image_viewer.hpp</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

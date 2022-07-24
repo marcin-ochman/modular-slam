@@ -35,6 +35,8 @@ bool RealSenseCamera::fetch()
     newRgbdFrame->depth.data.resize(depthMemorySize);
     newRgbdFrame->rgb.size.height = rgb_frame.get_height();
     newRgbdFrame->rgb.size.width = rgb_frame.get_width();
+    newRgbdFrame->depth.size.height = depth_frame.get_height();
+    newRgbdFrame->depth.size.width = depth_frame.get_width();
 
     std::copy_n(reinterpret_cast<const uint16_t*>(depth_frame.get_data()), depth_frame.get_data_size(),
                 newRgbdFrame->depth.data.begin());

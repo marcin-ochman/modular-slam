@@ -12,13 +12,13 @@ class ImageViewer : public QWidget
 
   public slots:
     void scaleDrawnImage(int percent);
-    void drawImage(const QPixmap& pixmap);
+    void drawImage(const QImage& image);
 
   protected:
     void initialize();
 
     Ui::MainImageViewer ui;
-    QPixmap pixmap;
+    QImage image;
 };
 
 #endif
