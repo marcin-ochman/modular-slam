@@ -1,7 +1,8 @@
 FROM archlinux:base-devel
 
+RUN pacman -Sy --noconfirm archlinux-keyring && pacman -Su --noconfirm
 
-RUN pacman -Sy --noconfirm \
+RUN pacman -Syu --noconfirm \
     base-devel \
     boost \
     catch2 \
@@ -11,6 +12,7 @@ RUN pacman -Sy --noconfirm \
     gdb \
     git \
     glu \
+    glm \
     go \
     graphviz \
     htop \

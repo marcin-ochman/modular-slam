@@ -16,12 +16,13 @@ void DepthImageViewer::drawImage(const mslam::DepthFrame& newDepth)
     const cv::Mat depth(newDepth.size.height, newDepth.size.width, CV_16UC1,
                         const_cast<std::uint16_t*>(newDepth.data.data()));
 
-    constexpr double min = 300, max = 10000;
+    const double min = minDepth(), max = maxDepth();
     cv::convertScaleAbs(depth - min, depthWithColormap, 255.0 / (max - min));
     cv::applyColorMap(depthWithColormap, depthWithColormap, cv::COLORMAP_HOT);
 
     image = QImage{depthWithColormap.ptr(), newDepth.size.width, newDepth.size.height, 3 * newDepth.size.width,
-                   QImage::Format_BGR888};
+                   QImage::Format_BGR888}
+                .copy();
 
     ui.label->setPixmap(QPixmap::fromImage(image));
     if(ui.autoscaleCheckbox->isChecked())

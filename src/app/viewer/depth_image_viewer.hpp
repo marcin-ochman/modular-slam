@@ -19,6 +19,9 @@ class DepthImageViewer : public QWidget
     void paintEvent(QPaintEvent* event) override;
     void initialize();
 
+    int minDepth() { return ui.minSlider->value() * 10; }
+    int maxDepth() { return ui.maxSlider->value() * 10; }
+
     Ui::DepthImageViewer ui;
     QImage image;
 };
