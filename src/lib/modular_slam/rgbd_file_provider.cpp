@@ -30,6 +30,9 @@ std::vector<std::string> getImages(const fs::path& rootDir)
             imagePaths.push_back(dirEntry.path().string());
     }
 
+    std::sort(std::begin(imagePaths), std::end(imagePaths),
+              [](const std::string& a, const std::string& b) { return a < b; });
+
     return imagePaths;
 }
 
@@ -58,15 +61,18 @@ bool RgbdFileProvider::fetch()
     auto rgbMat = cv::imread(rgbImagePath);
     auto depthMat = cv::imread(depthPath, cv::IMREAD_ANYDEPTH);
     cv::Size frameSize = rgbMat.size();
+    cv::Size depthSize = rgbMat.size();
 
     auto rgbMemorySize = frameSize.height * frameSize.width * rgbMat.channels();
-    auto depthMemorySize = frameSize.height * frameSize.width * depthMat.channels();
+    auto depthMemorySize = depthSize.height * depthSize.width * depthMat.channels();
 
     auto newRgbdFrame = std::make_shared<RgbdFrame>();
     newRgbdFrame->rgb.data.resize(rgbMemorySize);
     newRgbdFrame->rgb.size.width = frameSize.width;
     newRgbdFrame->rgb.size.height = frameSize.height;
     newRgbdFrame->depth.data.resize(depthMemorySize);
+    newRgbdFrame->depth.size.width = depthSize.width;
+    newRgbdFrame->depth.size.height = depthSize.height;
 
     cv::Mat rgbFrameView{frameSize.height, frameSize.width, CV_8UC3, newRgbdFrame->rgb.data.data()};
     cv::Mat depthFrameView{frameSize.height, frameSize.width, CV_16UC1, newRgbdFrame->depth.data.data()};
