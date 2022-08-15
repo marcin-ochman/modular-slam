@@ -32,6 +32,7 @@ class RgbdFileProvider : public DataProviderInterface<RgbdFrame>
     std::vector<std::string> depthPaths;
 
     std::size_t currentIndex = 0;
+
     std::shared_ptr<RgbdFrame> recentFrame;
 };
 } // namespace mslam
