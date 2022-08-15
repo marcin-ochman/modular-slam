@@ -6,8 +6,28 @@
 #include <cassert>
 #include <cstdint>
 
+#include <iostream>
+
 namespace mslam
 {
+
+Eigen::Matrix3f getProjectionMatrix(const CameraParameters& cameraParameters)
+{
+    const auto& focal = cameraParameters.focal;
+    const auto& principal = cameraParameters.principalPoint;
+
+    Eigen::Matrix3f projection;
+    projection << focal.x(), 0.0f, principal.x(), 0.0f, focal.y(), principal.y(), 0.0f, 0.0f, 1.0f;
+
+    return projection;
+}
+
+Eigen::Matrix3f getInverseProjectionMatrix(const CameraParameters& cameraParameters)
+{
+    auto projectionMatrix = getProjectionMatrix(cameraParameters);
+
+    return projectionMatrix.inverse();
+}
 
 bool RealSenseCamera::init()
 {
@@ -20,6 +40,12 @@ bool RealSenseCamera::fetch()
 {
     frames = pipe.wait_for_frames();
     frames = align_to_color.process(frames);
+    const auto intrinsics = frames.get_profile().as<rs2::video_stream_profile>().get_intrinsics();
+
+    auto newRgbdFrame = std::make_shared<RgbdFrame>();
+
+    newRgbdFrame->depth.cameraParameters.focal = {intrinsics.fx, intrinsics.fy};
+    newRgbdFrame->depth.cameraParameters.principalPoint = {intrinsics.ppx, intrinsics.ppy};
 
     rs2::video_frame rgb_frame = frames.first(RS2_STREAM_COLOR);
     rs2::depth_frame depth_frame = frames.first(RS2_STREAM_DEPTH);
@@ -30,7 +56,6 @@ bool RealSenseCamera::fetch()
     auto rgbMemorySize = rgb_frame.get_height() * rgb_frame.get_width() * rgb_frame.get_bytes_per_pixel();
     auto depthMemorySize = depth_frame.get_height() * depth_frame.get_width() * depth_frame.get_bytes_per_pixel();
 
-    auto newRgbdFrame = std::make_shared<RgbdFrame>();
     newRgbdFrame->rgb.data.resize(rgbMemorySize);
     newRgbdFrame->depth.data.resize(depthMemorySize);
     newRgbdFrame->rgb.size.height = rgb_frame.get_height();

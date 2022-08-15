@@ -14,10 +14,13 @@ find_package(Doxygen)
 
 add_library(
   ModularSlam
-  realsense_camera.cpp
-  rgbd_file_provider.cpp
   basic_parameters_handler.cpp
+  camera_parameters.cpp
+  ceres_backend.cpp
   parameters_handler.cpp
+  realsense_camera.cpp
+  rgbd_feature_frontend.cpp
+  rgbd_file_provider.cpp
 )
 
 add_library(ModularSlam::ModularSlam ALIAS ModularSlam)

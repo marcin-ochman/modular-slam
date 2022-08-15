@@ -1,16 +1,17 @@
 #ifndef MSLAM_VIEWER_POINTCLOUD_VIEWER_HPP_
 #define MSLAM_VIEWER_POINTCLOUD_VIEWER_HPP_
 
+#include "camera.hpp"
+#include "grid.hpp"
+
+#include <QEvent>
 #include <QOpenGLBuffer>
 #include <QOpenGLExtraFunctions>
 #include <QOpenGLFunctions>
 #include <QOpenGLShader>
 #include <QOpenGLShaderProgram>
 #include <QOpenGLWidget>
-#include <qevent.h>
-#include <qpoint.h>
-
-#include "camera.hpp"
+#include <QPoint>
 
 class PointcloudViewer : public QOpenGLWidget, protected QOpenGLFunctions
 {
@@ -19,6 +20,8 @@ class PointcloudViewer : public QOpenGLWidget, protected QOpenGLFunctions
   public:
     PointcloudViewer(QWidget* parent = nullptr);
     ~PointcloudViewer();
+  public slots:
+    void setPoints(const std::vector<glm::vec3>& newPoints);
 
   protected:
     void initializeGL() override;
@@ -31,17 +34,12 @@ class PointcloudViewer : public QOpenGLWidget, protected QOpenGLFunctions
     void handleCameraMovement(QMouseEvent* event);
 
   private:
-    void initShader();
-    void initBuffer();
-
-  private:
-    QOpenGLShaderProgram shader;
-    QOpenGLBuffer* vertexBuffer;
-    QOpenGLBuffer* indexBuffer;
-
     Camera camera;
     std::optional<QPoint> oldMousePosition;
     QTimer* updateTimer;
+
+    Grid grid;
+    PointCloudDrawable pointcloud;
 };
 
 #endif // MSLAM_VIEWER_POINTCLOUD_VIEWER_HPP_

@@ -54,7 +54,8 @@ class Slam
 template <typename SensorDataType, typename SensorStateType, typename LandmarkStateType>
 bool Slam<SensorDataType, SensorStateType, LandmarkStateType>::init()
 {
-    auto result = dataProvider->init() && frontend->init() && backend->init() && map->init();
+    auto result =
+        parameterHandler->init() && dataProvider->init() && frontend->init() && backend->init() /*&& map->init()*/;
 
     return result;
 }
@@ -70,12 +71,12 @@ SlamProcessResult Slam<SensorDataType, SensorStateType, LandmarkStateType>::proc
     auto sensorData = dataProvider->recentData();
     auto constraints = frontend->prepareConstraints(*sensorData);
 
-    if(constraints)
-        return SlamProcessResult::NoConstraints;
+    // if(constraints)
+    //     return SlamProcessResult::NoConstraints;
 
-    backend->optimize(*constraints);
-    frontend->update(*constraints);
-    map->update(/*sensorData,*/ *constraints);
+    // backend->optimize(*constraints);
+    // frontend->update(*constraints);
+    // map->update(/*sensorData,*/ *constraints);
 
     return SlamProcessResult::Success;
 }

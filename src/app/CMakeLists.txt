@@ -25,16 +25,20 @@ qt_wrap_cpp(
   viewer/pointcloud_viewer.hpp
 )
 
+qt_add_resources(MSLAM_VIEWER_QRC viewer/qrc/viewer.qrc)
+
 qt_add_executable(
   Viewer
   ${MSLAM_VIEWER_UIS}
   ${MSLAM_VIEWER_HEADERS}
+  ${MSLAM_VIEWER_QRC}
+  viewer/colorbar.cpp
+  viewer/depth_image_viewer.cpp
+  viewer/grid.cpp
+  viewer/image_viewer.cpp
+  viewer/pointcloud_viewer.cpp
   viewer/viewer.cpp
   viewer/viewer_main_window.cpp
-  viewer/image_viewer.cpp
-  viewer/depth_image_viewer.cpp
-  viewer/pointcloud_viewer.cpp
-  viewer/colorbar.cpp
 )
 
 add_executable(ModularSlam::Viewer ALIAS Viewer)
@@ -51,6 +55,13 @@ target_link_libraries(
   glm
   opencv_core
   opencv_imgproc
+)
+
+add_executable(RgbdSlam slam/rgbd_slam.cpp)
+target_link_libraries(
+  RgbdSlam PRIVATE ModularSlam::ModularSlam opencv_core
+  opencv_imgproc
+  opencv_highgui
 )
 
 install(

@@ -54,8 +54,8 @@ SCENARIO("Building SLAM system")
         {
             builder.addParameterHandler(std::make_shared<ParameterHandlerMock>())
                 .addDataProvider(std::make_shared<RgbdiDataProviderMock>())
-                .addBackend(std::make_shared<BackendMock>())
                 .addFrontend(std::make_shared<FrontendMock>())
+                .addBackend(std::make_shared<BackendMock>())
                 .addMap(std::make_shared<MapMock>());
 
             REQUIRE(builder.build() != nullptr);

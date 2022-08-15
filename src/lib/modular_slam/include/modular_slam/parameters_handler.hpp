@@ -51,10 +51,9 @@ class ParametersHandlerInterface
         return true;
     }
 
+    virtual bool init() { return true; }
     virtual bool setParameter(const std::string& /*name*/, const ParameterValue& /*newValue*/) { return true; }
-
     virtual std::optional<ParameterValue> getParameter(const std::string& /*name*/) const { return 0; }
-
     virtual ~ParametersHandlerInterface() {}
 };
 

@@ -49,6 +49,7 @@ int main(int argc, char* argv[])
     QObject::connect(slamThread, &SlamThread::newRgbImageAvailable, mainWindow, &mslam::ViewerMainWindow::setImage);
     QObject::connect(slamThread, &SlamThread::newDepthImageAvailable, mainWindow,
                      &mslam::ViewerMainWindow::setDepthImage);
+    QObject::connect(slamThread, &SlamThread::newPointsAvailable, mainWindow, &mslam::ViewerMainWindow::setPoints);
 
     mainWindow->show();
 

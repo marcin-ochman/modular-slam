@@ -23,6 +23,7 @@ elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
 endif()
 
 add_subdirectory(src)
+add_subdirectory(doc)
 
 enable_testing()
 add_subdirectory(test)

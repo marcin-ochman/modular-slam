@@ -20,6 +20,7 @@ class ViewerMainWindow : public QMainWindow
   public slots:
     void setImage(const QImage& newImage) { ui->imageViewer->drawImage(newImage); }
     void setDepthImage(const mslam::DepthFrame& newImage) { ui->depthImageViewer->drawImage(newImage); }
+    void setPoints(const std::vector<glm::vec3>& newPoints) { ui->pointcloudViewer->setPoints(newPoints); }
 
   private:
     std::unique_ptr<Ui::ViewerMainWindow> ui;
