@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>ViewerMainWindow</class>
+ <widget class="QMainWindow" name="ViewerMainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1072</width>
+    <height>608</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>MainWindow</string>
+  </property>
+  <widget class="PointcloudViewer" name="pointcloudViewer">
+   <layout class="QVBoxLayout" name="verticalLayout"/>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>1072</width>
+     <height>30</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>File</string>
+    </property>
+    <addaction name="actionExit"/>
+   </widget>
+   <widget class="QMenu" name="menuHelp">
+    <property name="title">
+     <string>Help</string>
+    </property>
+    <addaction name="actionAbout"/>
+   </widget>
+   <widget class="QMenu" name="menuView">
+    <property name="title">
+     <string>View</string>
+    </property>
+    <widget class="QMenu" name="menuAdd">
+     <property name="title">
+      <string>Add</string>
+     </property>
+     <addaction name="action3D_View"/>
+     <addaction name="actionRGB_View"/>
+     <addaction name="actionDepth_View"/>
+    </widget>
+    <addaction name="menuAdd"/>
+   </widget>
+   <addaction name="menuFile"/>
+   <addaction name="menuView"/>
+   <addaction name="menuHelp"/>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+  <widget class="QDockWidget" name="dockWidget">
+   <property name="accessibleName">
+    <string>RGB Viewer</string>
+   </property>
+   <property name="windowTitle">
+    <string>RGB Viewer</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>1</number>
+   </attribute>
+   <widget class="ImageViewer" name="imageViewer"/>
+  </widget>
+  <widget class="QDockWidget" name="dockWidget_2">
+   <property name="windowTitle">
+    <string>Depth Viewer</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>1</number>
+   </attribute>
+   <widget class="DepthImageViewer" name="depthImageViewer"/>
+  </widget>
+  <action name="actionExit">
+   <property name="text">
+    <string>Close</string>
+   </property>
+  </action>
+  <action name="actionAbout">
+   <property name="text">
+    <string>About</string>
+   </property>
+  </action>
+  <action name="action3D_View">
+   <property name="text">
+    <string>3D View</string>
+   </property>
+  </action>
+  <action name="actionRGB_View">
+   <property name="text">
+    <string>RGB View</string>
+   </property>
+  </action>
+  <action name="actionDepth_View">
+   <property name="text">
+    <string>Depth View</string>
+   </property>
+  </action>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>ImageViewer</class>
+   <extends>QWidget</extends>
+   <header>image_viewer.hpp</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>PointcloudViewer</class>
+   <extends>QWidget</extends>
+   <header>pointcloud_viewer.hpp</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>DepthImageViewer</class>
+   <extends>QWidget</extends>
+   <header>depth_image_viewer.hpp</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>actionExit</sender>
+   <signal>triggered()</signal>
+   <receiver>ViewerMainWindow</receiver>
+   <slot>close()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>399</x>
+     <y>299</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+</ui>

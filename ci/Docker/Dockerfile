@@ -1,7 +1,8 @@
 FROM archlinux:base-devel
 
+RUN pacman -Sy --noconfirm archlinux-keyring && pacman -Su --noconfirm
 
-RUN pacman -Sy --noconfirm \
+RUN pacman -Syu --noconfirm \
     base-devel \
     boost \
     catch2 \
@@ -11,6 +12,7 @@ RUN pacman -Sy --noconfirm \
     gdb \
     git \
     glu \
+    glm \
     go \
     graphviz \
     htop \
@@ -19,6 +21,7 @@ RUN pacman -Sy --noconfirm \
     python-pip \
     rsync \
     qt5 \
+    qt6 \
     valgrind \
     vim
 
@@ -31,6 +34,6 @@ RUN useradd builduser -m \
 RUN git clone https://aur.archlinux.org/yay.git yay.git && chown builduser -R yay.git && cd yay.git  && sudo -u builduser bash -c "makepkg -si --noconfirm" && cd - && rm -rf yay.git
 
 USER builduser
-RUN yay -S --noconfirm librealsense
+RUN yay -Syu --noconfirm librealsense ceres-solver trompeloeil-git
 
 USER root

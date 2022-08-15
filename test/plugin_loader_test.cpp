@@ -1,10 +1,10 @@
 #define CATCH_CONFIG_MAIN
 
 #include "modular_slam/plugin_loader.hpp"
-#include <boost/filesystem.hpp>
 #include <catch2/catch.hpp>
+#include <filesystem>
 
-using boost::filesystem::path;
+using std::filesystem::path;
 
 namespace mslam
 {

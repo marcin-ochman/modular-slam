@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: modular-slam-ci
     container:
-      image: ghcr.io/marcin-ochman/modular-slam:v0.0.3-arch
+      image: ghcr.io/marcin-ochman/modular-slam:v0.0.6-arch
       credentials:
         username: marcin-ochman
         password: ${{ secrets.container_registry_token }}
@@ -30,7 +30,7 @@ jobs:
 
     - name: Test
       working-directory: ${{github.workspace}}/build
-      run: ctest -C ${{env.BUILD_TYPE}}
+      run: ctest -C ${{env.BUILD_TYPE}} --output-on-failure
 
     - name: Generate Docs
       run: cd build; make doc; cd -;

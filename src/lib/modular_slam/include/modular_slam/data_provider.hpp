@@ -1,13 +1,14 @@
 #ifndef DATA_PROVIDER_HPP_
 #define DATA_PROVIDER_HPP_
 
+#include "modular_slam/slam_component.hpp"
 #include <memory>
 
 namespace mslam
 {
 
 template <typename DataType>
-class DataProvider
+class DataProviderInterface : public SlamComponent
 {
   public:
     virtual bool init() = 0;

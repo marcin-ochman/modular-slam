@@ -1,0 +1,8 @@
+<RCC>
+  <qresource prefix="shaders">
+    <file alias="fragment.glsl">../shaders/fragment.glsl</file>
+    <file alias="mvp.glsl">../shaders/mvp.glsl</file>
+    <file alias="pointcloud.glsl">../shaders/pointcloud.glsl</file>
+    <file alias="pointcloud_fragment.glsl">../shaders/pointcloud_fragment.glsl</file>
+  </qresource>
+</RCC>
