@@ -7,6 +7,8 @@
 #include <glm/matrix.hpp>
 #include <vector>
 
+#include <iostream>
+
 // Defines several possible options for camera movement. Used as abstraction to stay away from window-system specific
 // input methods
 enum CameraMovement
@@ -51,7 +53,18 @@ class Camera
         updateCameraVectors();
     }
 
-    glm::mat4 getViewMatrix() { return glm::lookAt(Position, Position + Front, Up); }
+    glm::mat4 getViewMatrix()
+    {
+
+        auto v = glm::transpose(glm::lookAt(Position, Position + Front, Up));
+        std::cout << v[0].x << " " << v[0].y << " " << v[0].z << " " << v[0].w << std::endl
+                  << v[1].x << " " << v[1].y << " " << v[1].z << " " << v[1].w << std::endl
+                  << v[2].x << " " << v[2].y << " " << v[2].z << " " << v[2].w << std::endl
+                  << v[3].x << " " << v[3].y << " " << v[3].z << " " << v[3].w << std::endl
+                  << std::endl;
+
+        return glm::lookAt(Position, Position + Front, Up);
+    }
 
     // void processKeyboard(CameraMovement direction, float deltaTime)
     // {

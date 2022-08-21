@@ -11,8 +11,7 @@ namespace mslam
 template <typename KeyframeType, typename LandmarkStateType>
 struct Observation
 {
-    std::shared_ptr<KeyframeType> firstKeyframe;
-    std::shared_ptr<KeyframeType> secondKeyframe;
+    std::shared_ptr<KeyframeType> keyframe;
     std::shared_ptr<Landmark<LandmarkStateType>> landmark;
 };
 

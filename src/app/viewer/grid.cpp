@@ -7,6 +7,9 @@
 #include <glm/vec4.hpp>
 #include <qquaternion.h>
 
+
+
+
 bool Grid::init()
 {
     shader.addShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/mvp.glsl");
