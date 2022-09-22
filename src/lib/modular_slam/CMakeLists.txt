@@ -21,6 +21,9 @@ add_library(
   realsense_camera.cpp
   rgbd_feature_frontend.cpp
   rgbd_file_provider.cpp
+  orb_feature.cpp
+  frame.cpp
+  min_mse_tracker.cpp
 )
 
 add_library(ModularSlam::ModularSlam ALIAS ModularSlam)

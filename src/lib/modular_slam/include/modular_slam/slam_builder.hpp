@@ -20,26 +20,31 @@ class SlamBuilder
 
     SlamBuilder& addDataProvider(std::shared_ptr<DataProviderInterface<SensorDataType>> dataProvider)
     {
-        dataProviderInterface = dataProvider;
+        dataProviderInterface = std::move(dataProvider);
         return *this;
     }
 
     SlamBuilder&
     addFrontend(std::shared_ptr<FrontendInterface<SensorDataType, SensorStateType, LandmarkStateType>> frontend)
     {
-        frontendInterface = frontend;
+        frontendInterface = std::move(frontend);
+        frontendInterface->setParameterHandler(parameterHandler);
+
         return *this;
     }
 
     SlamBuilder& addBackend(std::shared_ptr<BackendInterfaceType> backend)
     {
-        backendInterface = backend;
+        backendInterface = std::move(backend);
+        backendInterface->setParameterHandler(parameterHandler);
         return *this;
     }
 
     SlamBuilder& addMap(std::shared_ptr<MapType> map)
     {
-        mapInterface = map;
+        mapInterface = std::move(map);
+        mapInterface->setParameterHandler(parameterHandler);
+
         return *this;
     }
 

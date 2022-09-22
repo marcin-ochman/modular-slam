@@ -6,10 +6,10 @@
 #include "modular_slam/slam3d_types.hpp"
 namespace mslam
 {
-class CeresBackend : public BackendInterface<mslam::slam3d::State, mslam::Vector3d>
+class CeresBackend : public BackendInterface<mslam::slam3d::SensorState, mslam::Vector3>
 {
   public:
-    void optimize(ConstraintsInterface<mslam::slam3d::State, mslam::Vector3d>& constraints) override;
+    void optimize(ConstraintsInterface<mslam::slam3d::SensorState, mslam::Vector3>& constraints) override;
 };
 } // namespace mslam
 

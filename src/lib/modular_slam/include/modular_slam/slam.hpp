@@ -11,7 +11,6 @@ namespace mslam
 
 enum class SlamProcessResult
 {
-
     Success,
     NoDataAvailable,
     NoConstraints,
@@ -55,7 +54,12 @@ template <typename SensorDataType, typename SensorStateType, typename LandmarkSt
 bool Slam<SensorDataType, SensorStateType, LandmarkStateType>::init()
 {
     auto result =
-        parameterHandler->init() && dataProvider->init() && frontend->init() && backend->init() && map->init();
+        parameterHandler->init() && dataProvider->init() && frontend->init() && backend->init() /* && map->init()*/;
+
+    for(int i = 0; i < 20;)
+    {
+        i += dataProvider->fetch();
+    }
 
     return result;
 }
@@ -71,12 +75,12 @@ SlamProcessResult Slam<SensorDataType, SensorStateType, LandmarkStateType>::proc
     auto sensorData = dataProvider->recentData();
     auto constraints = frontend->prepareConstraints(*sensorData);
 
-    if(constraints)
+    if(!constraints)
         return SlamProcessResult::NoConstraints;
 
     backend->optimize(*constraints);
     frontend->update(*constraints);
-    map->update(*constraints);
+    // map->update(*constraints);
 
     return SlamProcessResult::Success;
 }

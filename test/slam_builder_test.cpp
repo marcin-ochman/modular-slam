@@ -23,22 +23,22 @@ class RgbdiDataProviderMock : public mslam::DataProviderInterface<mslam::RgbdiFr
     MAKE_MOCK0(recentData, std::shared_ptr<mslam::RgbdiFrame>(), const override);
 };
 
-class BackendMock : public mslam::BackendInterface<mslam::slam3d::State, mslam::Vector3d>
+class BackendMock : public mslam::BackendInterface<mslam::slam3d::SensorState, mslam::Vector3>
 {
-    MAKE_MOCK1(optimize, void(mslam::ConstraintsInterface<mslam::slam3d::State, mslam::Vector3d>& constraints),
+    MAKE_MOCK1(optimize, void(mslam::ConstraintsInterface<mslam::slam3d::SensorState, mslam::Vector3>& constraints),
                override);
 };
 
-class FrontendMock : public mslam::FrontendInterface<mslam::RgbdiFrame, mslam::slam3d::State, mslam::Vector3d>
+class FrontendMock : public mslam::FrontendInterface<mslam::RgbdiFrame, mslam::slam3d::SensorState, mslam::Vector3>
 {
   public:
-    using RetValue = std::shared_ptr<mslam::ConstraintsInterface<mslam::slam3d::State, mslam::Vector3d>>;
+    using RetValue = std::shared_ptr<mslam::ConstraintsInterface<mslam::slam3d::SensorState, mslam::Vector3>>;
     using Arg = mslam::RgbdiFrame;
 
     MAKE_MOCK1(prepareConstraints, RetValue(const Arg& arg), override);
 };
 
-class MapMock : public mslam::MapInterface<mslam::slam3d::State, mslam::Vector3d>
+class MapMock : public mslam::MapInterface<mslam::slam3d::SensorState, mslam::Vector3>
 {
   public:
     MAKE_MOCK1(update, bool(const MapMock::Constraints& constraints), override);
@@ -48,7 +48,7 @@ SCENARIO("Building SLAM system")
 {
     GIVEN("SLAM 3D Builder")
     {
-        mslam::SlamBuilder<mslam::RgbdiFrame, mslam::slam3d::State, mslam::Vector3d> builder;
+        mslam::SlamBuilder<mslam::RgbdiFrame, mslam::slam3d::SensorState, mslam::Vector3> builder;
 
         THEN("Build Slam system using RGBDI in 3D space")
         {

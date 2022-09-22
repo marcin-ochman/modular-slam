@@ -18,9 +18,9 @@ struct DepthFrame
     CameraParameters cameraParameters;
 };
 
-inline std::uint16_t getDepth(const DepthFrame& depthFrame, int x, int y)
+inline std::uint16_t getDepth(const DepthFrame& depthFrame, const Eigen::Vector2i& imgPoint)
 {
-    std::size_t index = depthFrame.size.width * y + x;
+    std::size_t index = depthFrame.size.width * imgPoint.y() + imgPoint.x();
 
     return depthFrame.data[index];
 }

@@ -4,198 +4,312 @@
 #include "modular_slam/camera_parameters.hpp"
 #include "modular_slam/constraints_interface.hpp"
 #include "modular_slam/depth_frame.hpp"
+#include "modular_slam/feature_interface.hpp"
 #include "modular_slam/keyframe.hpp"
 #include "modular_slam/landmark.hpp"
 #include "modular_slam/observation.hpp"
+#include "modular_slam/orb_feature.hpp"
+#include "modular_slam/parameters_handler.hpp"
 #include "modular_slam/rgbd_frame.hpp"
 #include "modular_slam/slam3d_types.hpp"
 #include <Eigen/src/Core/Matrix.h>
-#include <iostream>
+#include <cstdint>
 #include <memory>
-#include <opencv2/core/hal/interface.h>
-#include <opencv2/highgui.hpp>
-#include <unordered_map>
+#include <optional>
 
 namespace mslam
 {
 
-class BasicConstraints : public ConstraintsInterface<slam3d::State, Vector3d>
+Eigen::Vector2f projectOnImage(const Vector3& point, const CameraParameters& cameraParams)
+{
+    Eigen::Vector3f imagePoint = {};
+
+    float z = point.z();
+
+    return (point.block<2, 1>(0, 0).array() / z * cameraParams.focal.array() + cameraParams.principalPoint.array());
+}
+
+bool isVisibleInFrame(const Vector3& point, const CameraParameters& cameraParams, const Size& resolution)
+{
+    bool result = true;
+
+    return result;
+}
+
+Vector3 transform(const Vector3& point, const slam3d::SensorState& sensorPose)
+{
+    Vector3 sensorPoint;
+
+    return sensorPoint;
+}
+
+bool RgbdFeatureFrontend::init()
+{
+    using ParamsDefinitionContainer = std::array<std::pair<ParameterDefinition, ParameterValue>, 2>;
+    constexpr auto make_param = std::make_pair<ParameterDefinition, ParameterValue>;
+
+    const ParamsDefinitionContainer params = {
+        make_param({"rgbd_feature_frontend/min_matched_points", ParameterType::Number, {}, {0, 100000, 1}}, 10.f),
+        make_param({"rgbd_feature_frontend/new_keyframe_min_landmarks", ParameterType::Number, {}, {0, 100000, 1}},
+                   10.f)};
+
+    for(const auto& [definition, value] : params)
+        parametersHandler->registerParameter(definition, value);
+
+    return true;
+}
+
+class BasicConstraints : public ConstraintsInterface<slam3d::SensorState, Vector3>
 {
   public:
-    void addConstraint(const LandmarkConstraint<slam3d::State, Vector3d> constraint) override;
-    void addConstraint(const KeyframeConstraint<slam3d::State, Vector3d> constraint) override;
+    void addConstraint(const LandmarkConstraint<slam3d::SensorState, Vector3> constraint) override;
+    void addConstraint(const KeyframeConstraint<slam3d::SensorState, Vector3> constraint) override;
 
-    void visitLandmarkConstraints(LandmarkConstraintVisitor<slam3d::State, Vector3d>& visitor) override;
-    void visitKeyframeConstraints(KeyframeConstraintVisitor<slam3d::State, Vector3d>& visitor) override;
+    void visitLandmarkConstraints(LandmarkConstraintVisitor<slam3d::SensorState, Vector3>& visitor) override;
+    void visitKeyframeConstraints(KeyframeConstraintVisitor<slam3d::SensorState, Vector3>& visitor) override;
 
   private:
-    std::vector<LandmarkConstraint<slam3d::State, Vector3d>> landmarkConstraints;
-    std::vector<KeyframeConstraint<slam3d::State, Vector3d>> keyframeConstraints;
+    std::vector<LandmarkConstraint<slam3d::SensorState, Vector3>> landmarkConstraints;
+    std::vector<KeyframeConstraint<slam3d::SensorState, Vector3>> keyframeConstraints;
 };
 
-void BasicConstraints::addConstraint(const LandmarkConstraint<slam3d::State, Vector3d> constraint)
+void BasicConstraints::addConstraint(const LandmarkConstraint<slam3d::SensorState, Vector3> constraint)
 {
     landmarkConstraints.push_back(constraint);
 }
 
-void BasicConstraints::addConstraint(const KeyframeConstraint<slam3d::State, Vector3d> constraint)
+void BasicConstraints::addConstraint(const KeyframeConstraint<slam3d::SensorState, Vector3> constraint)
 {
     keyframeConstraints.push_back(constraint);
 }
 
-void BasicConstraints::visitLandmarkConstraints(LandmarkConstraintVisitor<slam3d::State, Vector3d>& visitor)
+void BasicConstraints::visitLandmarkConstraints(LandmarkConstraintVisitor<slam3d::SensorState, Vector3>& visitor)
 {
     for(const auto& constraint : landmarkConstraints)
         visitor.visit(constraint);
 }
 
-void BasicConstraints::visitKeyframeConstraints(KeyframeConstraintVisitor<slam3d::State, Vector3d>& visitor)
+void BasicConstraints::visitKeyframeConstraints(KeyframeConstraintVisitor<slam3d::SensorState, Vector3>& visitor)
 {
     for(const auto& constraint : keyframeConstraints)
         visitor.visit(constraint);
 }
 
+std::optional<Vector3> reconstructPoint(const Eigen::Vector2i imgPoint, const std::uint16_t depth,
+                                        const Eigen::Vector2f& principalPoint, const Eigen::Vector2f& invFocal)
+{
+    const auto isValid = isDepthValid(depth);
+
+    if(!isValid)
+        return std::nullopt;
+
+    static constexpr auto M_PER_MM = 0.001f;
+    const float z = depth * M_PER_MM;
+    const auto x = (imgPoint.x() - principalPoint.x()) * z * invFocal.x();
+    const auto y = (imgPoint.y() - principalPoint.y()) * z * invFocal.y();
+
+    return Vector3{x, y, z};
+}
+
 /*!
  * \brief Calculates 3D points in camera coordinate system based on points in image coordinate system
  */
-std::unordered_map<int, Vector3d> pointsFromRgbdKeypoints(const DepthFrame& depthFrame,
-                                                          const std::vector<cv::KeyPoint>& keypoints)
+std::vector<std::optional<Vector3>>
+pointsFromRgbdKeypoints(const DepthFrame& depthFrame,
+                        const std::vector<KeypointLandmarkMatch<Eigen::Vector2f, Eigen::Vector3f>>& matches)
 {
-    std::unordered_map<int, Vector3d> points;
+    std::vector<bool> isValid(matches.size());
 
-    const auto xScale = 1 / depthFrame.cameraParameters.focal.x();
-    const auto yScale = 1 / depthFrame.cameraParameters.focal.y();
+    std::vector<std::optional<Vector3>> points;
+    points.reserve(matches.size());
 
-    int index = 0;
-    for(const auto& keypoint : keypoints)
+    const Eigen::Vector2f invFocal = 1.0 / depthFrame.cameraParameters.focal.array();
+
+    for(const auto& match : matches)
     {
-        const int u = keypoint.pt.x, v = keypoint.pt.y;
-        const auto depth = getDepth(depthFrame, u, v);
+        const auto imgPoint = match.match.matchedKeypoint.coordinates.cast<int>();
+        const auto depth = getDepth(depthFrame, imgPoint);
 
-        if(isDepthValid(depth))
-        {
-            const float z = depth * 0.001f;
-            const auto x = (u - depthFrame.cameraParameters.principalPoint.x()) * z * xScale;
-            const auto y = (v - depthFrame.cameraParameters.principalPoint.y()) * z * yScale;
+        const auto point = reconstructPoint(imgPoint, depth, depthFrame.cameraParameters.principalPoint, invFocal);
 
-            Vector3d point{x, y, z};
-            points.emplace(index, point);
-        }
-
-        index++;
+        points.push_back(point);
     }
 
     return points;
 }
 
-RgbdFeatureFrontend::RgbdFeatureFrontend()
+RgbdFeatureFrontend::RgbdFeatureFrontend(std::shared_ptr<Tracker<slam3d::SensorState, Vector3>> newTracker,
+                                         std::shared_ptr<FeatureDetectorInterface<RgbFrame>> newFeatureDetector)
 {
-    orbDetector = cv::ORB::create();
+    this->tracker = newTracker;
+    this->featureDetector = newFeatureDetector;
     constraints = std::make_shared<BasicConstraints>();
-    matcher = cv::DescriptorMatcher::create(cv::DescriptorMatcher::FLANNBASED);
 }
 
-bool RgbdFeatureFrontend::isNewKeyframeRequired() const
+bool RgbdFeatureFrontend::isNewKeyframeRequired(const int matchedLandmarks) const
 {
-    const auto minMatchedLandmarks = 30;
+    const auto minMatchedLandmarks =
+        std::get<float>(parametersHandler->getParameter("rgbd_feature_frontend/new_keyframe_min_landmarks").value());
 
-    int matchedLandmarks = 40;
     return matchedLandmarks < minMatchedLandmarks;
 }
 
-cv::Mat toCameraMatrix(const CameraParameters& cameraParameters)
+bool RgbdFeatureFrontend::isLoopClosueNeeded() const
 {
-    cv::Mat cameraMatrix =
-        (cv::Mat_<double>(3, 3) << cameraParameters.focal.x(), 0, cameraParameters.principalPoint.x(), 0,
-         cameraParameters.focal.y(), cameraParameters.principalPoint.y(), 0, 0, 1);
+    return false;
+}
 
-    return cameraMatrix;
+std::shared_ptr<Keyframe<slam3d::SensorState>>
+RgbdFeatureFrontend::addKeyframe(const RgbdFrame& sensorData, const slam3d::SensorState& pose,
+                                 FeatureInterface<Eigen::Vector2f>& features)
+{
+    auto newKeyframe = std::make_shared<Keyframe<slam3d::SensorState>>();
+    const Eigen::Vector2f invFocal = 1.0 / sensorData.depth.cameraParameters.focal.array();
+
+    for(const auto& keypoint : features.getKeypoints())
+    {
+        const auto keypointCoordinates = keypoint.coordinates.cast<int>();
+        const auto landmarkCoordinates =
+            reconstructPoint(keypointCoordinates, getDepth(sensorData.depth, keypointCoordinates),
+                             sensorData.depth.cameraParameters.principalPoint, invFocal);
+
+        if(landmarkCoordinates.has_value())
+        {
+            auto landmark = std::make_shared<Landmark<Vector3>>();
+            landmark->state = landmarkCoordinates.value();
+
+            features.bindLandmark(keypoint, landmark);
+        }
+    }
+
+    return newKeyframe;
 }
 
 std::shared_ptr<RgbdFeatureFrontend::Constraints> RgbdFeatureFrontend::prepareConstraints(const RgbdFrame& sensorData)
 {
-    cv::Mat bgr{sensorData.rgb.size.height, sensorData.rgb.size.width, CV_8UC3,
-                const_cast<std::uint8_t*>(sensorData.rgb.data.data())};
+    auto features = featureDetector->detect(sensorData.rgb);
+    const auto keypoints = features->getKeypoints();
 
-    cv::Mat descriptors, bgrWithKeypoints;
-    std::vector<cv::KeyPoint> keypoints;
-
-    orbDetector->detectAndCompute(bgr, cv::Mat(), keypoints, descriptors);
-    descriptors.convertTo(descriptors, CV_32F);
-
-    std::vector<std::shared_ptr<Landmark<Vector3d>>> matchedLandmarks;
-
-    if(referenceKeyframeData.keyframe != nullptr && descriptors.total() > 0 &&
-       referenceKeyframeData.descriptors.total() > 0)
+    if(!isInitialized())
     {
-        std::vector<std::vector<cv::DMatch>> matches;
-        matcher->knnMatch(descriptors, referenceKeyframeData.descriptors, matches, 2);
-        auto landmarksCoordinates = pointsFromRgbdKeypoints(sensorData.depth, keypoints);
+        slam3d::SensorState pose = {Vector3(), Quaternion{AngleAxis{0.0f, Vector3{0.0f, 0.0f, 1.0f}}}};
+        auto keyframe = addKeyframe(sensorData, pose, *features);
 
-        cv::Mat worldCoords(static_cast<int>(landmarksCoordinates.size()), 3, CV_32F),
-            imagePoints(static_cast<int>(landmarksCoordinates.size()), 2, CV_32F);
+        referenceKeyframeData.features = std::move(features);
+        referenceKeyframeData.sensorData = sensorData;
+        referenceKeyframeData.keyframe = std::move(keyframe);
 
-        std::vector<cv::DMatch> goodMatches;
+        return constraints;
+    }
 
-        for(size_t i = 0; i < matches.size(); i++)
+    const auto matchedLandmarks = referenceKeyframeData.features->matchLandmarks(*features);
+    constexpr int MIN_POINTS_THRESHOLD = 10;
+
+    if(matchedLandmarks.size() < MIN_POINTS_THRESHOLD)
+        return constraints;
+
+    auto points = pointsFromRgbdKeypoints(sensorData.depth, matchedLandmarks);
+
+    std::vector<Vector3> cameraPointsForTracking;
+    std::vector<std::shared_ptr<Landmark<Vector3>>> landmarksForTracking;
+
+    for(auto i = 0; i < points.size(); i++)
+    {
+        if(points[i] && matchedLandmarks[i].landmark != nullptr)
         {
-            if(matches[i][0].distance < 0.7 * matches[i][1].distance)
-                goodMatches.push_back(matches[i][0]);
+            cameraPointsForTracking.push_back(points[i].value());
+            landmarksForTracking.push_back(matchedLandmarks[i].landmark);
+        }
+    }
+
+    const auto pointsMatchedCount = cameraPointsForTracking.size();
+
+    if(pointsMatchedCount > MIN_POINTS_THRESHOLD)
+    {
+        auto pose = tracker->track(landmarksForTracking, cameraPointsForTracking);
+
+        if(!pose)
+            return nullptr;
+
+        referenceKeyframeData.currentPose = pose.value();
+
+        if(isBetterKeyframeNeeded())
+        {
+            auto bestReferenceKeyframe = findBestKeyframe();
+            if(bestReferenceKeyframe != nullptr)
+                referenceKeyframeData.keyframe = bestReferenceKeyframe;
         }
 
-        std::size_t pointsMatched = 0;
-        for(std::size_t i = 0; i < goodMatches.size(); ++i)
+        if(isNewKeyframeRequired(pointsMatchedCount))
         {
-            const auto& match = goodMatches[i];
-            if(landmarksCoordinates.count(match.queryIdx))
+            auto newKeyframe = std::make_shared<Keyframe<slam3d::SensorState>>();
+            newKeyframe->state = pose.value();
+            referenceKeyframeData.keyframe = std::move(newKeyframe);
+
+            for(std::size_t i = 0; i < pointsMatchedCount; ++i)
             {
-                const auto& point = landmarksCoordinates[match.queryIdx];
-                const auto& keypoint = keypoints[match.queryIdx];
-                auto worldCoordsPtr = worldCoords.ptr<float>(pointsMatched);
-                worldCoordsPtr[0] = point.x();
-                worldCoordsPtr[1] = point.y();
-                worldCoordsPtr[2] = point.z();
+                const auto& match = matchedLandmarks[i];
+                const auto& point = cameraPointsForTracking[i];
 
-                auto imagePointsPtr = imagePoints.ptr<float>(pointsMatched++);
-                imagePointsPtr[0] = keypoint.pt.x;
-                imagePointsPtr[1] = keypoint.pt.y;
+                LandmarkConstraint<slam3d::SensorState, Vector3> landmarkConstraint{newKeyframe, match.landmark, point};
+                constraints->addConstraint(landmarkConstraint);
+            }
 
-                auto landmark = std::make_shared<Landmark<Vector3d>>();
-                landmark->state = point;
+            // Other landmarks?!
+            // findMapLandmarks(); // TODO:
 
-                matchedLandmarks.push_back(landmark);
+            std::vector<std::shared_ptr<Landmark<Vector3>>> localLandmarks;
+
+            for(const auto& landmark : localLandmarks)
+            {
+                Vector3 point = transform(landmark->state, pose.value());
+
+                if(isVisibleInFrame(landmark->state, sensorData.depth.cameraParameters, sensorData.depth.size))
+                {
+                    LandmarkConstraint<slam3d::SensorState, Vector3> landmarkConstraint{newKeyframe, landmark, point};
+
+                    constraints->addConstraint(landmarkConstraint);
+                }
             }
         }
 
-        constexpr int MIN_POINTS_THRESHOLD = 10;
-        if(pointsMatched > MIN_POINTS_THRESHOLD)
+        if(isLoopClosueNeeded())
         {
-            worldCoords = worldCoords(cv::Range(0, pointsMatched), cv::Range::all());
-            imagePoints = imagePoints(cv::Range(0, pointsMatched), cv::Range::all());
-
-            cv::Mat cameraMatrix = toCameraMatrix(sensorData.depth.cameraParameters);
-            cv::Mat tVec, rot;
-
-            cv::solvePnP(worldCoords, imagePoints, cameraMatrix, cv::Mat(), rot, tVec);
+            // auto keyframeLoopClosure->detect();
+            // TODO: run loop closure  detection
         }
     }
-
-    if(isNewKeyframeRequired())
+    else
     {
-        auto newKeyframe = std::make_shared<Keyframe<slam3d::State>>();
+        // Relocalization
 
-        for(const auto& landmark : matchedLandmarks)
+        auto newReferenceKeyframe = relocalize();
+
+        if(newReferenceKeyframe)
         {
-            LandmarkConstraint<slam3d::State, Vector3d> landmarkConstraint{newKeyframe, landmark, landmark->state};
-            constraints->addConstraint(landmarkConstraint);
+            referenceKeyframeData.keyframe = std::move(newReferenceKeyframe);
         }
 
-        referenceKeyframeData.descriptors = descriptors;
-        referenceKeyframeData.keypoints = std::move(keypoints);
-        referenceKeyframeData.keyframe = std::move(newKeyframe);
+        return nullptr;
     }
 
     return constraints;
+}
+
+std::shared_ptr<Keyframe<slam3d::SensorState>> RgbdFeatureFrontend::relocalize()
+{
+
+    return nullptr;
+}
+
+bool RgbdFeatureFrontend::isBetterKeyframeNeeded() const
+{
+    return false;
+}
+
+std::shared_ptr<Keyframe<slam3d::SensorState>> RgbdFeatureFrontend::findBestKeyframe() const
+{
+    return nullptr;
 }
 
 } // namespace mslam

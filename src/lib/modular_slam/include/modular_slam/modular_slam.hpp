@@ -12,7 +12,7 @@ namespace mslam
 
 namespace slam2d
 {
-using State = mslam::State<Vector2d, float>;
+using State = mslam::State<Vector2, float>;
 using Keyframe = mslam::Keyframe<State>;
 } // namespace slam2d
 } // namespace mslam

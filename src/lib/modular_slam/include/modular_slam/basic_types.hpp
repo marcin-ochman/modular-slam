@@ -3,6 +3,7 @@
 
 #include <Eigen/Dense>
 #include <Eigen/Geometry>
+#include <Eigen/src/Geometry/AngleAxis.h>
 #include <cstdint>
 
 #include <eigen3/Eigen/src/Core/Matrix.h>
@@ -13,9 +14,10 @@ namespace mslam
 
 using Id = std::uint64_t;
 
-using Vector2d = Eigen::Vector2f;
-using Vector3d = Eigen::Vector3f;
+using Vector2 = Eigen::Vector2f;
+using Vector3 = Eigen::Vector3f;
 using Quaternion = Eigen::Quaternionf;
+using AngleAxis = Eigen::AngleAxisf;
 
 struct Size
 {

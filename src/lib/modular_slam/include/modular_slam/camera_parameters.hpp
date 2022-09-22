@@ -6,8 +6,8 @@ namespace mslam
 {
 struct CameraParameters
 {
-    Vector2d principalPoint;
-    Vector2d focal;
+    Vector2 principalPoint;
+    Vector2 focal;
 };
 
 Eigen::Matrix3f getProjectionMatrix(const CameraParameters& cameraParameters);

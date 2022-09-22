@@ -18,10 +18,8 @@ class FrontendInterface : public SlamComponent
 
     FrontendInterface(const FrontendInterface<SensorDataType, SensorStateType, LandmarkStateType>&) = delete;
     FrontendInterface(FrontendInterface<SensorDataType, SensorStateType, LandmarkStateType>&&) = delete;
-
     FrontendInterface<SensorDataType, SensorStateType, LandmarkStateType>&
     operator=(const FrontendInterface<SensorDataType, SensorStateType, LandmarkStateType>&) = delete;
-
     FrontendInterface<SensorDataType, SensorStateType, LandmarkStateType>&
     operator=(const FrontendInterface<SensorDataType, SensorStateType, LandmarkStateType>&&) = delete;
 
