@@ -5,7 +5,7 @@
 
 ColorBar::ColorBar(QWidget* parent) : QWidget(parent) {}
 
-void ColorBar::paintEvent(QPaintEvent* event)
+void ColorBar::paintEvent(QPaintEvent* /*event*/)
 {
     QPainter painter{this};
 

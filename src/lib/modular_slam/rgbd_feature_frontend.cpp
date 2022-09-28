@@ -13,6 +13,7 @@
 #include "modular_slam/rgbd_frame.hpp"
 #include "modular_slam/slam3d_types.hpp"
 #include <Eigen/src/Core/Matrix.h>
+#include <boost/range/combine.hpp>
 #include <cstdint>
 #include <memory>
 #include <optional>
@@ -22,25 +23,25 @@ namespace mslam
 
 Eigen::Vector2f projectOnImage(const Vector3& point, const CameraParameters& cameraParams)
 {
-    Eigen::Vector3f imagePoint = {};
-
-    float z = point.z();
+    const auto z = point.z();
 
     return (point.block<2, 1>(0, 0).array() / z * cameraParams.focal.array() + cameraParams.principalPoint.array());
 }
 
 bool isVisibleInFrame(const Vector3& point, const CameraParameters& cameraParams, const Size& resolution)
 {
-    bool result = true;
+    const auto imagePoint = projectOnImage(point, cameraParams);
+    const auto inWidth = imagePoint.x() >= 0 && imagePoint.x() < resolution.width;
+    const auto inHeight = imagePoint.y() >= 0 && imagePoint.y() < resolution.height;
 
-    return result;
+    return inWidth && inHeight;
 }
 
 Vector3 transform(const Vector3& point, const slam3d::SensorState& sensorPose)
 {
     Vector3 sensorPoint;
 
-    return sensorPoint;
+    return sensorPose.orientation.inverse() * point - sensorPoint;
 }
 
 bool RgbdFeatureFrontend::init()
@@ -118,8 +119,6 @@ std::vector<std::optional<Vector3>>
 pointsFromRgbdKeypoints(const DepthFrame& depthFrame,
                         const std::vector<KeypointLandmarkMatch<Eigen::Vector2f, Eigen::Vector3f>>& matches)
 {
-    std::vector<bool> isValid(matches.size());
-
     std::vector<std::optional<Vector3>> points;
     points.reserve(matches.size());
 
@@ -154,7 +153,7 @@ bool RgbdFeatureFrontend::isNewKeyframeRequired(const int matchedLandmarks) cons
     return matchedLandmarks < minMatchedLandmarks;
 }
 
-bool RgbdFeatureFrontend::isLoopClosueNeeded() const
+bool RgbdFeatureFrontend::isLoopClosureNeeded() const
 {
     return false;
 }
@@ -164,6 +163,8 @@ RgbdFeatureFrontend::addKeyframe(const RgbdFrame& sensorData, const slam3d::Sens
                                  FeatureInterface<Eigen::Vector2f>& features)
 {
     auto newKeyframe = std::make_shared<Keyframe<slam3d::SensorState>>();
+    newKeyframe->state = pose;
+
     const Eigen::Vector2f invFocal = 1.0 / sensorData.depth.cameraParameters.focal.array();
 
     for(const auto& keypoint : features.getKeypoints())
@@ -213,12 +214,12 @@ std::shared_ptr<RgbdFeatureFrontend::Constraints> RgbdFeatureFrontend::prepareCo
     std::vector<Vector3> cameraPointsForTracking;
     std::vector<std::shared_ptr<Landmark<Vector3>>> landmarksForTracking;
 
-    for(auto i = 0; i < points.size(); i++)
+    for(const auto& [point, matchedLandmark] : boost::combine(points, matchedLandmarks))
     {
-        if(points[i] && matchedLandmarks[i].landmark != nullptr)
+        if(point && matchedLandmark.landmark != nullptr)
         {
-            cameraPointsForTracking.push_back(points[i].value());
-            landmarksForTracking.push_back(matchedLandmarks[i].landmark);
+            cameraPointsForTracking.push_back(point.value());
+            landmarksForTracking.push_back(matchedLandmark.landmark);
         }
     }
 
@@ -273,7 +274,7 @@ std::shared_ptr<RgbdFeatureFrontend::Constraints> RgbdFeatureFrontend::prepareCo
             }
         }
 
-        if(isLoopClosueNeeded())
+        if(isLoopClosureNeeded())
         {
             // auto keyframeLoopClosure->detect();
             // TODO: run loop closure  detection

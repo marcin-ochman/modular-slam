@@ -22,7 +22,7 @@ jobs:
 
     - name: Configure CMake
       shell: bash
-      run: mkdir build; cd build;  cmake -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} ..; cd -
+      run: mkdir build; cd build;  cmake -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_CXX_FLAGS="-Wall -pedantic -Wextra" ..; cd -
 
     - name: Build
       shell: bash

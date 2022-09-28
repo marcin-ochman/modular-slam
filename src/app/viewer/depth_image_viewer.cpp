@@ -51,5 +51,3 @@ void DepthImageViewer::initialize()
     ui.colorbar->hide();
     connect(ui.horizontalSlider, SIGNAL(valueChanged(int)), this, SLOT(scaleDrawnImage(int)));
 }
-
-void DepthImageViewer::paintEvent(QPaintEvent* event) {}

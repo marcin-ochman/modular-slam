@@ -75,13 +75,13 @@ class CeresVisitor : public LandmarkConstraintVisitor<slam3d::SensorState, Vecto
 
 CeresVisitor::CeresVisitor() : problem(new ceres::Problem()) {}
 
-void CeresVisitor::visit(const LandmarkConstraint<slam3d::SensorState, Vector3>& constraint)
+void CeresVisitor::visit(const LandmarkConstraint<slam3d::SensorState, Vector3>& /*constraint*/)
 {
-    ceres::CostFunction* costFunction = SnavelyReprojectionError::Create(0, 0);
+    // ceres::CostFunction* costFunction = SnavelyReprojectionError::Create(0, 0);
     // problem.AddResidualBlock(cost_function, nullptr, &x);
 }
 
-void CeresVisitor::visit(const KeyframeConstraint<slam3d::SensorState, Vector3>& constraint)
+void CeresVisitor::visit(const KeyframeConstraint<slam3d::SensorState, Vector3>& /*constraint*/)
 {
     // ceres::CostFunction* cost_function =
     //     new ceres::AutoDiffCostFunction<SnavelyReprojectionError, 1, 1>(new SnavelyReprojectionError(0, 0));

@@ -1,6 +1,7 @@
 #include "modular_slam/min_mse_tracker.hpp"
 #include "modular_slam/basic_types.hpp"
 
+#include <boost/range/combine.hpp>
 #include <ceres/ceres.h>
 #include <ceres/problem.h>
 #include <ceres/rotation.h>
@@ -53,9 +54,9 @@ MinMseTracker::track(const std::vector<std::shared_ptr<Landmark<Vector3>>>& land
 
     double axisAnglePoint[6] = {0, 0, 1, 0, 0, 0};
 
-    for(auto i = 0; i < landmarks.size(); i++)
+    for(const auto& [landmark, point] : boost::combine(landmarks, sensorPoints))
     {
-        auto costFunction = PointAlignmentCostFunctor::Create(landmarks[i], sensorPoints[i]);
+        auto costFunction = PointAlignmentCostFunctor::Create(landmark, point);
         problem.AddResidualBlock(costFunction, nullptr, axisAnglePoint);
     }
 

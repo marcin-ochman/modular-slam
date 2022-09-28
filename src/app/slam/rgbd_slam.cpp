@@ -13,7 +13,7 @@
 #include <memory>
 #include <opencv2/highgui.hpp>
 
-int main(int argc, char* argv[])
+int main(int /*argc*/, char* /*argv*/[])
 {
     mslam::SlamBuilder<mslam::RgbdFrame, mslam::slam3d::SensorState, mslam::Vector3> slamBuilder;
 

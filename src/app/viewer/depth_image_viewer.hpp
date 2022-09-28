@@ -16,7 +16,6 @@ class DepthImageViewer : public QWidget
     void drawImage(const mslam::DepthFrame& newDepth);
 
   protected:
-    void paintEvent(QPaintEvent* event) override;
     void initialize();
 
     int minDepth() { return ui.minSlider->value() * 10; }

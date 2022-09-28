@@ -34,6 +34,8 @@ ViewerArgs parseArgs(QApplication& app)
     return args;
 }
 
+void handleArgs(const ViewerArgs& /*args*/) {}
+
 int main(int argc, char* argv[])
 {
     QApplication::setApplicationName("Modular SLAM Viewer");
@@ -41,6 +43,7 @@ int main(int argc, char* argv[])
 
     QApplication app{argc, argv};
     auto args = parseArgs(app);
+    handleArgs(args);
 
     auto mainWindow = new mslam::ViewerMainWindow{};
     SlamThread* slamThread = new SlamThread(mainWindow);

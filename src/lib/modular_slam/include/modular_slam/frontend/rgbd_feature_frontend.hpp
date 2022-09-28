@@ -37,7 +37,7 @@ class RgbdFeatureFrontend : public FrontendInterface<RgbdFrame, slam3d::SensorSt
     bool isBetterKeyframeNeeded() const;
     bool isNewKeyframeRequired(const int matchedLandmarks) const;
     bool isInitialized() const { return referenceKeyframeData.keyframe != nullptr; }
-    bool isLoopClosueNeeded() const;
+    bool isLoopClosureNeeded() const;
 
     std::shared_ptr<Keyframe<slam3d::SensorState>> relocalize();
     void track();
