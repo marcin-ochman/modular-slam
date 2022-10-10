@@ -29,22 +29,24 @@ class RgbdFeatureFrontend : public FrontendInterface<RgbdFrame, slam3d::SensorSt
                         std::shared_ptr<FeatureDetectorInterface<RgbFrame>> featureDetector);
 
     std::shared_ptr<Constraints> prepareConstraints(const RgbdFrame& sensorData) override;
-
     bool init() override;
 
   protected:
     std::shared_ptr<Keyframe<slam3d::SensorState>> findBestKeyframe() const;
-    bool isBetterKeyframeNeeded() const;
+    bool isBetterReferenceKeyframeNeeded() const;
     bool isNewKeyframeRequired(const int matchedLandmarks) const;
-    bool isInitialized() const { return referenceKeyframeData.keyframe != nullptr; }
+    bool hasInitialKeyframe() const { return referenceKeyframeData.keyframe != nullptr; }
     bool isLoopClosureNeeded() const;
+    void initFirstKeyframe(const RgbdFrame& sensorData, std::unique_ptr<FeatureInterface<Eigen::Vector2f>> features);
 
     std::shared_ptr<Keyframe<slam3d::SensorState>> relocalize();
-    void track();
+    std::shared_ptr<Constraints> track(const RgbdFrame& sensorData, FeatureInterface<Eigen::Vector2f>& features);
 
     std::shared_ptr<Keyframe<slam3d::SensorState>> addKeyframe(const RgbdFrame& sensorData,
                                                                const slam3d::SensorState& pose,
                                                                FeatureInterface<Eigen::Vector2f>& features);
+    std::size_t minMatchedPoints() const;
+    std::vector<std::shared_ptr<Landmark<Vector3>>> findMapLandmarks() const;
 
   private:
     struct ReferenceKeyframeData
