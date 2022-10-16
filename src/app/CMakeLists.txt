@@ -59,9 +59,16 @@ target_link_libraries(
 
 add_executable(RgbdSlam slam/rgbd_slam.cpp)
 target_link_libraries(
-  RgbdSlam PRIVATE ModularSlam::ModularSlam opencv_core
+  RgbdSlam PRIVATE ModularSlam::ModularSlam
+  Qt6::Widgets
+  Qt6::OpenGL
+  Qt6::OpenGLWidgets
+  Qt6::Gui
+  ModularSlam::ModularSlam
+  OpenGL::GLU
+  glm
+  opencv_core
   opencv_imgproc
-  opencv_highgui
 )
 
 install(

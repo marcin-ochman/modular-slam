@@ -46,7 +46,7 @@ class RgbdFeatureFrontend : public FrontendInterface<RgbdFrame, slam3d::SensorSt
                                                                const slam3d::SensorState& pose,
                                                                FeatureInterface<Eigen::Vector2f>& features);
     std::size_t minMatchedPoints() const;
-    std::vector<std::shared_ptr<Landmark<Vector3>>> findMapLandmarks() const;
+    std::vector<std::shared_ptr<Landmark<Vector3>>> findLocalLandmarks() const;
 
   private:
     struct ReferenceKeyframeData

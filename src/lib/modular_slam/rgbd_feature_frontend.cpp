@@ -18,6 +18,7 @@
 #include <cstdint>
 #include <memory>
 #include <optional>
+#include <spdlog/spdlog.h>
 
 namespace mslam
 {
@@ -53,7 +54,7 @@ bool RgbdFeatureFrontend::init()
     const ParamsDefinitionContainer params = {
         make_param({"rgbd_feature_frontend/min_matched_points", ParameterType::Number, {}, {0, 100000, 1}}, 10.f),
         make_param({"rgbd_feature_frontend/new_keyframe_min_landmarks", ParameterType::Number, {}, {0, 100000, 1}},
-                   10.f)};
+                   30.f)};
 
     for(const auto& [definition, value] : params)
         parametersHandler->registerParameter(definition, value);
@@ -195,11 +196,13 @@ std::shared_ptr<RgbdFeatureFrontend::Constraints> RgbdFeatureFrontend::prepareCo
     if(!hasInitialKeyframe())
     {
         initFirstKeyframe(sensorData, std::move(features));
+        spdlog::info("Creating first keyframe");
         return constraints;
     }
 
     if(auto trackConstraints = track(sensorData, *features); trackConstraints != nullptr)
     {
+
         if(isLoopClosureNeeded())
         {
             // auto keyframeLoopClosure->detect();
@@ -211,6 +214,7 @@ std::shared_ptr<RgbdFeatureFrontend::Constraints> RgbdFeatureFrontend::prepareCo
     }
     else
     {
+
         if(auto newReferenceKeyframe = relocalize(); newReferenceKeyframe != nullptr)
         {
             referenceKeyframeData.keyframe = std::move(newReferenceKeyframe);
@@ -218,6 +222,8 @@ std::shared_ptr<RgbdFeatureFrontend::Constraints> RgbdFeatureFrontend::prepareCo
             // TODO: update constraints
             return constraints;
         }
+
+        spdlog::error("Relocalization failed. Tracking lost");
 
         return nullptr;
     }
@@ -245,8 +251,10 @@ RgbdFeatureFrontend::track(const RgbdFrame& sensorData, FeatureInterface<Eigen::
     }
 
     const auto pointsMatchedCount = cameraPointsForTracking.size();
+
+    spdlog::info("Tracking points matched {}", pointsMatchedCount);
     if(pointsMatchedCount < minMatchedPoints())
-        return trackConstraints;
+        return nullptr;
 
     auto pose = tracker->track(landmarksForTracking, cameraPointsForTracking);
 
@@ -255,15 +263,16 @@ RgbdFeatureFrontend::track(const RgbdFrame& sensorData, FeatureInterface<Eigen::
 
     referenceKeyframeData.currentPose = pose.value();
 
-    if(isBetterReferenceKeyframeNeeded())
-    {
-        auto bestReferenceKeyframe = findBestKeyframe();
-        if(bestReferenceKeyframe != nullptr)
-            referenceKeyframeData.keyframe = bestReferenceKeyframe;
-    }
+    // if(isBetterReferenceKeyframeNeeded())
+    // {
+    //     auto bestReferenceKeyframe = findBestKeyframe();
+    //     if(bestReferenceKeyframe != nullptr)
+    //         referenceKeyframeData.keyframe = bestReferenceKeyframe;
+    // }
 
     if(isNewKeyframeRequired(pointsMatchedCount))
     {
+        spdlog::info("New keyframe required");
         auto newKeyframe = addKeyframe(sensorData, *pose, features);
         for(const auto& [point, match] : boost::combine(cameraPointsForTracking, matchedLandmarks))
         {
@@ -271,7 +280,7 @@ RgbdFeatureFrontend::track(const RgbdFrame& sensorData, FeatureInterface<Eigen::
             trackConstraints->addConstraint(landmarkConstraint);
         }
 
-        auto localLandmarks = findMapLandmarks();
+        auto localLandmarks = findLocalLandmarks();
         for(const auto& landmark : localLandmarks)
         {
             Vector3 point = transform(landmark->state, pose.value());
@@ -294,7 +303,7 @@ void RgbdFeatureFrontend::initFirstKeyframe(const RgbdFrame& sensorData,
     auto keyframe = addKeyframe(sensorData, pose, *features);
 
     referenceKeyframeData.features = std::move(features);
-    referenceKeyframeData.sensorData = sensorData;
+    referenceKeyframeData.sensorData = sensorData; // TODO: check!
     referenceKeyframeData.keyframe = std::move(keyframe);
 }
 
@@ -306,9 +315,12 @@ std::size_t RgbdFeatureFrontend::minMatchedPoints() const
     return static_cast<int>(minMatchedLandmarks);
 }
 
-std::vector<std::shared_ptr<Landmark<Vector3>>> RgbdFeatureFrontend::findMapLandmarks() const
+std::vector<std::shared_ptr<Landmark<Vector3>>> RgbdFeatureFrontend::findLocalLandmarks() const
 {
     std::vector<std::shared_ptr<Landmark<Vector3>>> localLandmarks;
+    std::vector<std::shared_ptr<Keyframe<slam3d::SensorState>>> localKeyframes;
+
+    // for(const auto& landmark :)
 
     // TODO: implement
     return localLandmarks;

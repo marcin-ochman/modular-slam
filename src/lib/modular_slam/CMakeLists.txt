@@ -9,6 +9,7 @@ find_package(Eigen3 REQUIRED)
 find_package(realsense2 REQUIRED)
 find_package(nlohmann_json 3.10.5 REQUIRED)
 find_package(Ceres REQUIRED)
+find_package(spdlog REQUIRED)
 find_package(trompeloeil)
 find_package(Doxygen)
 
@@ -46,6 +47,7 @@ target_link_libraries(
   PUBLIC
   Boost::filesystem
   Eigen3::Eigen
+  spdlog::spdlog
 )
 
 install(

@@ -47,6 +47,7 @@ class FeatureInterface
   public:
     virtual std::vector<KeypointMatch<CoordinatesType>> match(FeatureInterface& features) = 0;
     virtual std::vector<Keypoint<CoordinatesType>> getKeypoints() = 0;
+    virtual std::unique_ptr<FeatureInterface> fromIds() { return nullptr; };
     virtual int type() = 0;
 
     std::vector<KeypointLandmarkMatch<CoordinatesType, LandmarkStateType>> matchLandmarks(FeatureInterface& features);
@@ -94,6 +95,15 @@ void FeatureInterface<CoordinatesType, LandmarkStateType>::bindLandmark(
 {
     landmarks[keypoint.id] = landmark;
 }
+
+// template <typename SensorData, typename CoordinatesType = Eigen::Vector2f, typename LandmarkStateType = Vector3>
+// class FeatureLandmarkInterface
+// {
+//   public:
+//     std::vector<KeypointLandmarkMatch<CoordinatesType, LandmarkStateType>> matchLandmarks(FeatureInterface&
+//     features); void bindLandmark(const Keypoint<CoordinatesType>& keypoint,
+//     std::shared_ptr<Landmark<LandmarkStateType>> landmark);
+// };
 
 } // namespace mslam
 

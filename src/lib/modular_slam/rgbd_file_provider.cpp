@@ -1,11 +1,14 @@
 #include "modular_slam/rgbd_file_provider.hpp"
 #include <algorithm>
 #include <filesystem>
-#include <regex>
+#include <fstream>
 
 #include <opencv2/core.hpp>
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>
+#include <spdlog/spdlog.h>
+#include <sstream>
+#include <string>
 
 namespace mslam
 {
@@ -37,10 +40,15 @@ std::vector<std::string> getImages(const fs::path& rootDir)
 }
 
 RgbdFileProvider::RgbdFileProvider(const fs::path& rgbRootDir, const fs::path& depthRootDir)
-    : rgbPath{rgbRootDir}, depthPath{depthRootDir}
 {
     rgbPaths = getImages(rgbRootDir);
     depthPaths = getImages(depthRootDir);
+}
+
+RgbdFileProvider::RgbdFileProvider(RgbdFilePaths paths)
+{
+    rgbPaths = std::move(paths.rgbPaths);
+    depthPaths = std::move(paths.depthPaths);
 }
 
 bool RgbdFileProvider::init()
@@ -61,7 +69,7 @@ bool RgbdFileProvider::fetch()
     auto rgbMat = cv::imread(rgbImagePath);
     auto depthMat = cv::imread(depthPath, cv::IMREAD_ANYDEPTH);
     cv::Size frameSize = rgbMat.size();
-    cv::Size depthSize = rgbMat.size();
+    cv::Size depthSize = depthMat.size();
 
     auto rgbMemorySize = frameSize.height * frameSize.width * rgbMat.channels();
     auto depthMemorySize = depthSize.height * depthSize.width * depthMat.channels();
@@ -90,6 +98,32 @@ bool RgbdFileProvider::fetch()
 std::shared_ptr<RgbdFrame> RgbdFileProvider::recentData() const
 {
     return recentFrame;
+}
+
+RgbdFilePaths readTumRgbdDataset(const std::filesystem::path& tumFile)
+{
+    std::ifstream ifss{tumFile};
+    RgbdFilePaths paths;
+
+    spdlog::error("{}", tumFile.string());
+    std::string line;
+    while(std::getline(ifss, line))
+    {
+        std::istringstream iss{line};
+
+        std::string temp, rgbPath, depthPath;
+
+        iss >> temp >> rgbPath >> temp >> depthPath;
+
+        spdlog::error("{} - {}", rgbPath, depthPath);
+        if(!iss.fail())
+        {
+            paths.rgbPaths.push_back(rgbPath);
+            paths.depthPaths.push_back(depthPath);
+        }
+    }
+
+    return paths;
 }
 
 } // namespace mslam
