@@ -46,6 +46,7 @@ bool RealSenseCamera::fetch()
 
     newRgbdFrame->depth.cameraParameters.focal = {intrinsics.fx, intrinsics.fy};
     newRgbdFrame->depth.cameraParameters.principalPoint = {intrinsics.ppx, intrinsics.ppy};
+    newRgbdFrame->depth.cameraParameters.factor = 0.001;
 
     rs2::video_frame rgb_frame = frames.first(RS2_STREAM_COLOR);
     rs2::depth_frame depth_frame = frames.first(RS2_STREAM_DEPTH);

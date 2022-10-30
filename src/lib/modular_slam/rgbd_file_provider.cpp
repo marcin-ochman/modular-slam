@@ -1,4 +1,5 @@
 #include "modular_slam/rgbd_file_provider.hpp"
+#include "modular_slam/camera_parameters.hpp"
 #include <algorithm>
 #include <filesystem>
 #include <fstream>
@@ -6,7 +7,6 @@
 #include <opencv2/core.hpp>
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>
-#include <spdlog/spdlog.h>
 #include <sstream>
 #include <string>
 
@@ -39,16 +39,11 @@ std::vector<std::string> getImages(const fs::path& rootDir)
     return imagePaths;
 }
 
-RgbdFileProvider::RgbdFileProvider(const fs::path& rgbRootDir, const fs::path& depthRootDir)
-{
-    rgbPaths = getImages(rgbRootDir);
-    depthPaths = getImages(depthRootDir);
-}
-
-RgbdFileProvider::RgbdFileProvider(RgbdFilePaths paths)
+RgbdFileProvider::RgbdFileProvider(RgbdFilePaths paths, const CameraParameters& params)
 {
     rgbPaths = std::move(paths.rgbPaths);
     depthPaths = std::move(paths.depthPaths);
+    cameraParameters = params;
 }
 
 bool RgbdFileProvider::init()
@@ -81,6 +76,7 @@ bool RgbdFileProvider::fetch()
     newRgbdFrame->depth.data.resize(depthMemorySize);
     newRgbdFrame->depth.size.width = depthSize.width;
     newRgbdFrame->depth.size.height = depthSize.height;
+    newRgbdFrame->depth.cameraParameters = cameraParameters;
 
     cv::Mat rgbFrameView{frameSize.height, frameSize.width, CV_8UC3, newRgbdFrame->rgb.data.data()};
     cv::Mat depthFrameView{frameSize.height, frameSize.width, CV_16UC1, newRgbdFrame->depth.data.data()};
@@ -105,25 +101,35 @@ RgbdFilePaths readTumRgbdDataset(const std::filesystem::path& tumFile)
     std::ifstream ifss{tumFile};
     RgbdFilePaths paths;
 
-    spdlog::error("{}", tumFile.string());
+    auto rootDir = tumFile.parent_path();
+
     std::string line;
     while(std::getline(ifss, line))
     {
         std::istringstream iss{line};
-
         std::string temp, rgbPath, depthPath;
 
         iss >> temp >> rgbPath >> temp >> depthPath;
 
-        spdlog::error("{} - {}", rgbPath, depthPath);
         if(!iss.fail())
         {
-            paths.rgbPaths.push_back(rgbPath);
-            paths.depthPaths.push_back(depthPath);
+            paths.rgbPaths.push_back(rootDir / rgbPath);
+            paths.depthPaths.push_back(rootDir / depthPath);
         }
     }
 
     return paths;
+}
+
+CameraParameters tumRgbdCameraParams()
+{
+    CameraParameters cameraParams;
+
+    cameraParams.focal = {525, 525};
+    cameraParams.principalPoint = {319.5f, 239.5f};
+    cameraParams.factor = 1.0 / 5000;
+
+    return cameraParams;
 }
 
 } // namespace mslam

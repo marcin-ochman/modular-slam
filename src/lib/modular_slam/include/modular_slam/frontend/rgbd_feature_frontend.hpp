@@ -6,6 +6,7 @@
 #include "modular_slam/feature_interface.hpp"
 #include "modular_slam/frontend_interface.hpp"
 #include "modular_slam/keyframe.hpp"
+#include "modular_slam/landmark.hpp"
 #include "modular_slam/min_mse_tracker.hpp"
 #include "modular_slam/orb_feature.hpp"
 #include "modular_slam/rgbd_frame.hpp"
@@ -33,7 +34,7 @@ class RgbdFeatureFrontend : public FrontendInterface<RgbdFrame, slam3d::SensorSt
 
   protected:
     std::shared_ptr<Keyframe<slam3d::SensorState>> findBestKeyframe() const;
-    bool isBetterReferenceKeyframeNeeded() const;
+    bool isBetterReferenceKeyframeNeeded(const int keyframeLandmarksCount) const;
     bool isNewKeyframeRequired(const int matchedLandmarks) const;
     bool hasInitialKeyframe() const { return referenceKeyframeData.keyframe != nullptr; }
     bool isLoopClosureNeeded() const;
@@ -46,7 +47,13 @@ class RgbdFeatureFrontend : public FrontendInterface<RgbdFrame, slam3d::SensorSt
                                                                const slam3d::SensorState& pose,
                                                                FeatureInterface<Eigen::Vector2f>& features);
     std::size_t minMatchedPoints() const;
-    std::vector<std::shared_ptr<Landmark<Vector3>>> findLocalLandmarks() const;
+    std::vector<std::shared_ptr<Landmark<Vector3>>>
+    findVisibleLocalLandmarks(const FeatureInterface<Eigen::Vector2f>& features, const slam3d::SensorState& pose,
+                              const RgbdFrame& sensorData) const;
+
+    std::vector<Keypoint<Eigen::Vector2i>>
+    findKeypointsForNewLandmarks(const FeatureInterface<Eigen::Vector2f>& features,
+                                 const boost::span<std::shared_ptr<Landmark<Vector3>>> landmarks) const;
 
   private:
     struct ReferenceKeyframeData
@@ -55,6 +62,8 @@ class RgbdFeatureFrontend : public FrontendInterface<RgbdFrame, slam3d::SensorSt
         std::shared_ptr<Keyframe<slam3d::SensorState>> keyframe;
         RgbdFrame sensorData;
         slam3d::SensorState currentPose;
+
+        std::map<std::shared_ptr<Landmark<Vector3>>, Descriptor> landmarkDescriptors;
     };
 
     ReferenceKeyframeData referenceKeyframeData;

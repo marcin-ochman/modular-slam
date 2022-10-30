@@ -65,6 +65,7 @@ MinMseTracker::track(const std::vector<std::shared_ptr<Landmark<Vector3>>>& land
     options.gradient_tolerance = 1e-8;
     options.function_tolerance = 1e-8;
     options.parameter_tolerance = 1e-8;
+    options.minimizer_progress_to_stdout = false;
 
     ceres::Solver::Summary summary;
 

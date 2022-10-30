@@ -1,6 +1,7 @@
 #ifndef RGBD_FILE_PROVIDER_H_
 #define RGBD_FILE_PROVIDER_H_
 
+#include "modular_slam/camera_parameters.hpp"
 #include "modular_slam/data_provider.hpp"
 #include "modular_slam/rgbd_frame.hpp"
 
@@ -21,12 +22,7 @@ struct RgbdFilePaths
 class RgbdFileProvider : public DataProviderInterface<RgbdFrame>
 {
   public:
-    RgbdFileProvider(const std::filesystem::path& rgbRootDir, const std::filesystem::path& depthRootDir);
-    RgbdFileProvider(RgbdFilePaths paths);
-
-    template <typename RgbIteratorType, typename DepthIteratorType>
-    RgbdFileProvider(RgbIteratorType rgbBegin, RgbIteratorType rgbEnd, DepthIteratorType depthBegin,
-                     DepthIteratorType depthEnd);
+    RgbdFileProvider(RgbdFilePaths paths, const CameraParameters& cameraParams);
 
     virtual bool init() override;
     virtual bool fetch() override;
@@ -41,21 +37,14 @@ class RgbdFileProvider : public DataProviderInterface<RgbdFrame>
   private:
     std::vector<std::string> rgbPaths;
     std::vector<std::string> depthPaths;
-
     std::size_t currentIndex = 0;
-
     std::shared_ptr<RgbdFrame> recentFrame;
+
+    CameraParameters cameraParameters;
 };
 
-template <typename RgbIteratorType, typename DepthIteratorType>
-RgbdFileProvider::RgbdFileProvider(RgbIteratorType rgbBegin, RgbIteratorType rgbEnd, DepthIteratorType depthBegin,
-                                   DepthIteratorType depthEnd)
-{
-    std::copy(rgbBegin, rgbEnd, std::back_inserter(rgbPaths));
-    std::copy(depthBegin, depthEnd, std::back_inserter(depthPaths));
-}
-
 RgbdFilePaths readTumRgbdDataset(const std::filesystem::path& tumFile);
+CameraParameters tumRgbdCameraParams();
 
 } // namespace mslam
 

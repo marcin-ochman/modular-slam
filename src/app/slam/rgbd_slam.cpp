@@ -11,14 +11,18 @@
 #include "modular_slam/slam3d_types.hpp"
 #include "modular_slam/slam_builder.hpp"
 
+#include <Eigen/src/Core/Matrix.h>
+#include <cstdlib>
 #include <iostream>
+#include <iterator>
 #include <memory>
 #include <opencv2/highgui.hpp>
 
 #include <QApplication>
+#include <QCommandLineOption>
 #include <QCommandLineParser>
 #include <optional>
-#include <qcommandlineoption.h>
+#include <ostream>
 
 struct RgbdSlamProgramArgs
 {
@@ -55,33 +59,34 @@ int main(int argc, char* argv[])
 
     mslam::SlamBuilder<mslam::RgbdFrame, mslam::slam3d::SensorState, mslam::Vector3> slamBuilder;
 
-    std::shared_ptr<mslam::DataProviderInterface<mslam::RgbdFrame>> dataProvider;
+    std::shared_ptr<mslam::DataProviderInterface<mslam::RgbdFrame>> dataProvider =
+        std::make_shared<mslam::RealSenseCamera>();
     if(args.tumFile.has_value())
     {
         const auto rgbdPaths = mslam::readTumRgbdDataset(args.tumFile.value());
-        dataProvider = std::make_shared<mslam::RgbdFileProvider>(rgbdPaths);
+        dataProvider = std::make_shared<mslam::RgbdFileProvider>(rgbdPaths, mslam::tumRgbdCameraParams());
     }
 
-    // auto frontend = std::make_shared<mslam::RgbdFeatureFrontend>(std::make_shared<mslam::MinMseTracker>(),
-    //                                                              std::make_shared<mslam::OrbFeatureDetector>());
+    auto frontend = std::make_shared<mslam::RgbdFeatureFrontend>(std::make_shared<mslam::MinMseTracker>(),
+                                                                 std::make_shared<mslam::OrbFeatureDetector>());
 
-    // slamBuilder.addParameterHandler(std::make_shared<mslam::BasicParameterHandler>())
-    //     .addDataProvider(dataProvider)
-    //     .addFrontend(frontend)
-    //     .addBackend(std::make_shared<mslam::CeresBackend>());
+    slamBuilder.addParameterHandler(std::make_shared<mslam::BasicParameterHandler>())
+        .addDataProvider(dataProvider)
+        .addFrontend(frontend)
+        .addBackend(std::make_shared<mslam::CeresBackend>());
 
-    // auto slam = slamBuilder.build();
-    // slam->init();
+    auto slam = slamBuilder.build();
+    slam->init();
 
-    // while(true)
-    // {
-    //     slam->process();
-    //     auto data = dataProvider->recentData();
+    while(true)
+    {
+        slam->process();
+        auto data = dataProvider->recentData();
 
-    //     // cv::Mat mat{data->rgb.size.height, data->rgb.size.width, CV_8UC3, data->rgb.data.data()};
-    //     // cv::imshow("rgb", mat);
-    //     // cv::waitKey(1);
-    // }
+        cv::Mat mat{data->rgb.size.height, data->rgb.size.width, CV_8UC3, data->rgb.data.data()};
+        cv::imshow("rgb", mat);
+        cv::waitKey(1);
+    }
 
-    return 0;
+    return EXIT_SUCCESS;
 }

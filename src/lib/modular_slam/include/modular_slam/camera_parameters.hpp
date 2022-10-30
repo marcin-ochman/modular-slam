@@ -8,6 +8,7 @@ struct CameraParameters
 {
     Vector2 principalPoint;
     Vector2 focal;
+    float factor;
 };
 
 Eigen::Matrix3f getProjectionMatrix(const CameraParameters& cameraParameters);
