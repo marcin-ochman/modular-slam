@@ -46,7 +46,7 @@ bool RealSenseCamera::fetch()
 
     newRgbdFrame->depth.cameraParameters.focal = {intrinsics.fx, intrinsics.fy};
     newRgbdFrame->depth.cameraParameters.principalPoint = {intrinsics.ppx, intrinsics.ppy};
-    newRgbdFrame->depth.cameraParameters.factor = 0.001;
+    newRgbdFrame->depth.cameraParameters.factor = 0.001f;
 
     rs2::video_frame rgb_frame = frames.first(RS2_STREAM_COLOR);
     rs2::depth_frame depth_frame = frames.first(RS2_STREAM_DEPTH);
@@ -54,8 +54,10 @@ bool RealSenseCamera::fetch()
     assert(rgb_frame.get_width() == depth_frame.get_width());
     assert(rgb_frame.get_height() == depth_frame.get_height());
 
-    auto rgbMemorySize = rgb_frame.get_height() * rgb_frame.get_width() * rgb_frame.get_bytes_per_pixel();
-    auto depthMemorySize = depth_frame.get_height() * depth_frame.get_width() * depth_frame.get_bytes_per_pixel();
+    auto rgbMemorySize =
+        static_cast<std::size_t>(rgb_frame.get_height() * rgb_frame.get_width() * rgb_frame.get_bytes_per_pixel());
+    auto depthMemorySize = static_cast<std::size_t>(depth_frame.get_height() * depth_frame.get_width() *
+                                                    depth_frame.get_bytes_per_pixel());
 
     newRgbdFrame->rgb.data.resize(rgbMemorySize);
     newRgbdFrame->depth.data.resize(depthMemorySize);

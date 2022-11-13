@@ -14,12 +14,19 @@
 #include "modular_slam/slam_component.hpp"
 #include "modular_slam/tracker.hpp"
 #include <Eigen/src/Core/Matrix.h>
+#include <cstddef>
 #include <memory>
 #include <opencv2/features2d.hpp>
 #include <opencv2/opencv.hpp>
 
 namespace mslam
 {
+
+struct KeypointDescriptor
+{
+    Keypoint<Eigen::Vector2f> keypoint;
+    Descriptor descriptor;
+};
 
 class RgbdFeatureFrontend : public FrontendInterface<RgbdFrame, slam3d::SensorState, Vector3>
 {
@@ -32,26 +39,29 @@ class RgbdFeatureFrontend : public FrontendInterface<RgbdFrame, slam3d::SensorSt
     std::shared_ptr<Constraints> prepareConstraints(const RgbdFrame& sensorData) override;
     bool init() override;
 
+    void visitLandmarks(LandmarkVisitor<Vector3>&) override;
+    void visitKeyframes(KeyframeVisitor<slam3d::SensorState>&) override;
+
   protected:
-    std::shared_ptr<Keyframe<slam3d::SensorState>> findBestKeyframe() const;
-    bool isBetterReferenceKeyframeNeeded(const int keyframeLandmarksCount) const;
-    bool isNewKeyframeRequired(const int matchedLandmarks) const;
+    std::shared_ptr<Keyframe<slam3d::SensorState>> findBetterReferenceKeyframe(const RgbdFrame& sensorData) const;
+    bool isBetterReferenceKeyframeNeeded(const std::size_t keyframeLandmarksCount) const;
+    bool isNewKeyframeRequired(const std::size_t matchedLandmarks) const;
     bool hasInitialKeyframe() const { return referenceKeyframeData.keyframe != nullptr; }
     bool isLoopClosureNeeded() const;
-    void initFirstKeyframe(const RgbdFrame& sensorData, std::unique_ptr<FeatureInterface<Eigen::Vector2f>> features);
+    void initFirstKeyframe(const RgbdFrame& sensorData, std::shared_ptr<FeatureInterface<Eigen::Vector2f>> features);
 
     std::shared_ptr<Keyframe<slam3d::SensorState>> relocalize();
-    std::shared_ptr<Constraints> track(const RgbdFrame& sensorData, FeatureInterface<Eigen::Vector2f>& features);
+    std::shared_ptr<Constraints> track(const RgbdFrame& sensorData,
+                                       std::shared_ptr<FeatureInterface<Eigen::Vector2f>>& features);
 
     std::shared_ptr<Keyframe<slam3d::SensorState>> addKeyframe(const RgbdFrame& sensorData,
                                                                const slam3d::SensorState& pose,
                                                                FeatureInterface<Eigen::Vector2f>& features);
     std::size_t minMatchedPoints() const;
-    std::vector<std::shared_ptr<Landmark<Vector3>>>
-    findVisibleLocalLandmarks(const FeatureInterface<Eigen::Vector2f>& features, const slam3d::SensorState& pose,
-                              const RgbdFrame& sensorData) const;
+    std::vector<std::shared_ptr<Landmark<Vector3>>> findVisibleLocalLandmarks(const slam3d::SensorState& pose,
+                                                                              const RgbdFrame& sensorData) const;
 
-    std::vector<Keypoint<Eigen::Vector2i>>
+    std::vector<KeypointDescriptor>
     findKeypointsForNewLandmarks(const FeatureInterface<Eigen::Vector2f>& features,
                                  const boost::span<std::shared_ptr<Landmark<Vector3>>> landmarks) const;
 
@@ -63,7 +73,7 @@ class RgbdFeatureFrontend : public FrontendInterface<RgbdFrame, slam3d::SensorSt
         RgbdFrame sensorData;
         slam3d::SensorState currentPose;
 
-        std::map<std::shared_ptr<Landmark<Vector3>>, Descriptor> landmarkDescriptors;
+        std::multimap<std::shared_ptr<Landmark<Vector3>>, Descriptor> landmarkDescriptors;
     };
 
     ReferenceKeyframeData referenceKeyframeData;
@@ -71,6 +81,9 @@ class RgbdFeatureFrontend : public FrontendInterface<RgbdFrame, slam3d::SensorSt
 
     std::shared_ptr<FeatureDetectorInterface<RgbFrame>> featureDetector;
     std::shared_ptr<Tracker<slam3d::SensorState, Vector3>> tracker;
+
+    std::vector<std::shared_ptr<Keyframe<slam3d::SensorState>>> m_keyframes;
+    std::vector<std::shared_ptr<Landmark<slam3d::SensorState>>> m_landmarks;
 };
 } // namespace mslam
 

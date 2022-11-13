@@ -66,8 +66,8 @@ bool RgbdFileProvider::fetch()
     cv::Size frameSize = rgbMat.size();
     cv::Size depthSize = depthMat.size();
 
-    auto rgbMemorySize = frameSize.height * frameSize.width * rgbMat.channels();
-    auto depthMemorySize = depthSize.height * depthSize.width * depthMat.channels();
+    auto rgbMemorySize = static_cast<std::size_t>(frameSize.height * frameSize.width * rgbMat.channels());
+    auto depthMemorySize = static_cast<std::size_t>(depthSize.height * depthSize.width * depthMat.channels());
 
     auto newRgbdFrame = std::make_shared<RgbdFrame>();
     newRgbdFrame->rgb.data.resize(rgbMemorySize);
@@ -127,7 +127,7 @@ CameraParameters tumRgbdCameraParams()
 
     cameraParams.focal = {525, 525};
     cameraParams.principalPoint = {319.5f, 239.5f};
-    cameraParams.factor = 1.0 / 5000;
+    cameraParams.factor = 1.f / 5000.f;
 
     return cameraParams;
 }

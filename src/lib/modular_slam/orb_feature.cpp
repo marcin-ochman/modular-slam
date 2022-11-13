@@ -44,14 +44,14 @@ std::vector<KeypointMatch<Eigen::Vector2f>> OrbFeature::match(cv::Mat otherDescr
     std::transform(std::begin(goodMatches), std::end(goodMatches), std::back_inserter(matchedKeypoints),
                    [&keypoints = otherKeypoints, &refKeypoints = cvKeypoints](const cv::DMatch& match)
                    {
-                       const auto& cvKeypoint = keypoints[match.trainIdx];
-                       const auto& cvRefKeypoint = refKeypoints[match.queryIdx];
+                       const auto& cvKeypoint = keypoints[static_cast<std::size_t>(match.trainIdx)];
+                       const auto& cvRefKeypoint = refKeypoints[static_cast<std::size_t>(match.queryIdx)];
 
                        KeypointMatch<Eigen::Vector2f> keypointMatch;
-                       keypointMatch.matchedKeypoint.id = match.trainIdx;
+                       keypointMatch.matchedKeypoint.id = static_cast<Id>(match.trainIdx);
                        keypointMatch.matchedKeypoint.coordinates = {cvKeypoint.pt.x, cvKeypoint.pt.y};
 
-                       keypointMatch.refKeypoint.id = match.queryIdx;
+                       keypointMatch.refKeypoint.id = static_cast<Id>(match.queryIdx);
                        keypointMatch.refKeypoint.coordinates = {cvRefKeypoint.pt.x, cvRefKeypoint.pt.y};
 
                        return keypointMatch;
@@ -73,11 +73,13 @@ std::vector<DescriptorMatch> OrbFeature::match(boost::span<const Descriptor> des
         return {};
 
     std::vector<std::vector<cv::DMatch>> matches;
-    cv::Mat cvOtherDescriptors(descriptors.size(), descriptors[0].descriptor.size(), CV_32F);
+    const int rows = static_cast<int>(matches.size());
+    const int columns = static_cast<int>(descriptors[0].descriptor.size());
+    cv::Mat cvOtherDescriptors(rows, columns, CV_32F);
 
     for(std::size_t i = 0; i < descriptors.size(); ++i)
     {
-        auto rowPtr = cvOtherDescriptors.ptr<float>(i);
+        auto rowPtr = cvOtherDescriptors.ptr<float>(static_cast<int>(i));
         const auto& currentDescriptor = descriptors[i].descriptor;
 
         std::copy(std::begin(currentDescriptor), std::end(currentDescriptor), rowPtr);
@@ -99,8 +101,8 @@ std::vector<DescriptorMatch> OrbFeature::match(boost::span<const Descriptor> des
                    {
                        DescriptorMatch descriptorMatch;
 
-                       descriptorMatch.toIndex = match.trainIdx;
-                       descriptorMatch.fromIndex = match.queryIdx;
+                       descriptorMatch.toIndex = static_cast<std::size_t>(match.trainIdx);
+                       descriptorMatch.fromIndex = static_cast<std::size_t>(match.queryIdx);
 
                        return descriptorMatch;
                    });
@@ -111,12 +113,12 @@ std::vector<DescriptorMatch> OrbFeature::match(boost::span<const Descriptor> des
 std::vector<KeypointMatch<Eigen::Vector2f>> OrbFeature::match(boost::span<const Keypoint<Eigen::Vector2f>> keypoints,
                                                               boost::span<const Descriptor> descriptors) const
 {
-    const auto rows = descriptors.size();
+    const auto rows = static_cast<int>(descriptors.size());
     if(rows == 0)
         return {};
 
     const auto cols = descriptors[0].descriptor.size();
-    cv::Mat refCvDescriptors(rows, cols, CV_32F);
+    cv::Mat refCvDescriptors(rows, static_cast<int>(cols), CV_32F);
 
     auto i = 0;
     for(const auto& descriptor : descriptors)
@@ -162,12 +164,13 @@ std::vector<Keypoint<Eigen::Vector2f>> OrbFeature::keypoints() const
 std::vector<Descriptor> OrbFeature::descriptors() const
 {
     std::vector<Descriptor> result;
-    result.reserve(cvDescriptors.rows);
+    result.reserve(static_cast<std::size_t>(cvDescriptors.rows));
 
     Id id = 0;
     for(auto row = 0; row < cvDescriptors.rows; ++row, ++id)
     {
-        Descriptor descriptor = {id, boost::span<const float>(cvDescriptors.ptr<const float>(row), cvDescriptors.cols)};
+        Descriptor descriptor = {id, boost::span<const float>(cvDescriptors.ptr<const float>(row),
+                                                              static_cast<std::size_t>(cvDescriptors.cols))};
         result.push_back(descriptor);
     }
 

@@ -1,23 +1,10 @@
 #include "pointcloud_viewer.hpp"
-#include <GL/gl.h>
-#include <GL/glu.h>
-
-#include <glm/ext/matrix_clip_space.hpp>
-#include <glm/ext/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
 
 #include <QMouseEvent>
 #include <QTimer>
-#include <glm/glm.hpp>
-#include <glm/mat4x4.hpp>
+#include <glm/gtc/type_ptr.hpp>
 #include <glm/vec3.hpp>
-#include <glm/vec4.hpp>
 #include <optional>
-#include <qevent.h>
-#include <qmatrix4x4.h>
-#include <qnamespace.h>
-#include <qopenglwidget.h>
-#include <qwidget.h>
 
 PointcloudViewer::PointcloudViewer(QWidget* parent) : QOpenGLWidget(parent), camera{glm::vec3(0, 5, 13)}
 {
@@ -34,6 +21,17 @@ void PointcloudViewer::setPoints(const std::vector<glm::vec3>& newPoints)
     pointcloud.setPoints(newPoints);
 }
 
+void PointcloudViewer::addKeyframe(const KeyframeViewData& keyframe)
+{
+    auto thumbnail = new KeyframeThumbnail(this);
+
+    thumbnail->init();
+    thumbnail->setImage(keyframe.image);
+    thumbnail->setPose(keyframe.pose);
+
+    keyframeThumbnails.push_back(thumbnail);
+}
+
 void PointcloudViewer::initializeGL()
 {
     initializeOpenGLFunctions();
@@ -44,7 +42,8 @@ void PointcloudViewer::initializeGL()
 
     updateTimer = new QTimer(this);
     connect(updateTimer, SIGNAL(timeout()), this, SLOT(update()));
-    updateTimer->start(1 / 30.f);
+    static constexpr auto msPerFrame = 20;
+    updateTimer->start(msPerFrame);
 }
 
 void PointcloudViewer::resizeGL(int w, int h)
@@ -57,7 +56,7 @@ void PointcloudViewer::paintGL()
     glEnable(GL_DEPTH_TEST);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    auto aspectRatio = static_cast<float>(this->width()) / this->height();
+    auto aspectRatio = static_cast<float>(this->width()) / static_cast<float>(this->height());
 
     QMatrix4x4 projection, view;
     projection.setToIdentity();
@@ -70,6 +69,11 @@ void PointcloudViewer::paintGL()
 
     grid.draw(*this, projection, view);
     pointcloud.draw(*this, projection, view);
+
+    for(auto thumbnail : keyframeThumbnails)
+    {
+        thumbnail->draw(*this, projection, view);
+    }
 }
 
 void PointcloudViewer::mouseMoveEvent(QMouseEvent* event)
@@ -84,8 +88,8 @@ void PointcloudViewer::mouseMoveEvent(QMouseEvent* event)
 
 void PointcloudViewer::wheelEvent(QWheelEvent* event)
 {
-    QPoint numDegrees = event->angleDelta() / 8 * 0.2;
-    camera.processMouseScroll(numDegrees.y());
+    const auto scroll = static_cast<float>(event->angleDelta().x()) / 40.0f;
+    camera.processMouseScroll(scroll);
 }
 
 void PointcloudViewer::handleCameraRotation(QMouseEvent* event)
@@ -94,7 +98,7 @@ void PointcloudViewer::handleCameraRotation(QMouseEvent* event)
     if(oldMousePosition)
     {
         auto offset = currentPosition - oldMousePosition.value();
-        camera.processMouseMovement(offset.x(), offset.y());
+        camera.processMouseMovement(static_cast<float>(offset.x()), static_cast<float>(offset.y()));
     }
 
     oldMousePosition = currentPosition;
@@ -107,8 +111,9 @@ void PointcloudViewer::handleCameraMovement(QMouseEvent* event)
     {
         auto offset = currentPosition - oldMousePosition.value();
 
-        float xoffset = offset.x() * 0.01;
-        float yoffset = offset.y() * 0.01;
+        const auto xoffset = static_cast<float>(offset.x()) * 0.01f;
+        const auto yoffset = static_cast<float>(offset.y()) * 0.01f;
+
         camera.processCameraPlaneMovement(xoffset, yoffset);
     }
 

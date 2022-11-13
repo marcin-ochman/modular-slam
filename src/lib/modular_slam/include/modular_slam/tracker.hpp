@@ -16,6 +16,8 @@ class Tracker
     virtual std::optional<SensorStateType>
     track(const std::vector<std::shared_ptr<Landmark<LandmarkStateType>>>& landmarks,
           const std::vector<PointType>& sensorPoints) = 0;
+
+    virtual ~Tracker() {}
 };
 
 } // namespace mslam

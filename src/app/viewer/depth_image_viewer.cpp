@@ -16,7 +16,8 @@ void DepthImageViewer::drawImage(const mslam::DepthFrame& newDepth)
     const cv::Mat depth(newDepth.size.height, newDepth.size.width, CV_16UC1,
                         const_cast<std::uint16_t*>(newDepth.data.data()));
 
-    const double min = minDepth(), max = maxDepth();
+    const auto factor = newDepth.cameraParameters.factor;
+    const double min = minDepth() / factor, max = maxDepth() / factor;
     cv::convertScaleAbs(depth - min, depthWithColormap, 255.0 / (max - min));
     cv::applyColorMap(depthWithColormap, depthWithColormap, cv::COLORMAP_HOT);
 
@@ -27,21 +28,30 @@ void DepthImageViewer::drawImage(const mslam::DepthFrame& newDepth)
     ui.label->setPixmap(QPixmap::fromImage(image));
     if(ui.autoscaleCheckbox->isChecked())
     {
-        auto heightPercent = static_cast<float>(ui.scrollArea->height()) / image.height() * 100.0f;
-        auto widthPercent = static_cast<float>(ui.scrollArea->width()) / image.width() * 100.0f;
+        const float scrollHeight = static_cast<float>(ui.scrollArea->height());
+        const float imageHeight = static_cast<float>(image.height());
+        const float scrollWidth = static_cast<float>(ui.scrollArea->width());
+        const float imageWidth = static_cast<float>(image.width());
+
+        auto heightPercent = scrollHeight / imageHeight * 100.0f;
+        auto widthPercent = scrollWidth / imageWidth * 100.0f;
         scaleDrawnImage(std::min(heightPercent, widthPercent) * 0.9f);
     }
     else
     {
-        scaleDrawnImage(ui.horizontalSlider->value());
+        const float scale = static_cast<float>(ui.horizontalSlider->value());
+        scaleDrawnImage(scale);
     }
 }
 
-void DepthImageViewer::scaleDrawnImage(int percent)
+void DepthImageViewer::scaleDrawnImage(float percent)
 {
     ui.label->setScaledContents(true);
-    auto scaledWidth = image.width() * percent / 100.0f;
-    auto scaledHeight = image.height() * percent / 100.0f;
+    const float imageWidth = static_cast<float>(image.width());
+    const float imageHEight = static_cast<float>(image.height());
+
+    auto scaledWidth = static_cast<int>(imageWidth * percent / 100.0f);
+    auto scaledHeight = static_cast<int>(imageHEight * percent / 100.0f);
     ui.label->setFixedSize(scaledWidth, scaledHeight);
 }
 

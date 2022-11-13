@@ -74,8 +74,9 @@ MinMseTracker::track(const std::vector<std::shared_ptr<Landmark<Vector3>>>& land
     if(!summary.IsSolutionUsable())
         return std::nullopt;
 
-    const float angle = std::sqrt(axisAnglePoint[0] * axisAnglePoint[0] + axisAnglePoint[1] * axisAnglePoint[1] +
-                                  axisAnglePoint[2] * axisAnglePoint[2]);
+    const float angle =
+        static_cast<float>(std::sqrt(axisAnglePoint[0] * axisAnglePoint[0] + axisAnglePoint[1] * axisAnglePoint[1] +
+                                     axisAnglePoint[2] * axisAnglePoint[2]));
     Vector3 axis = {static_cast<float>(axisAnglePoint[0]), static_cast<float>(axisAnglePoint[1]),
                     static_cast<float>(axisAnglePoint[2])};
     axis /= angle;

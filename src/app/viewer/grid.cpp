@@ -7,9 +7,6 @@
 #include <glm/vec4.hpp>
 #include <qquaternion.h>
 
-
-
-
 bool Grid::init()
 {
     shader.addShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/mvp.glsl");
@@ -33,9 +30,10 @@ bool Grid::initBuffers(const int cellsCount)
     {
         for(int i = 0; i <= cellsCount; ++i)
         {
-            float x = i - cellsCount / 2.0f;
-            float z = -(j - cellsCount / 2.0f);
-            float y = 0.0f;
+            const auto x = static_cast<float>(i - cellsCount) / 2.0f;
+            const auto z = static_cast<float>(j - cellsCount) / -2.0f;
+            const auto y = 0.0f;
+
             vertices.push_back(glm::vec3(x, y, z));
         }
     }
@@ -54,13 +52,15 @@ bool Grid::initBuffers(const int cellsCount)
 
     vertexBuffer->create();
     vertexBuffer->bind();
-    vertexBuffer->allocate(vertices.data(), sizeof(vertices[0]) * vertices.size());
+    const auto vertexSize = static_cast<int>(sizeof(vertices[0]) * vertices.size());
+    vertexBuffer->allocate(vertices.data(), vertexSize);
     vertexBuffer->setUsagePattern(QOpenGLBuffer::StaticDraw);
     vertexBuffer->release();
 
     indexBuffer->create();
     indexBuffer->bind();
-    indexBuffer->allocate(indices.data(), sizeof(indices[0]) * indices.size());
+    const auto indicesSize = static_cast<int>(sizeof(indices[0]) * indices.size());
+    indexBuffer->allocate(indices.data(), indicesSize);
     indexBuffer->setUsagePattern(QOpenGLBuffer::StaticDraw);
     indexBuffer->release();
 
@@ -117,7 +117,8 @@ void PointCloudDrawable::draw(QOpenGLFunctions& gl, const QMatrix4x4& projection
     shader.setAttributeBuffer("color", GL_FLOAT, sizeof(glm::vec3), 3, 2 * sizeof(glm::vec3));
     shader.setUniformValue("mvp", projection * view * model);
 
-    gl.glDrawArrays(GL_POINTS, 0, vertexBuffer->size() / (2 * sizeof(glm::vec3)));
+    const auto pointsSize = vertexBuffer->size() / static_cast<int>((2 * sizeof(glm::vec3)));
+    gl.glDrawArrays(GL_POINTS, 0, pointsSize);
 
     shader.disableAttributeArray("pos");
     shader.disableAttributeArray("color");
@@ -128,7 +129,12 @@ void PointCloudDrawable::draw(QOpenGLFunctions& gl, const QMatrix4x4& projection
 
 void PointCloudDrawable::setPoints(const std::vector<glm::vec3>& newPoints)
 {
+    const auto requiredSize = static_cast<int>(sizeof(newPoints[0]) * newPoints.size());
     vertexBuffer->bind();
-    vertexBuffer->allocate(&newPoints[0], sizeof(newPoints[0]) * newPoints.size());
+    if(vertexBuffer->size() < requiredSize)
+        vertexBuffer->allocate(&newPoints[0], requiredSize);
+    else
+        vertexBuffer->write(0, &newPoints[0], requiredSize);
+
     vertexBuffer->release();
 }

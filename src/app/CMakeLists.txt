@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.19)
 project(ModularSlamApplications VERSION 0.0.1)
 
-find_package(Qt6 COMPONENTS Widgets OpenGL OpenGLWidgets Gui REQUIRED)
+find_package(Qt6 COMPONENTS Widgets OpenGL OpenGLWidgets Gui Charts REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(glm REQUIRED)
 find_package(OpenCV 4 REQUIRED)
@@ -15,6 +15,7 @@ qt_wrap_ui(
   viewer/ui/viewer_main_window.ui
   viewer/ui/image_viewer.ui
   viewer/ui/depth_image_viewer.ui
+  viewer/ui/slam_statistics.ui
 )
 
 qt_wrap_cpp(
@@ -39,6 +40,10 @@ qt_add_executable(
   viewer/pointcloud_viewer.cpp
   viewer/viewer.cpp
   viewer/viewer_main_window.cpp
+  viewer/slam_statistics_widget.cpp
+  viewer/slam_thread.cpp
+  viewer/map_2d_widget.cpp
+  viewer/keyframe_thumbnail.cpp
 )
 
 add_executable(ModularSlam::Viewer ALIAS Viewer)
@@ -50,6 +55,7 @@ target_link_libraries(
   Qt6::OpenGL
   Qt6::OpenGLWidgets
   Qt6::Gui
+  Qt6::Charts
   ModularSlam::ModularSlam
   OpenGL::GLU
   glm
@@ -64,6 +70,8 @@ target_link_libraries(
   Qt6::OpenGL
   Qt6::OpenGLWidgets
   Qt6::Gui
+  Qt6::Charts
+
   ModularSlam::ModularSlam
   OpenGL::GLU
   glm

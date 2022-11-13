@@ -68,6 +68,7 @@ class FeatureInterface
     virtual std::vector<Keypoint<CoordinatesType>> keypoints() const = 0;
     virtual std::vector<Descriptor> descriptors() const = 0;
     virtual int type() const = 0;
+    virtual ~FeatureInterface() {}
 
     std::vector<KeypointLandmarkMatch<CoordinatesType, LandmarkStateType>> matchLandmarks(FeatureInterface& features);
     void bindLandmark(const Keypoint<CoordinatesType>& keypoint, std::shared_ptr<Landmark<LandmarkStateType>> landmark);

@@ -77,6 +77,24 @@
    </attribute>
    <widget class="DepthImageViewer" name="depthImageViewer"/>
   </widget>
+  <widget class="QDockWidget" name="dockWidget_3">
+   <property name="windowTitle">
+    <string>Slam statistics</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>1</number>
+   </attribute>
+   <widget class="SlamStatisticsWidget" name="slamStatsViewer"/>
+  </widget>
+  <widget class="QDockWidget" name="dockWidget_4">
+   <property name="windowTitle">
+    <string>Map 2D</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>1</number>
+   </attribute>
+   <widget class="MapWidget" name="dockWidgetContents"/>
+  </widget>
   <action name="actionExit">
    <property name="text">
     <string>Close</string>
@@ -120,6 +138,18 @@
    <class>DepthImageViewer</class>
    <extends>QWidget</extends>
    <header>depth_image_viewer.hpp</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>SlamStatisticsWidget</class>
+   <extends>QWidget</extends>
+   <header>slam_statistics_widget.hpp</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>MapWidget</class>
+   <extends>QWidget</extends>
+   <header>map_2d_widget.hpp</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

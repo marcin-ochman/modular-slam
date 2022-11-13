@@ -21,7 +21,7 @@ struct DepthFrame
 
 inline float getDepth(const DepthFrame& depthFrame, const Eigen::Vector2i& imgPoint)
 {
-    std::size_t index = depthFrame.size.width * imgPoint.y() + imgPoint.x();
+    const auto index = static_cast<std::size_t>(depthFrame.size.width * imgPoint.y() + imgPoint.x());
 
     return depthFrame.data[index] * depthFrame.cameraParameters.factor;
 }

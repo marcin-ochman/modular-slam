@@ -41,8 +41,8 @@ class Slam
 
     virtual bool init();
     virtual SlamProcessResult process();
+    virtual ~Slam() {}
 
-  protected:
     std::shared_ptr<ParametersHandlerInterface> parameterHandler;
     std::shared_ptr<DataProviderInterface<SensorDataType>> dataProvider;
     std::shared_ptr<MapType> map;

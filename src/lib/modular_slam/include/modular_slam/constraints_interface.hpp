@@ -52,6 +52,8 @@ class ConstraintsInterface
         LandmarkConstraintVisitor<SensorStateType, LandmarkStateType, LandmarkConstraintType>& visitor) = 0;
     virtual void visitKeyframeConstraints(
         KeyframeConstraintVisitor<SensorStateType, LandmarkStateType, KeyframeConstraintType>& visitor) = 0;
+
+    virtual ~ConstraintsInterface() {}
 };
 
 } // namespace mslam

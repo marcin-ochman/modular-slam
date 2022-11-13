@@ -1,3 +1,5 @@
+
+
 #ifndef MSLAM_VIEWER_CAMERA_HPP_
 #define MSLAM_VIEWER_CAMERA_HPP_
 
@@ -7,39 +9,23 @@
 #include <glm/matrix.hpp>
 #include <vector>
 
-#include <iostream>
-
-// Defines several possible options for camera movement. Used as abstraction to stay away from window-system specific
-// input methods
-enum CameraMovement
-{
-    FORWARD,
-    BACKWARD,
-    LEFT,
-    RIGHT
-};
-
 // Default camera values
-const float YAW = -90.0f;
-const float PITCH = 0.0f;
 const float SENSITIVITY = 0.1f;
 const float ZOOM = 75.0f;
 
-// An abstract camera class that processes input and calculates the corresponding Euler Angles, Vectors and Matrices for
-// use in OpenGL
 class Camera
 {
   public:
     float Zoom;
 
-    Camera(glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f),
-           float yaw = YAW, float pitch = PITCH)
+    Camera(glm::vec3 _position = glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f),
+           float _yaw = -90.0f, float _pitch = 0.0f)
         : Zoom(ZOOM), front(glm::vec3(0.0f, 0.0f, -1.0f)), mouseSensitivity(SENSITIVITY)
     {
-        position = position;
+        this->position = _position;
         worldUp = up;
-        yaw = yaw;
-        pitch = pitch;
+        this->yaw = _yaw;
+        this->pitch = _pitch;
         updateCameraVectors();
     }
 
@@ -82,14 +68,12 @@ class Camera
   private:
     void updateCameraVectors()
     {
-        glm::vec3 front;
-        front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-        front.y = sin(glm::radians(pitch));
-        front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+        front.x = std::cos(glm::radians(yaw)) * std::cos(glm::radians(pitch));
+        front.y = std::sin(glm::radians(pitch));
+        front.z = std::sin(glm::radians(yaw)) * std::cos(glm::radians(pitch));
         front = glm::normalize(front);
 
         right = glm::normalize(glm::cross(front, worldUp));
-
         up = glm::normalize(glm::cross(right, front));
     }
 
