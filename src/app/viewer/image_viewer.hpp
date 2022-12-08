@@ -11,10 +11,11 @@ class ImageViewer : public QWidget
     ImageViewer(QWidget* parent = nullptr) : QWidget(parent) { initialize(); }
 
   public slots:
-    void scaleDrawnImage(float percent);
+    void scaleDrawnImage(int percent) { scaleDrawnImage(static_cast<float>(percent)); }
     void drawImage(const QImage& image);
 
   protected:
+    void scaleDrawnImage(float percent);
     void initialize();
 
     Ui::MainImageViewer ui;

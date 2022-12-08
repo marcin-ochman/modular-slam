@@ -25,13 +25,14 @@ bool Grid::initBuffers(const int cellsCount)
 
     std::vector<glm::vec3> vertices;
     std::vector<glm::uvec4> indices;
+    const float cellsCountFloat = static_cast<float>(cellsCount);
 
     for(int j = 0; j <= cellsCount; ++j)
     {
         for(int i = 0; i <= cellsCount; ++i)
         {
-            const auto x = static_cast<float>(i - cellsCount) / 2.0f;
-            const auto z = static_cast<float>(j - cellsCount) / -2.0f;
+            const auto x = static_cast<float>(i) - cellsCountFloat / 2.0f;
+            const auto z = static_cast<float>(j) - cellsCountFloat / 2.0f;
             const auto y = 0.0f;
 
             vertices.push_back(glm::vec3(x, y, z));

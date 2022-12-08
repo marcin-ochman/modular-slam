@@ -24,6 +24,7 @@ qt_wrap_cpp(
   viewer/depth_image_viewer.hpp
   viewer/slam_thread.hpp
   viewer/pointcloud_viewer.hpp
+  viewer/viewer_main_window.hpp
 )
 
 qt_add_resources(MSLAM_VIEWER_QRC viewer/qrc/viewer.qrc)

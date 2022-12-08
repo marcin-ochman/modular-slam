@@ -1,4 +1,5 @@
 #include "modular_slam/ceres_backend.hpp"
+#include "modular_slam/basic_types.hpp"
 #include "modular_slam/constraints_interface.hpp"
 
 #include <ceres/ceres.h>
@@ -57,13 +58,12 @@ struct SnavelyReprojectionError
     double observed_y;
 };
 
-class CeresVisitor : public LandmarkConstraintVisitor<slam3d::SensorState, Vector3>,
-                     public KeyframeConstraintVisitor<slam3d::SensorState, Vector3>
+class CeresVisitor : public ConstraintVisitor<slam3d::SensorState, Vector3>
 {
   public:
     CeresVisitor();
-    void visit(const LandmarkConstraint<slam3d::SensorState, Vector3>&) override;
-    void visit(const KeyframeConstraint<slam3d::SensorState, Vector3>&) override;
+    void visit(const KeyframeConstraint<slam3d::SensorState, Vector3>& constraint) override;
+    void visit(const LandmarkConstraint<slam3d::SensorState, Vector3>& constraint) override;
 
     void reset() { problem.reset(new ceres::Problem()); }
 
@@ -75,24 +75,14 @@ class CeresVisitor : public LandmarkConstraintVisitor<slam3d::SensorState, Vecto
 
 CeresVisitor::CeresVisitor() : problem(new ceres::Problem()) {}
 
-void CeresVisitor::visit(const LandmarkConstraint<slam3d::SensorState, Vector3>& /*constraint*/)
-{
-    // ceres::CostFunction* costFunction = SnavelyReprojectionError::Create(0, 0);
-    // problem.AddResidualBlock(cost_function, nullptr, &x);
-}
-
-void CeresVisitor::visit(const KeyframeConstraint<slam3d::SensorState, Vector3>& /*constraint*/)
-{
-    // ceres::CostFunction* cost_function =
-    //     new ceres::AutoDiffCostFunction<SnavelyReprojectionError, 1, 1>(new SnavelyReprojectionError(0, 0));
-}
+void CeresVisitor::visit(const KeyframeConstraint<slam3d::SensorState, Vector3>& constraint) {}
+void CeresVisitor::visit(const LandmarkConstraint<slam3d::SensorState, Vector3>& constraint) {}
 
 void CeresBackend::optimize(ConstraintsInterface<mslam::slam3d::SensorState, mslam::Vector3>& constraints)
 {
     CeresVisitor visitor;
 
-    constraints.visitKeyframeConstraints(visitor);
-    constraints.visitLandmarkConstraints(visitor);
+    // constraints.visitKeyframeConstraints(visitor);
 
     ceres::Solver::Options options;
     options.linear_solver_type = ceres::DENSE_QR;

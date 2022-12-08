@@ -6,6 +6,8 @@
 #include "modular_slam/frontend_interface.hpp"
 #include "modular_slam/map_interface.hpp"
 
+#include <spdlog/spdlog.h>
+
 namespace mslam
 {
 
@@ -41,13 +43,18 @@ class Slam
 
     virtual bool init();
     virtual SlamProcessResult process();
+    virtual const SensorStateType& currentState() { return state; }
     virtual ~Slam() {}
 
-    std::shared_ptr<ParametersHandlerInterface> parameterHandler;
+    std::shared_ptr<FrontendInterfaceType> frontend;
     std::shared_ptr<DataProviderInterface<SensorDataType>> dataProvider;
+
+  private:
+    std::shared_ptr<ParametersHandlerInterface> parameterHandler;
     std::shared_ptr<MapType> map;
     std::shared_ptr<BackendInterfaceType> backend;
-    std::shared_ptr<FrontendInterfaceType> frontend;
+
+    SensorStateType state;
 };
 
 template <typename SensorDataType, typename SensorStateType, typename LandmarkStateType>
@@ -55,11 +62,6 @@ bool Slam<SensorDataType, SensorStateType, LandmarkStateType>::init()
 {
     auto result =
         parameterHandler->init() && dataProvider->init() && frontend->init() && backend->init() /* && map->init()*/;
-
-    for(int i = 0; i < 20;)
-    {
-        i += dataProvider->fetch();
-    }
 
     return result;
 }
@@ -78,8 +80,8 @@ SlamProcessResult Slam<SensorDataType, SensorStateType, LandmarkStateType>::proc
     if(!constraints)
         return SlamProcessResult::NoConstraints;
 
+    state = constraints->currentState();
     backend->optimize(*constraints);
-    frontend->update(*constraints);
     // map->update(*constraints);
 
     return SlamProcessResult::Success;

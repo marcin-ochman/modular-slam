@@ -24,17 +24,12 @@ struct KeyframeConstraint
     KeyframeConstraintType constraint;
 };
 
-template <typename SensorStateType, typename LandmarkStateType, typename LandmarkConstraintType = LandmarkStateType>
-class LandmarkConstraintVisitor
+template <typename SensorStateType, typename LandmarkStateType, typename KeyframeConstraintType = SensorStateType,
+          typename LandmarkConstraintType = LandmarkStateType>
+class ConstraintVisitor
 {
   public:
     virtual void visit(const LandmarkConstraint<SensorStateType, LandmarkStateType>& constraint) = 0;
-};
-
-template <typename SensorStateType, typename LandmarkStateType, typename KeyframeConstraintType = SensorStateType>
-class KeyframeConstraintVisitor
-{
-  public:
     virtual void visit(const KeyframeConstraint<SensorStateType, LandmarkStateType>& constraint) = 0;
 };
 
@@ -48,10 +43,14 @@ class ConstraintsInterface
     virtual void
     addConstraint(const KeyframeConstraint<SensorStateType, LandmarkStateType, KeyframeConstraintType> constraint) = 0;
 
-    virtual void visitLandmarkConstraints(
-        LandmarkConstraintVisitor<SensorStateType, LandmarkStateType, LandmarkConstraintType>& visitor) = 0;
-    virtual void visitKeyframeConstraints(
-        KeyframeConstraintVisitor<SensorStateType, LandmarkStateType, KeyframeConstraintType>& visitor) = 0;
+    virtual SensorStateType currentState() = 0;
+    virtual void visitConstraints(ConstraintVisitor<SensorStateType, LandmarkStateType, KeyframeConstraintType,
+                                                    LandmarkConstraintType>& visitor) = 0;
+
+    // virtual void visitLandmarkConstraints(
+    //     LandmarkConstraintVisitor<SensorStateType, LandmarkStateType, LandmarkConstraintType>& visitor) = 0;
+    // virtual void visitKeyframeConstraints(
+    //     KeyframeConstraintVisitor<SensorStateType, LandmarkStateType, KeyframeConstraintType>& visitor) = 0;
 
     virtual ~ConstraintsInterface() {}
 };

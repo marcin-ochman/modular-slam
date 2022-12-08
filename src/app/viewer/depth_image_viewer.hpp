@@ -12,10 +12,11 @@ class DepthImageViewer : public QWidget
     DepthImageViewer(QWidget* parent = nullptr) : QWidget(parent) { initialize(); }
 
   public slots:
-    void scaleDrawnImage(float percent);
+    void scaleDrawnImage(int percent) { scaleDrawnImage(static_cast<float>(percent)); }
     void drawImage(const mslam::DepthFrame& newDepth);
 
   protected:
+    void scaleDrawnImage(float percent);
     void initialize();
 
     float minDepth() { return static_cast<float>(ui.minSlider->value()) * 0.01f; }

@@ -72,8 +72,7 @@ std::vector<DescriptorMatch> OrbFeature::match(boost::span<const Descriptor> des
     if(descriptors.size() == 0)
         return {};
 
-    std::vector<std::vector<cv::DMatch>> matches;
-    const int rows = static_cast<int>(matches.size());
+    const int rows = static_cast<int>(descriptors.size());
     const int columns = static_cast<int>(descriptors[0].descriptor.size());
     cv::Mat cvOtherDescriptors(rows, columns, CV_32F);
 
@@ -85,6 +84,7 @@ std::vector<DescriptorMatch> OrbFeature::match(boost::span<const Descriptor> des
         std::copy(std::begin(currentDescriptor), std::end(currentDescriptor), rowPtr);
     }
 
+    std::vector<std::vector<cv::DMatch>> matches;
     matcher->knnMatch(cvDescriptors, cvOtherDescriptors, matches, 2);
 
     std::vector<cv::DMatch> goodMatches;

@@ -28,12 +28,6 @@ class Slam
     bool run();
 };
 
-class SlamBuilder
-{
-
-  public:
-};
-
 } // namespace mslam
 
 #endif // TYPES_HPP_

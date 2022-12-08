@@ -27,7 +27,7 @@ class SlamThread : public QThread
     Q_OBJECT
 
   public:
-    SlamThread(QObject* parent) : QThread(parent) {}
+    SlamThread(QObject* parent);
     void setSlam(std::unique_ptr<mslam::Slam<mslam::RgbdFrame, mslam::slam3d::SensorState, Eigen::Vector3f>>&& newSlam)
     {
         m_slam = std::move(newSlam);
@@ -35,6 +35,8 @@ class SlamThread : public QThread
 
   public slots:
     void stop() { isRunning = false; }
+    void pause() { isPaused = true; }
+    void resume() { isPaused = false; }
 
   private:
     void run() override;
@@ -48,6 +50,7 @@ class SlamThread : public QThread
 
   private:
     bool isRunning;
+    bool isPaused;
     std::unique_ptr<mslam::Slam<mslam::RgbdFrame, mslam::slam3d::SensorState, Eigen::Vector3f>> m_slam;
     std::shared_ptr<mslam::RgbdFrame> m_frame;
 };

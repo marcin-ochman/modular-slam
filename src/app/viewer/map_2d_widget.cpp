@@ -8,10 +8,10 @@
 
 MapWidget::MapWidget(QWidget* parent) : QWidget(parent)
 {
-    m_series = new QScatterSeries();
+    m_keyframeSeries = new QScatterSeries();
 
     QChart* chart = new QChart();
-    chart->addSeries(m_series);
+    chart->addSeries(m_keyframeSeries);
     chart->createDefaultAxes();
 
     auto xAxis = chart->axes(Qt::Horizontal).first();
@@ -31,7 +31,7 @@ MapWidget::MapWidget(QWidget* parent) : QWidget(parent)
     horizontalLayout->addWidget(chartView);
 }
 
-void MapWidget::addSensorPosition(int x, int y)
+void MapWidget::addKeyframe(int x, int y)
 {
-    m_series->append(x, y);
+    m_keyframeSeries->append(x, y);
 }

@@ -41,7 +41,7 @@ class FrontendMock : public mslam::FrontendInterface<mslam::RgbdiFrame, mslam::s
 class MapMock : public mslam::MapInterface<mslam::slam3d::SensorState, mslam::Vector3>
 {
   public:
-    MAKE_MOCK1(update, bool(const MapMock::Constraints& constraints), override);
+    MAKE_MOCK1(update, void(const std::shared_ptr<MapMock::Constraints> constraints), override);
 };
 
 SCENARIO("Building SLAM system")

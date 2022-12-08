@@ -32,6 +32,7 @@ class FrontendInterface : public SlamComponent
     virtual std::shared_ptr<Constraints> prepareConstraints(const SensorDataType& sensorData) = 0;
     virtual bool update(const Constraints& /*constraints*/) { return true; }
 
+    // TODO: remove it!
     virtual void visitLandmarks(LandmarkVisitor<LandmarkStateType>&) {}
     virtual void visitKeyframes(KeyframeVisitor<SensorStateType>&) {}
 

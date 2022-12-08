@@ -14,7 +14,7 @@ struct RgbdFrame
 {
     RgbFrame rgb;
     DepthFrame depth;
-    CameraParameters cameraParameters;
+    // CameraParameters cameraParameters;
 };
 
 } // namespace mslam

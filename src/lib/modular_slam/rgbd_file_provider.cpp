@@ -63,6 +63,13 @@ bool RgbdFileProvider::fetch()
     const auto& depthPath = depthPaths[currentIndex];
     auto rgbMat = cv::imread(rgbImagePath);
     auto depthMat = cv::imread(depthPath, cv::IMREAD_ANYDEPTH);
+
+    if(rgbMat.empty() || depthMat.empty())
+    {
+        recentFrame = nullptr;
+        return false;
+    }
+
     cv::Size frameSize = rgbMat.size();
     cv::Size depthSize = depthMat.size();
 

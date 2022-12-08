@@ -44,8 +44,6 @@ RgbdSlamProgramArgs parseArgs(QApplication& app)
     args.useRealSense = parser.isSet("realsense");
     args.tumFile = parser.isSet("tum_file") ? std::make_optional(parser.value("tum_file").toStdString()) : std::nullopt;
 
-    // TODO: fill args
-
     return args;
 }
 

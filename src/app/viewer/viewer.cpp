@@ -101,6 +101,8 @@ int main(int argc, char* argv[])
     QObject::connect(slamThread, &SlamThread::newSlamStatisticsAvailable, mainWindow,
                      &mslam::ViewerMainWindow::setSlamStatistics);
     QObject::connect(slamThread, &SlamThread::keyframeAdded, mainWindow, &mslam::ViewerMainWindow::addKeyframe);
+    QObject::connect(mainWindow, &mslam::ViewerMainWindow::paused, slamThread, &SlamThread::pause);
+    QObject::connect(mainWindow, &mslam::ViewerMainWindow::resumed, slamThread, &SlamThread::resume);
 
     mainWindow->show();
 

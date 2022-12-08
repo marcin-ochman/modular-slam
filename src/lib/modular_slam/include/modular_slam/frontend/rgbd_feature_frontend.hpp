@@ -19,6 +19,8 @@
 #include <opencv2/features2d.hpp>
 #include <opencv2/opencv.hpp>
 
+#include <modular_slam/rgbd_slam_types.hpp>
+
 namespace mslam
 {
 
@@ -26,6 +28,23 @@ struct KeypointDescriptor
 {
     Keypoint<Eigen::Vector2f> keypoint;
     Descriptor descriptor;
+};
+
+class BasicConstraints : public ConstraintsInterface<slam3d::SensorState, Vector3>
+{
+  public:
+    void addConstraint(const LandmarkConstraint<slam3d::SensorState, Vector3> constraint) override;
+    void addConstraint(const KeyframeConstraint<slam3d::SensorState, Vector3> constraint) override;
+    void visitConstraints(ConstraintVisitor<slam3d::SensorState, Vector3>& visitor) override;
+
+    slam3d::SensorState currentState() override { return state; }
+    void setState(const slam3d::SensorState& newState) { state = newState; }
+
+  private:
+    std::vector<LandmarkConstraint<slam3d::SensorState, Vector3>> landmarkConstraints;
+    std::vector<KeyframeConstraint<slam3d::SensorState, Vector3>> keyframeConstraints;
+
+    slam3d::SensorState state;
 };
 
 class RgbdFeatureFrontend : public FrontendInterface<RgbdFrame, slam3d::SensorState, Vector3>
@@ -39,51 +58,68 @@ class RgbdFeatureFrontend : public FrontendInterface<RgbdFrame, slam3d::SensorSt
     std::shared_ptr<Constraints> prepareConstraints(const RgbdFrame& sensorData) override;
     bool init() override;
 
+    // TODO: remove!!!!
     void visitLandmarks(LandmarkVisitor<Vector3>&) override;
     void visitKeyframes(KeyframeVisitor<slam3d::SensorState>&) override;
 
   protected:
-    std::shared_ptr<Keyframe<slam3d::SensorState>> findBetterReferenceKeyframe(const RgbdFrame& sensorData) const;
+    std::shared_ptr<rgbd::Keyframe> findBetterReferenceKeyframe(const slam3d::SensorState& currentPose,
+                                                                const RgbdFrame& frame) const;
     bool isBetterReferenceKeyframeNeeded(const std::size_t keyframeLandmarksCount) const;
     bool isNewKeyframeRequired(const std::size_t matchedLandmarks) const;
     bool hasInitialKeyframe() const { return referenceKeyframeData.keyframe != nullptr; }
     bool isLoopClosureNeeded() const;
-    void initFirstKeyframe(const RgbdFrame& sensorData, std::shared_ptr<FeatureInterface<Eigen::Vector2f>> features);
+    std::shared_ptr<Constraints> initFirstKeyframe(const RgbdFrame& sensorData,
+                                                   std::shared_ptr<rgbd::FeatureInterface> features);
 
-    std::shared_ptr<Keyframe<slam3d::SensorState>> relocalize();
-    std::shared_ptr<Constraints> track(const RgbdFrame& sensorData,
-                                       std::shared_ptr<FeatureInterface<Eigen::Vector2f>>& features);
+    std::shared_ptr<rgbd::Keyframe> relocalize();
+    std::shared_ptr<Constraints> track(const RgbdFrame& sensorData, std::shared_ptr<rgbd::FeatureInterface>& features);
 
-    std::shared_ptr<Keyframe<slam3d::SensorState>> addKeyframe(const RgbdFrame& sensorData,
-                                                               const slam3d::SensorState& pose,
-                                                               FeatureInterface<Eigen::Vector2f>& features);
+    std::shared_ptr<rgbd::Keyframe> addKeyframe(const RgbdFrame& sensorData, const slam3d::SensorState& pose,
+                                                std::shared_ptr<rgbd::FeatureInterface> features);
     std::size_t minMatchedPoints() const;
-    std::vector<std::shared_ptr<Landmark<Vector3>>> findVisibleLocalLandmarks(const slam3d::SensorState& pose,
-                                                                              const RgbdFrame& sensorData) const;
+    std::vector<std::shared_ptr<rgbd::Landmark>> findVisibleLocalLandmarks(const slam3d::SensorState& pose,
+                                                                           const RgbdFrame& sensorData) const;
 
     std::vector<KeypointDescriptor>
-    findKeypointsForNewLandmarks(const FeatureInterface<Eigen::Vector2f>& features,
-                                 const boost::span<std::shared_ptr<Landmark<Vector3>>> landmarks) const;
+    findKeypointsForNewLandmarks(const rgbd::FeatureInterface& features,
+                                 const boost::span<std::shared_ptr<rgbd::Landmark>> landmarks) const;
+
+    std::shared_ptr<rgbd::Landmark> addLandmark(std::shared_ptr<rgbd::Keyframe>, const Vector3& state,
+                                                const Descriptor& descriptor);
+    void addLandmarkDescriptor(std::shared_ptr<rgbd::Landmark>, const Descriptor& descriptor);
+    void markLandmarkInKeyframe(std::shared_ptr<rgbd::Landmark> landmark, std::shared_ptr<rgbd::Keyframe> keyframe);
+
+    void addNewLandmarks(const std::vector<KeypointDescriptor>& keypoints, std::shared_ptr<rgbd::Keyframe> newKeyframe,
+                         const RgbdFrame& sensorData,
+                         std::shared_ptr<ConstraintsInterface<slam3d::SensorState, Vector3>> constraints,
+                         std::shared_ptr<rgbd::FeatureInterface> features);
+
+    void updateVisibleLandmarks(const std::vector<std::shared_ptr<rgbd::Landmark>>& landmarksOnFrame,
+                                std::shared_ptr<rgbd::Keyframe> keyframe);
 
   private:
     struct ReferenceKeyframeData
     {
-        std::shared_ptr<FeatureInterface<Eigen::Vector2f>> features;
-        std::shared_ptr<Keyframe<slam3d::SensorState>> keyframe;
-        RgbdFrame sensorData;
+        std::shared_ptr<rgbd::FeatureInterface> features;
+        std::shared_ptr<rgbd::Keyframe> keyframe;
         slam3d::SensorState currentPose;
-
-        std::multimap<std::shared_ptr<Landmark<Vector3>>, Descriptor> landmarkDescriptors;
+        std::multimap<std::shared_ptr<rgbd::Landmark>, Descriptor> landmarkDescriptors;
     };
 
     ReferenceKeyframeData referenceKeyframeData;
-    std::shared_ptr<ConstraintsInterface<slam3d::SensorState, Vector3>> constraints;
 
     std::shared_ptr<FeatureDetectorInterface<RgbFrame>> featureDetector;
     std::shared_ptr<Tracker<slam3d::SensorState, Vector3>> tracker;
 
-    std::vector<std::shared_ptr<Keyframe<slam3d::SensorState>>> m_keyframes;
-    std::vector<std::shared_ptr<Landmark<slam3d::SensorState>>> m_landmarks;
+    std::vector<std::shared_ptr<rgbd::Keyframe>> m_keyframes;
+    std::vector<std::shared_ptr<rgbd::Landmark>> m_landmarks;
+    std::map<std::shared_ptr<rgbd::Keyframe>, std::shared_ptr<rgbd::FeatureInterface>> m_keyframeFeatures;
+
+    std::vector<float> keypointsDescriptorData;
+    std::map<std::shared_ptr<rgbd::Keyframe>, std::vector<std::shared_ptr<rgbd::Landmark>>> keyframesWithLandmarks;
+
+    std::map<std::shared_ptr<rgbd::Landmark>, std::vector<std::shared_ptr<rgbd::Keyframe>>> landmarksInKeyframes;
 };
 } // namespace mslam
 

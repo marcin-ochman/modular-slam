@@ -6,16 +6,26 @@
 
 class QScatterSeries;
 
+struct MapKeyframe
+{
+    int id;
+    QVector2D position;
+    float angle;
+};
+
 class MapWidget : public QWidget
 {
   public:
     MapWidget(QWidget* parent = nullptr);
 
   public slots:
-    void addSensorPosition(int x, int y);
+    void addKeyframe(int x, int y);
+
+    // void addLandmark(int x, int y);
+    // void updateLandmark();
 
   private:
-    QScatterSeries* m_series;
+    QScatterSeries* m_keyframeSeries;
 };
 
 #endif // MAP_2D_WIDGET_HPP_

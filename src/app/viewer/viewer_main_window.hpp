@@ -16,6 +16,8 @@ namespace mslam
 {
 class ViewerMainWindow : public QMainWindow
 {
+    Q_OBJECT
+
   public:
     ViewerMainWindow(QWidget* parent = nullptr);
 
@@ -26,7 +28,15 @@ class ViewerMainWindow : public QMainWindow
     void setSlamStatistics(const SlamStatistics& newSlamStats) { ui->slamStatsViewer->setSlamStatistics(newSlamStats); }
     void addKeyframe(const KeyframeViewData& keyframe) { ui->pointcloudViewer->addKeyframe(keyframe); }
 
+  signals:
+    void paused();
+    void resumed();
+
+  private slots:
+    void onPauseResume();
+
   private:
+    bool isPaused = false;
     std::unique_ptr<Ui::ViewerMainWindow> ui;
 };
 } // namespace mslam

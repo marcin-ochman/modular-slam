@@ -49,6 +49,9 @@ struct KeypointLandmarkMatch
     std::shared_ptr<Landmark<LandmarkStateType>> landmark;
 };
 
+template <int N = 32>
+using DescriptorArray = std::array<float, N>;
+
 struct Descriptor
 {
     Id keypointId;
@@ -64,7 +67,6 @@ class FeatureInterface
                                                               boost::span<const Descriptor> descriptors) const = 0;
 
     virtual std::vector<DescriptorMatch> match(boost::span<const Descriptor> descriptors) const = 0;
-
     virtual std::vector<Keypoint<CoordinatesType>> keypoints() const = 0;
     virtual std::vector<Descriptor> descriptors() const = 0;
     virtual int type() const = 0;

@@ -51,9 +51,16 @@
     </widget>
     <addaction name="menuAdd"/>
    </widget>
+   <widget class="QMenu" name="menuControl">
+    <property name="title">
+     <string>Control</string>
+    </property>
+    <addaction name="pauseResumeAction"/>
+   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuView"/>
    <addaction name="menuHelp"/>
+   <addaction name="menuControl"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <widget class="QDockWidget" name="dockWidget">
@@ -118,6 +125,11 @@
   <action name="actionDepth_View">
    <property name="text">
     <string>Depth View</string>
+   </property>
+  </action>
+  <action name="pauseResumeAction">
+   <property name="text">
+    <string>Pause / Resume</string>
    </property>
   </action>
  </widget>

@@ -1,12 +1,50 @@
 #include "slam_thread.hpp"
 #include "modular_slam/basic_types.hpp"
 #include "modular_slam/frontend_interface.hpp"
+#include "modular_slam/rgbd_frame.hpp"
+#include "modular_slam/rgbd_slam_types.hpp"
 #include "modular_slam/slam3d_types.hpp"
 #include "pointcloud_viewer.hpp"
 #include "slam_statistics.hpp"
+#include <Eigen/src/Core/Matrix.h>
 #include <bits/chrono.h>
 #include <chrono>
+#include <glm/fwd.hpp>
 #include <qmatrix4x4.h>
+
+QMatrix4x4 poseToQMatrix(const mslam::slam3d::SensorState& state)
+{
+    QMatrix4x4 pose;
+
+    Eigen::Matrix3f R = state.orientation.toRotationMatrix();
+    Eigen::Vector3f T = state.position;
+    Eigen::Matrix4f transformMatrix = Eigen::Matrix4f::Identity();
+    transformMatrix.block<3, 3>(0, 0) = R;
+    transformMatrix.block<3, 1>(0, 3) = T;
+
+    for(int i = 0; i < 4; i++)
+        for(int j = 0; j < 4; j++)
+            pose(i, j) = transformMatrix(i, j);
+
+    return pose;
+}
+
+glm::mat4 poseToGlmMat4(const mslam::slam3d::SensorState& state)
+{
+    auto pose = glm::mat4(1);
+
+    const Eigen::Matrix3f R = state.orientation.toRotationMatrix();
+    const Eigen::Vector3f T = state.position;
+    Eigen::Matrix4f transformMatrix = Eigen::Matrix4f::Identity();
+    transformMatrix.block<3, 3>(0, 0) = R;
+    transformMatrix.block<3, 1>(0, 3) = T;
+
+    for(int i = 0; i < 4; i++)
+        for(int j = 0; j < 4; j++)
+            pose[j][i] = transformMatrix(i, j);
+
+    return pose;
+}
 
 class FrontendVisitor : public mslam::KeyframeVisitor<mslam::slam3d::SensorState>,
                         public mslam::LandmarkVisitor<mslam::Vector3>
@@ -39,9 +77,47 @@ void FrontendVisitor::visit(std::shared_ptr<mslam::Keyframe<mslam::slam3d::Senso
     }
 }
 
+SlamThread::SlamThread(QObject* parent) : QThread(parent), isRunning(false), isPaused(false) {}
+
 std::shared_ptr<mslam::Keyframe<mslam::slam3d::SensorState>> FrontendVisitor::recentlyKeyframeAdded() const
 {
     return keyframeAdded;
+}
+
+void pointCloudFromRgbd(const mslam::RgbdFrame& rgbd, const mslam::rgbd::SensorState& currentPose,
+                        std::vector<glm::vec3>& outPoints)
+{
+    const auto& depthFrame = rgbd.depth;
+    const auto xScale = 1 / depthFrame.cameraParameters.focal.x();
+    const auto yScale = 1 / depthFrame.cameraParameters.focal.y();
+    const auto pose = poseToGlmMat4(currentPose);
+
+    constexpr float invMultiplier = 1 / 255.f;
+
+    std::size_t outIndex = 0;
+    for(auto u = 0; u < depthFrame.size.width; ++u)
+    {
+        for(auto v = 0; v < depthFrame.size.height; ++v)
+        {
+            const auto z = mslam::getDepth(depthFrame, {u, v});
+            const auto isValid = mslam::isDepthValid(z);
+            const auto x = (static_cast<float>(u) - depthFrame.cameraParameters.principalPoint.x()) * z * xScale;
+            const auto y = (static_cast<float>(v) - depthFrame.cameraParameters.principalPoint.y()) * z * yScale;
+
+            const std::size_t index = static_cast<std::size_t>(3 * (v * depthFrame.size.width + u));
+            const auto b = rgbd.rgb.data[index] * invMultiplier;
+            const auto g = rgbd.rgb.data[index + 1] * invMultiplier;
+            const auto r = rgbd.rgb.data[index + 2] * invMultiplier;
+
+            const glm::vec4 point{x, y, z, 1.0f};
+            const glm::vec3 rgb{r, g, b};
+
+            outPoints[outIndex] = pose * point;
+            outIndex += isValid;
+            outPoints[outIndex] = rgb;
+            outIndex += isValid;
+        }
+    }
 }
 
 void SlamThread::run()
@@ -54,11 +130,15 @@ void SlamThread::run()
 
     std::vector<glm::vec3> points;
     SlamStatistics stats;
-
     FrontendVisitor visitor;
 
     while(isRunning)
     {
+        while(isPaused)
+        {
+            msleep(5);
+        }
+
         auto start = std::chrono::high_resolution_clock::now();
         m_slam->process();
         auto stop = std::chrono::high_resolution_clock::now();
@@ -67,42 +147,14 @@ void SlamThread::run()
         if(points.size() < 2 * rgbd->depth.data.size())
             points.resize(2 * rgbd->depth.data.size());
 
-        QImage image{rgbd->rgb.data.data(), rgbd->rgb.size.width, rgbd->rgb.size.height, 3 * rgbd->rgb.size.width,
-                     QImage::Format_BGR888};
+        QImage originalImage{rgbd->rgb.data.data(), rgbd->rgb.size.width, rgbd->rgb.size.height,
+                             3 * rgbd->rgb.size.width, QImage::Format_BGR888};
+        const QImage image = originalImage.copy();
 
         emit newRgbImageAvailable(image);
         emit newDepthImageAvailable(rgbd->depth);
 
-        m_frame = rgbd;
-
-        const auto& depthFrame = rgbd->depth;
-        const auto xScale = 1 / depthFrame.cameraParameters.focal.x();
-        const auto yScale = 1 / depthFrame.cameraParameters.focal.y();
-
-        std::size_t outIndex = 0;
-        for(auto u = 0; u < depthFrame.size.width; ++u)
-        {
-            for(auto v = 0; v < depthFrame.size.height; ++v)
-            {
-                const auto z = mslam::getDepth(depthFrame, {u, v});
-                const auto isValid = mslam::isDepthValid(z);
-                const auto x = (static_cast<float>(u) - depthFrame.cameraParameters.principalPoint.x()) * z * xScale;
-                const auto y = (static_cast<float>(v) - depthFrame.cameraParameters.principalPoint.y()) * z * yScale;
-
-                const std::size_t index = static_cast<std::size_t>(3 * (v * depthFrame.size.width + u));
-                const auto b = rgbd->rgb.data[index] / 255.f;
-                const auto g = rgbd->rgb.data[index + 1] / 255.f;
-                const auto r = rgbd->rgb.data[index + 2] / 255.f;
-
-                const glm::vec3 point{x, y, z};
-                const glm::vec3 rgb{r, g, b};
-
-                points[outIndex] = point;
-                outIndex += isValid;
-                points[outIndex] = rgb;
-                outIndex += isValid;
-            }
-        }
+        pointCloudFromRgbd(*rgbd, m_slam->currentState(), points);
 
         auto microseconds = std::chrono::duration_cast<std::chrono::microseconds>(stop - start).count();
         stats.msPerFrame = static_cast<float>(microseconds) / 1000.0f;
@@ -114,24 +166,9 @@ void SlamThread::run()
 
         if(auto keyframe = visitor.recentlyKeyframeAdded(); keyframe != nullptr)
         {
-            QMatrix4x4 pose;
-            pose.setToIdentity();
+            auto keyframePose = poseToQMatrix(keyframe->state);
 
-            Eigen::Matrix3f R = keyframe->state.orientation.toRotationMatrix();
-            Eigen::Vector3f T = keyframe->state.position;
-            Eigen::Matrix4f Trans; // Your Transformation Matrix
-            Trans.setIdentity();   // Set to Identity to make bottom row of Matrix 0,0,0,1
-            Trans.block<3, 3>(0, 0) = R;
-            Trans.block<3, 1>(0, 3) = T;
-
-            for(int i = 0; i < 4; i++)
-                for(int j = 0; j < 4; j++)
-                    pose(i, j) = Trans(i, j);
-
-            qDebug() << pose;
-
-            KeyframeViewData keyframeView = {image, pose};
-
+            KeyframeViewData keyframeView = {image, keyframePose};
             emit keyframeAdded(keyframeView);
         }
     }

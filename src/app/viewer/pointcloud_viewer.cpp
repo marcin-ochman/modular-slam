@@ -6,7 +6,7 @@
 #include <glm/vec3.hpp>
 #include <optional>
 
-PointcloudViewer::PointcloudViewer(QWidget* parent) : QOpenGLWidget(parent), camera{glm::vec3(0, 5, 13)}
+PointcloudViewer::PointcloudViewer(QWidget* parent) : QOpenGLWidget(parent), camera{glm::vec3(0, 0, 13)}
 {
     setMouseTracking(true);
 }
@@ -42,6 +42,7 @@ void PointcloudViewer::initializeGL()
 
     updateTimer = new QTimer(this);
     connect(updateTimer, SIGNAL(timeout()), this, SLOT(update()));
+
     static constexpr auto msPerFrame = 20;
     updateTimer->start(msPerFrame);
 }
@@ -88,7 +89,7 @@ void PointcloudViewer::mouseMoveEvent(QMouseEvent* event)
 
 void PointcloudViewer::wheelEvent(QWheelEvent* event)
 {
-    const auto scroll = static_cast<float>(event->angleDelta().x()) / 40.0f;
+    const auto scroll = static_cast<float>(event->angleDelta().y()) / 40.0f;
     camera.processMouseScroll(scroll);
 }
 

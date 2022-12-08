@@ -13,7 +13,7 @@ class MapInterface : public SlamComponent
   public:
     using Constraints = ConstraintsInterface<SensorStateType, LandmarkStateType>;
 
-    virtual bool update(const Constraints& constraints) = 0;
+    virtual void update(const std::shared_ptr<Constraints> constraints) = 0;
 };
 
 } // namespace mslam

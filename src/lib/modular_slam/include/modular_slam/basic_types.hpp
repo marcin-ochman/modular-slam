@@ -15,6 +15,7 @@ namespace mslam
 using Id = std::uint64_t;
 
 using Vector2 = Eigen::Vector2f;
+using Vector2i = Eigen::Vector2i;
 using Vector3 = Eigen::Vector3f;
 using Quaternion = Eigen::Quaternionf;
 using AngleAxis = Eigen::AngleAxisf;
