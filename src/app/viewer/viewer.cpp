@@ -68,7 +68,8 @@ auto buildSlam(const ViewerArgs& args)
     }
 
     auto frontend = std::make_shared<mslam::RgbdFeatureFrontend>(std::make_shared<mslam::MinMseTracker>(),
-                                                                 std::make_shared<mslam::OrbFeatureDetector>());
+                                                                 std::make_shared<mslam::OrbOpenCvDetector>(),
+                                                                 std::make_shared<mslam::OrbOpenCvMatcher>());
 
     slamBuilder.addParameterHandler(std::make_shared<mslam::BasicParameterHandler>())
         .addDataProvider(dataProvider)

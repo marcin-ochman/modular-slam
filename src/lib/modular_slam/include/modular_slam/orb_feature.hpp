@@ -13,38 +13,28 @@
 namespace mslam
 {
 
-class OrbFeature : public FeatureInterface<Eigen::Vector2f>
+using IOrbFeatureDetector = IFeatureDetector<RgbFrame, Eigen::Vector2f, float, 32>;
+using IOrbMatcher = IFeatureMatcher<Eigen::Vector2f, float, 32>;
+using OrbKeypoint = KeypointDescriptor<Eigen::Vector2f, float, 32>;
+
+class OrbOpenCvDetector : public IOrbFeatureDetector
 {
   public:
-    virtual std::vector<KeypointMatch<Eigen::Vector2f>>
-    match(FeatureInterface<Eigen::Vector2f>& features) const override;
-    virtual std::vector<KeypointMatch<Eigen::Vector2f>> match(boost::span<const Keypoint<Eigen::Vector2f>> keypoints,
-                                                              boost::span<const Descriptor> descriptors) const override;
-    virtual std::vector<DescriptorMatch> match(boost::span<const Descriptor> descriptors) const override;
-
-    virtual int type() const override { return static_cast<int>(FeatureType::Orb); }
-    virtual std::vector<Keypoint<Eigen::Vector2f>> keypoints() const override;
-    virtual std::vector<Descriptor> descriptors() const override;
-    static std::unique_ptr<OrbFeature> create(cv::Mat descriptors, const std::vector<cv::KeyPoint>& keypoints);
-
-  protected:
-    std::vector<KeypointMatch<Eigen::Vector2f>> match(cv::Mat otherDescriptors,
-                                                      const std::vector<cv::KeyPoint>& otherKeypoints) const;
-
-    static inline cv::Ptr<cv::DescriptorMatcher> matcher =
-        cv::DescriptorMatcher::create(cv::DescriptorMatcher::FLANNBASED);
-
-    cv::Mat cvDescriptors;
-    std::vector<cv::KeyPoint> cvKeypoints;
-};
-
-class OrbFeatureDetector : public FeatureDetectorInterface<RgbFrame, Eigen::Vector2f>
-{
-  public:
-    virtual std::unique_ptr<FeatureInterface<Eigen::Vector2f>> detect(const RgbFrame& sensorData) override;
+    virtual std::vector<OrbKeypoint> detect(const RgbFrame& sensorData) override;
 
   private:
     static inline cv::Ptr<cv::Feature2D> detector = cv::ORB::create();
+};
+
+class OrbOpenCvMatcher : public IOrbMatcher
+{
+  public:
+    std::vector<DescriptorMatch> match(const std::vector<OrbKeypoint>& firstDescriptors,
+                                       const std::vector<OrbKeypoint>& secondDescriptors) override;
+
+  private:
+    static inline cv::Ptr<cv::DescriptorMatcher> matcher =
+        cv::DescriptorMatcher::create(cv::DescriptorMatcher::FLANNBASED);
 };
 
 } // namespace mslam

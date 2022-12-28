@@ -12,7 +12,6 @@ namespace mslam::rgbd
 using SensorState = mslam::slam3d::SensorState;
 using Keyframe = Keyframe<SensorState>;
 using Landmark = Landmark<Vector3>;
-using FeatureInterface = FeatureInterface<Vector2, Vector3>;
 } // namespace mslam::rgbd
 
 #endif // RGBD_SLAM_TYPES_HPP_

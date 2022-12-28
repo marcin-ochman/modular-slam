@@ -10,6 +10,7 @@
 #include "modular_slam/rgbd_slam_types.hpp"
 #include "modular_slam/slam3d_types.hpp"
 
+#include <Eigen/src/Core/Matrix.h>
 #include <boost/range/adaptor/filtered.hpp>
 #include <boost/range/adaptor/map.hpp>
 #include <boost/range/adaptor/uniqued.hpp>
@@ -23,9 +24,14 @@
 #include <iterator>
 #include <memory>
 #include <numeric>
+#include <opencv2/core/types.hpp>
+#include <opencv2/features2d.hpp>
+#include <opencv2/highgui.hpp>
 #include <optional>
 #include <spdlog/spdlog.h>
 #include <unordered_set>
+#include <utility>
+#include <vector>
 
 namespace mslam
 {
@@ -141,12 +147,14 @@ pointsFromRgbdKeypoints(const DepthFrame& depthFrame,
     return points;
 }
 
-RgbdFeatureFrontend::RgbdFeatureFrontend(std::shared_ptr<Tracker<slam3d::SensorState, Vector3>> newTracker,
-                                         std::shared_ptr<FeatureDetectorInterface<RgbFrame>> newFeatureDetector)
+RgbdFeatureFrontend::RgbdFeatureFrontend(
+    std::shared_ptr<Tracker<slam3d::SensorState, Vector3>> newTracker,
+    std::shared_ptr<IFeatureDetector<RgbFrame, Eigen::Vector2f, float, 32>> newDetector,
+    std::shared_ptr<IFeatureMatcher<Eigen::Vector2f, float, 32>> newMatcher)
 {
     tracker = newTracker;
-    featureDetector = newFeatureDetector;
-    keypointsDescriptorData.reserve(1000 * 1000 * 32);
+    detector = newDetector;
+    matcher = newMatcher;
 }
 
 void RgbdFeatureFrontend::visitLandmarks(LandmarkVisitor<Vector3>& visitor)
@@ -160,7 +168,7 @@ void RgbdFeatureFrontend::visitLandmarks(LandmarkVisitor<Vector3>& visitor)
 
 void RgbdFeatureFrontend::visitKeyframes(KeyframeVisitor<slam3d::SensorState>& visitor)
 {
-    for(auto& keyframe : m_keyframes)
+    for(auto& keyframe : keyframes)
     {
         visitor.visit(keyframe);
     }
@@ -179,29 +187,27 @@ bool RgbdFeatureFrontend::isLoopClosureNeeded() const
     return false;
 }
 
-std::shared_ptr<rgbd::Keyframe> RgbdFeatureFrontend::addKeyframe(const RgbdFrame& /*sensorData*/,
-                                                                 const slam3d::SensorState& pose,
-                                                                 std::shared_ptr<rgbd::FeatureInterface> features)
+std::shared_ptr<rgbd::Keyframe>
+RgbdFeatureFrontend::addKeyframe(const RgbdFrame& /*sensorData*/, const slam3d::SensorState& pose,
+                                 const std::vector<KeypointDescriptor<Eigen::Vector2f, float>>& keypoints)
 {
     auto newKeyframe = std::make_shared<rgbd::Keyframe>();
     newKeyframe->state = pose;
-
-    m_keyframes.push_back(newKeyframe);
-    m_keyframeFeatures[newKeyframe] = features;
+    keyframes.push_back(newKeyframe);
 
     return newKeyframe;
 }
 
 std::shared_ptr<RgbdFeatureFrontend::Constraints> RgbdFeatureFrontend::prepareConstraints(const RgbdFrame& sensorData)
 {
-    std::shared_ptr<rgbd::FeatureInterface> features = featureDetector->detect(sensorData.rgb);
+    const auto keypoints = detector->detect(sensorData.rgb);
 
     if(!hasInitialKeyframe())
     {
-        return initFirstKeyframe(sensorData, std::move(features));
+        return initFirstKeyframe(sensorData, keypoints);
     }
 
-    if(auto trackConstraints = track(sensorData, features); trackConstraints != nullptr)
+    if(auto trackConstraints = track(sensorData, keypoints); trackConstraints != nullptr)
     {
         if(isLoopClosureNeeded())
         {
@@ -229,11 +235,47 @@ std::shared_ptr<RgbdFeatureFrontend::Constraints> RgbdFeatureFrontend::prepareCo
     return nullptr;
 }
 
+std::vector<KeypointLandmarkMatch<Eigen::Vector2f, Vector3>>
+RgbdFeatureFrontend::matchLandmarks(const std::vector<KeypointDescriptor<Eigen::Vector2f, float>>& keypoints)
+{
+    const auto [refKeyframeKeypoints, landmarks] = getLandmarksWithKeypoints(referenceKeyframeData.keyframe);
+    const auto matches = matcher->match(refKeyframeKeypoints, keypoints);
+    std::vector<KeypointLandmarkMatch<Eigen::Vector2f, Vector3>> result;
+
+    for(const auto& match : matches)
+    {
+        KeypointMatch<Eigen::Vector2f> keypointMatch = {refKeyframeKeypoints[match.fromIndex].keypoint,
+                                                        keypoints[match.toIndex].keypoint};
+        const auto landmark = landmarks[match.fromIndex];
+        KeypointLandmarkMatch<Eigen::Vector2f, Vector3> landmarkMatch = {keypointMatch, landmark};
+
+        result.push_back(landmarkMatch);
+    }
+
+    return result;
+}
+
+std::pair<std::vector<KeypointDescriptor<Eigen::Vector2f, float>>, std::vector<std::shared_ptr<rgbd::Landmark>>>
+RgbdFeatureFrontend::getLandmarksWithKeypoints(std::shared_ptr<rgbd::Keyframe> keyframe)
+{
+    std::vector<std::shared_ptr<rgbd::Landmark>> keyframeLandmarks = keyframesWithLandmarks[keyframe];
+    std::vector<KeypointDescriptor<Eigen::Vector2f, float>> keypoints;
+
+    for(auto landmark : keyframeLandmarks)
+    {
+        const auto keypoint = landmarkDescriptors.find(landmark);
+        keypoints.push_back(keypoint->second);
+    }
+
+    return std::make_pair(keypoints, keyframeLandmarks);
+}
+
 std::shared_ptr<RgbdFeatureFrontend::Constraints>
-RgbdFeatureFrontend::track(const RgbdFrame& sensorData, std::shared_ptr<rgbd::FeatureInterface>& features)
+RgbdFeatureFrontend::track(const RgbdFrame& sensorData,
+                           const std::vector<KeypointDescriptor<Eigen::Vector2f, float>>& keypoints)
 {
     auto trackConstraints = std::make_shared<BasicConstraints>();
-    const auto matchedLandmarks = referenceKeyframeData.features->matchLandmarks(*features);
+    const auto matchedLandmarks = matchLandmarks(keypoints);
     auto points = pointsFromRgbdKeypoints(sensorData.depth, matchedLandmarks);
 
     spdlog::debug("Points from RGBD keypoints {}, matchedLandmarks: {}", points.size(), matchedLandmarks.size());
@@ -269,13 +311,13 @@ RgbdFeatureFrontend::track(const RgbdFrame& sensorData, std::shared_ptr<rgbd::Fe
         if(bestReferenceKeyframe != nullptr)
         {
             referenceKeyframeData.keyframe = bestReferenceKeyframe;
-            referenceKeyframeData.features = m_keyframeFeatures[bestReferenceKeyframe];
+            // referenceKeyframeData.features = keyframeFeatures[bestReferenceKeyframe];
         }
     }
 
     if(isNewKeyframeRequired(pointsMatchedCount))
     {
-        auto newKeyframe = addKeyframe(sensorData, pose.value(), features);
+        auto newKeyframe = addKeyframe(sensorData, pose.value(), keypoints);
 
         for(const auto& [point, landmark] : boost::combine(cameraPointsForTracking, landmarksForTracking))
         {
@@ -284,12 +326,12 @@ RgbdFeatureFrontend::track(const RgbdFrame& sensorData, std::shared_ptr<rgbd::Fe
         }
 
         auto landmarksOnFrame = findVisibleLocalLandmarks(pose.value(), sensorData);
-        const auto newLandmarkKeypoints = findKeypointsForNewLandmarks(*features, landmarksOnFrame);
+        const auto newLandmarkKeypoints = findKeypointsForNewLandmarks(keypoints, landmarksOnFrame);
 
-        addNewLandmarks(newLandmarkKeypoints, newKeyframe, sensorData, trackConstraints, features);
+        addNewLandmarks(newLandmarkKeypoints, newKeyframe, sensorData, trackConstraints /*, keypoints*/);
         updateVisibleLandmarks(landmarksOnFrame, newKeyframe);
 
-        referenceKeyframeData.features = std::move(features);
+        // referenceKeyframeData.features = std::move(features);
         referenceKeyframeData.keyframe = std::move(newKeyframe);
     }
 
@@ -304,15 +346,15 @@ void RgbdFeatureFrontend::updateVisibleLandmarks(const std::vector<std::shared_p
 }
 
 void RgbdFeatureFrontend::addNewLandmarks(
-    const std::vector<KeypointDescriptor>& newLandmarkKeypoints, std::shared_ptr<rgbd::Keyframe> newKeyframe,
-    const RgbdFrame& sensorData, std::shared_ptr<ConstraintsInterface<slam3d::SensorState, Vector3>> constraints,
-    std::shared_ptr<rgbd::FeatureInterface> features)
+    const std::vector<KeypointDescriptor<Eigen::Vector2f, float>>& newLandmarkKeypoints,
+    std::shared_ptr<rgbd::Keyframe> newKeyframe, const RgbdFrame& sensorData,
+    std::shared_ptr<ConstraintsInterface<slam3d::SensorState, Vector3>> constraints)
 {
     const Eigen::Vector2f invFocal = 1.0f / sensorData.depth.cameraParameters.focal.array();
 
-    for(const auto& [landmarkKeypoint, descriptor] : newLandmarkKeypoints)
+    for(const auto& keypoint : newLandmarkKeypoints)
     {
-        const auto keypointCoordinate = landmarkKeypoint.coordinates.cast<int>();
+        const auto keypointCoordinate = keypoint.keypoint.coordinates.cast<int>();
         const auto landmarkCoordinatesInKeyframe =
             reconstructPoint(keypointCoordinate, getDepth(sensorData.depth, keypointCoordinate),
                              sensorData.depth.cameraParameters.principalPoint, invFocal);
@@ -320,38 +362,37 @@ void RgbdFeatureFrontend::addNewLandmarks(
         if(landmarkCoordinatesInKeyframe.has_value())
         {
             auto state = toGlobalCoordinates(landmarkCoordinatesInKeyframe.value(), newKeyframe->state);
-            auto landmark = addLandmark(newKeyframe, state, descriptor);
+            auto landmark = addLandmark(newKeyframe, state, keypoint);
 
             LandmarkConstraint<slam3d::SensorState, Vector3> landmarkConstraint{newKeyframe, landmark,
                                                                                 landmarkCoordinatesInKeyframe.value()};
             constraints->addConstraint(landmarkConstraint);
-            features->bindLandmark(landmarkKeypoint, landmark);
+            bindLandmark(keypoint, landmark);
         }
     }
 }
 
 std::shared_ptr<RgbdFeatureFrontend::Constraints>
-RgbdFeatureFrontend::initFirstKeyframe(const RgbdFrame& sensorData, std::shared_ptr<rgbd::FeatureInterface> features)
+RgbdFeatureFrontend::initFirstKeyframe(const RgbdFrame& sensorData,
+                                       const std::vector<KeypointDescriptor<Eigen::Vector2f, float>>& keypoints)
 {
     auto constraints = std::make_shared<BasicConstraints>();
 
     const slam3d::SensorState pose = {Vector3(0, 0, 0), Quaternion{AngleAxis{0.0f, Vector3{0.0f, 0.0f, 1.0f}}}};
-    auto keyframe = addKeyframe(sensorData, pose, features);
+    auto keyframe = addKeyframe(sensorData, pose, keypoints);
     const Eigen::Vector2f invFocal = 1.0 / sensorData.depth.cameraParameters.focal.array();
 
-    const auto keypoints = features->keypoints();
-    const auto descriptors = features->descriptors();
-    for(const auto& [keypoint, descriptor] : boost::combine(keypoints, descriptors))
+    for(const auto& keypointWithDescriptor : keypoints)
     {
-        const auto keypointCoordinates = keypoint.coordinates.cast<int>();
+        const auto keypointCoordinates = keypointWithDescriptor.keypoint.coordinates.cast<int>();
         const auto landmarkCoordinates =
             reconstructPoint(keypointCoordinates, getDepth(sensorData.depth, keypointCoordinates),
                              sensorData.depth.cameraParameters.principalPoint, invFocal);
 
         if(landmarkCoordinates.has_value())
         {
-            auto landmark = addLandmark(keyframe, landmarkCoordinates.value(), descriptor);
-            features->bindLandmark(keypoint, landmark);
+            auto landmark = addLandmark(keyframe, landmarkCoordinates.value(), keypointWithDescriptor);
+            bindLandmark(keypointWithDescriptor, landmark);
 
             LandmarkConstraint<slam3d::SensorState, Vector3> landmarkConstraint{keyframe, landmark,
                                                                                 landmarkCoordinates.value()};
@@ -360,7 +401,6 @@ RgbdFeatureFrontend::initFirstKeyframe(const RgbdFrame& sensorData, std::shared_
     }
 
     constraints->setState(pose);
-    referenceKeyframeData.features = std::move(features);
     referenceKeyframeData.keyframe = std::move(keyframe);
 
     return constraints;
@@ -379,7 +419,7 @@ RgbdFeatureFrontend::findVisibleLocalLandmarks(const slam3d::SensorState& pose, 
 {
     std::vector<std::shared_ptr<rgbd::Landmark>> localLandmarks;
 
-    boost::copy(boost::adaptors::keys(referenceKeyframeData.landmarkDescriptors) |
+    boost::copy(landmarks |
                     boost::adaptors::filtered(
                         [&cameraParameters = sensorData.depth.cameraParameters, &imgSize = sensorData.depth.size,
                          &pose](const std::shared_ptr<rgbd::Landmark> landmark)
@@ -390,27 +430,25 @@ RgbdFeatureFrontend::findVisibleLocalLandmarks(const slam3d::SensorState& pose, 
     return localLandmarks;
 }
 
-std::vector<KeypointDescriptor>
-RgbdFeatureFrontend::findKeypointsForNewLandmarks(const rgbd::FeatureInterface& features,
-                                                  const boost::span<std::shared_ptr<rgbd::Landmark>> landmarks) const
+std::vector<KeypointDescriptor<Eigen::Vector2f, float>> RgbdFeatureFrontend::findKeypointsForNewLandmarks(
+    const std::vector<KeypointDescriptor<Eigen::Vector2f, float>>& keypoints,
+    const boost::span<std::shared_ptr<rgbd::Landmark>> landmarks) const
 {
-    std::vector<Descriptor> localLandmarksDescriptors;
+    std::vector<KeypointDescriptor<Eigen::Vector2f, float>> localLandmarksDescriptors;
     localLandmarksDescriptors.reserve(landmarks.size());
 
-    std::transform(std::begin(landmarks), std::end(landmarks), std::back_inserter(localLandmarksDescriptors),
-                   [&landmarkDescriptors = referenceKeyframeData.landmarkDescriptors](
-                       const std::shared_ptr<Landmark<Eigen::Vector3f>>& landmark)
-                   {
-                       auto it = landmarkDescriptors.find(landmark);
-                       return it->second;
-                   });
+    std::transform(
+        std::begin(landmarks), std::end(landmarks), std::back_inserter(localLandmarksDescriptors),
+        [&landmarkDescriptors = landmarkDescriptors](const std::shared_ptr<Landmark<Eigen::Vector3f>>& landmark)
+        {
+            auto it = landmarkDescriptors.find(landmark);
+            return it->second;
+        });
 
-    auto matches = features.match(localLandmarksDescriptors);
-    auto allKeypoints = features.keypoints();
-    auto allDescriptors = features.descriptors();
+    auto matches = matcher->match(localLandmarksDescriptors, keypoints);
 
     std::vector<std::size_t> allIndices, matchedIndices, newKeypointsIndices;
-    allIndices.resize(allKeypoints.size());
+    allIndices.resize(keypoints.size());
     std::iota(std::begin(allIndices), std::end(allIndices), 0);
 
     std::transform(std::begin(matches), std::end(matches), std::back_inserter(matchedIndices),
@@ -419,46 +457,31 @@ RgbdFeatureFrontend::findKeypointsForNewLandmarks(const rgbd::FeatureInterface& 
     std::set_difference(std::begin(allIndices), std::end(allIndices), std::begin(matchedIndices),
                         std::end(matchedIndices), std::back_inserter(newKeypointsIndices));
 
-    std::vector<KeypointDescriptor> newKeypoints;
+    std::vector<KeypointDescriptor<Eigen::Vector2f, float>> newKeypoints;
     std::transform(std::begin(newKeypointsIndices), std::end(newKeypointsIndices), std::back_inserter(newKeypoints),
-                   [&keypoints = allKeypoints, &descriptors = allDescriptors](std::size_t index)
-                   {
-                       KeypointDescriptor kd = {keypoints[index], descriptors[index]};
-                       return kd;
-                   });
+                   [&keypoints](std::size_t index) { return keypoints[index]; });
 
     return newKeypoints;
 }
 
-std::shared_ptr<rgbd::Landmark> RgbdFeatureFrontend::addLandmark(std::shared_ptr<rgbd::Keyframe> keyframe,
-                                                                 const Vector3& state, const Descriptor& descriptor)
+std::shared_ptr<rgbd::Landmark>
+RgbdFeatureFrontend::addLandmark(std::shared_ptr<rgbd::Keyframe> keyframe, const Vector3& state,
+                                 const KeypointDescriptor<Eigen::Vector2f, float>& keypoint)
 {
     auto newLandmark = std::make_shared<rgbd::Landmark>();
     newLandmark->state = state;
-    m_landmarks.push_back(newLandmark);
+    landmarks.push_back(newLandmark);
 
-    addLandmarkDescriptor(newLandmark, descriptor);
+    bindLandmark(keypoint, newLandmark);
     markLandmarkInKeyframe(newLandmark, keyframe);
 
     return newLandmark;
 }
 
-void RgbdFeatureFrontend::addLandmarkDescriptor(std::shared_ptr<rgbd::Landmark> landmark, const Descriptor& descriptor)
+void RgbdFeatureFrontend::bindLandmark(const KeypointDescriptor<Eigen::Vector2f, float> keypointWithDescriptor,
+                                       std::shared_ptr<rgbd::Landmark> landmark)
 {
-    const auto descriptorSize = descriptor.descriptor.size();
-    const auto freeDescriptorCapacity = keypointsDescriptorData.capacity() - keypointsDescriptorData.size();
-
-    if(freeDescriptorCapacity < descriptorSize)
-    {
-        // updateDescriptors();
-        throw "Not implemented yet!";
-    }
-
-    auto it = keypointsDescriptorData.insert(std::end(keypointsDescriptorData), std::begin(descriptor.descriptor),
-                                             std::end(descriptor.descriptor));
-
-    Descriptor newDescriptor{descriptor.keypointId, boost::span<const float>(&(*it), descriptor.descriptor.size())};
-    referenceKeyframeData.landmarkDescriptors.insert(std::make_pair(landmark, newDescriptor));
+    landmarkDescriptors.insert(std::make_pair(landmark, keypointWithDescriptor));
 }
 
 void RgbdFeatureFrontend::markLandmarkInKeyframe(std::shared_ptr<rgbd::Landmark> landmark,

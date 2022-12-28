@@ -15,18 +15,18 @@
 namespace mslam
 {
 
-enum class FeatureType
-{
-    Orb,
-    Sift,
-    Surf
-};
-
 template <typename CoordinatesType>
 struct Keypoint
 {
     Id id;
     CoordinatesType coordinates;
+};
+
+template <typename CoordinatesType, typename DescriptorType, int Length = 32>
+struct KeypointDescriptor
+{
+    Keypoint<CoordinatesType> keypoint;
+    std::array<DescriptorType, Length> descriptor;
 };
 
 template <typename CoordinatesType>
@@ -49,83 +49,24 @@ struct KeypointLandmarkMatch
     std::shared_ptr<Landmark<LandmarkStateType>> landmark;
 };
 
-template <int N = 32>
-using DescriptorArray = std::array<float, N>;
-
-struct Descriptor
-{
-    Id keypointId;
-    boost::span<const float> descriptor;
-};
-
-template <typename CoordinatesType = Eigen::Vector2f, typename LandmarkStateType = Vector3>
-class FeatureInterface
+template <typename SensorData, typename KeypointCoordinatesType, typename DescriptorType, int Length>
+class IFeatureDetector
 {
   public:
-    virtual std::vector<KeypointMatch<CoordinatesType>> match(FeatureInterface& features) const = 0;
-    virtual std::vector<KeypointMatch<CoordinatesType>> match(boost::span<const Keypoint<CoordinatesType>> keypoints,
-                                                              boost::span<const Descriptor> descriptors) const = 0;
-
-    virtual std::vector<DescriptorMatch> match(boost::span<const Descriptor> descriptors) const = 0;
-    virtual std::vector<Keypoint<CoordinatesType>> keypoints() const = 0;
-    virtual std::vector<Descriptor> descriptors() const = 0;
-    virtual int type() const = 0;
-    virtual ~FeatureInterface() {}
-
-    std::vector<KeypointLandmarkMatch<CoordinatesType, LandmarkStateType>> matchLandmarks(FeatureInterface& features);
-    void bindLandmark(const Keypoint<CoordinatesType>& keypoint, std::shared_ptr<Landmark<LandmarkStateType>> landmark);
-
-  protected:
-    std::map<Id, std::shared_ptr<Landmark<LandmarkStateType>>> landmarks;
-};
-
-template <typename SensorData, typename CoordinatesType = Eigen::Vector2f, typename LandmarkStateType = Vector3>
-class FeatureDetectorInterface
-{
-  public:
-    virtual std::unique_ptr<FeatureInterface<CoordinatesType, LandmarkStateType>>
+    virtual std::vector<KeypointDescriptor<KeypointCoordinatesType, DescriptorType, Length>>
     detect(const SensorData& sensorData) = 0;
-    virtual ~FeatureDetectorInterface() {}
+    virtual ~IFeatureDetector() {}
 };
 
-template <typename CoordinatesType, typename LandmarkStateType>
-std::vector<KeypointLandmarkMatch<CoordinatesType, LandmarkStateType>>
-FeatureInterface<CoordinatesType, LandmarkStateType>::matchLandmarks(FeatureInterface& features)
-{
-    const auto matchedKeypoints = match(features);
-    std::vector<KeypointLandmarkMatch<CoordinatesType, LandmarkStateType>> matches;
-
-    matches.reserve(matchedKeypoints.size());
-    std::transform(std::cbegin(matchedKeypoints), std::cend(matchedKeypoints), std::back_inserter(matches),
-                   [&landmarks = landmarks](const KeypointMatch<Eigen::Vector2f>& keypointMatch)
-                   {
-                       KeypointLandmarkMatch<CoordinatesType, LandmarkStateType> match;
-
-                       auto foundLandmarkIt = landmarks.find(keypointMatch.refKeypoint.id);
-                       match.match = keypointMatch;
-                       match.landmark = foundLandmarkIt == std::end(landmarks) ? nullptr : foundLandmarkIt->second;
-
-                       return match;
-                   });
-
-    return matches;
-}
-
-template <typename CoordinatesType, typename LandmarkStateType>
-void FeatureInterface<CoordinatesType, LandmarkStateType>::bindLandmark(
-    const Keypoint<CoordinatesType>& keypoint, std::shared_ptr<Landmark<LandmarkStateType>> landmark)
-{
-    landmarks[keypoint.id] = landmark;
-}
-
-template <typename SensorData, typename CoordinatesType = Eigen::Vector2f, typename LandmarkStateType = Vector3>
-class FeatureToLandmarkStore
+template <typename KeypointCoordinatesType, typename DescriptorType, int Length>
+class IFeatureMatcher
 {
   public:
-    std::vector<Landmark<LandmarkStateType>> matchLandmarks(const cv::Mat& descriptors);
-    void bindLandmarkWithDescriptor(std::shared_ptr<Landmark<LandmarkStateType>> landmark, const cv::Mat descriptor);
+    virtual std::vector<DescriptorMatch> match(
+        const std::vector<KeypointDescriptor<KeypointCoordinatesType, DescriptorType, Length>>& firstDescriptors,
+        const std::vector<KeypointDescriptor<KeypointCoordinatesType, DescriptorType, Length>>& secondDescriptors) = 0;
+    virtual ~IFeatureMatcher() {}
 };
-
 } // namespace mslam
 
 #endif // MSLAM_FEATURE_INTERFACE_HPP_
