@@ -7,6 +7,7 @@
 #include <cstdint>
 
 #include <iostream>
+#include <spdlog/spdlog.h>
 
 namespace mslam
 {
@@ -48,6 +49,11 @@ bool RealSenseCamera::fetch()
     newRgbdFrame->depth.cameraParameters.principalPoint = {intrinsics.ppx, intrinsics.ppy};
     newRgbdFrame->depth.cameraParameters.factor = 0.001f;
 
+    // spdlog::info("f: {}, {} c: {}, {}, model: {} coeffs:  {} {} {} {} {}", intrinsics.fx, intrinsics.fy,
+    // intrinsics.ppx,
+    //              intrinsics.ppy, intrinsics.model, intrinsics.coeffs[0], intrinsics.coeffs[1], intrinsics.coeffs[2],
+    //              intrinsics.coeffs[3], intrinsics.coeffs[4]);
+
     rs2::video_frame rgb_frame = frames.first(RS2_STREAM_COLOR);
     rs2::depth_frame depth_frame = frames.first(RS2_STREAM_DEPTH);
 
@@ -56,8 +62,9 @@ bool RealSenseCamera::fetch()
 
     auto rgbMemorySize =
         static_cast<std::size_t>(rgb_frame.get_height() * rgb_frame.get_width() * rgb_frame.get_bytes_per_pixel());
-    auto depthMemorySize = static_cast<std::size_t>(depth_frame.get_height() * depth_frame.get_width() *
-                                                    depth_frame.get_bytes_per_pixel());
+    auto depthMemorySize = static_cast<std::size_t>(depth_frame.get_height() * depth_frame.get_width());
+
+    // assert(depthMemorySize == depth_frame.get_data_size());
 
     newRgbdFrame->rgb.data.resize(rgbMemorySize);
     newRgbdFrame->depth.data.resize(depthMemorySize);
@@ -66,7 +73,7 @@ bool RealSenseCamera::fetch()
     newRgbdFrame->depth.size.height = depth_frame.get_height();
     newRgbdFrame->depth.size.width = depth_frame.get_width();
 
-    std::copy_n(reinterpret_cast<const uint16_t*>(depth_frame.get_data()), depth_frame.get_data_size(),
+    std::copy_n(reinterpret_cast<const uint16_t*>(depth_frame.get_data()), depthMemorySize,
                 newRgbdFrame->depth.data.begin());
 
     cv::Mat rgbMatFrame{rgb_frame.get_height(), rgb_frame.get_width(), CV_8UC3,

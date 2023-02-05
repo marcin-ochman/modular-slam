@@ -6,7 +6,7 @@
 #include <glm/vec3.hpp>
 #include <optional>
 
-PointcloudViewer::PointcloudViewer(QWidget* parent) : QOpenGLWidget(parent), camera{glm::vec3(0, 0, 13)}
+PointcloudViewer::PointcloudViewer(QWidget* parent) : QOpenGLWidget(parent), camera{glm::vec3(0, 0, 10)}
 {
     setMouseTracking(true);
 }

@@ -107,7 +107,7 @@ void PointCloudDrawable::draw(QOpenGLFunctions& gl, const QMatrix4x4& projection
 {
     QMatrix4x4 model;
     model.setToIdentity();
-    model.rotate(180, 1, 0, 0);
+    // model.rotate(180, 1, 0, 0);
     vertexBuffer->bind();
     shader.bind();
     shader.enableAttributeArray("pos");

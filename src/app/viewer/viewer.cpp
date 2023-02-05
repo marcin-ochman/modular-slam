@@ -7,12 +7,15 @@
 #include <iostream>
 #include <limits>
 
+#include "modular_slam/basic_feature_map_components_factory.hpp"
+#include "modular_slam/basic_map.hpp"
 #include "modular_slam/basic_parameters_handler.hpp"
 #include "modular_slam/basic_types.hpp"
 #include "modular_slam/ceres_backend.hpp"
+#include "modular_slam/ceres_reprojection_error_pnp.hpp"
+#include "modular_slam/cv_ransac_pnp.hpp"
 #include "modular_slam/data_provider.hpp"
 #include "modular_slam/frontend/rgbd_feature_frontend.hpp"
-#include "modular_slam/min_mse_tracker.hpp"
 #include "modular_slam/orb_feature.hpp"
 #include "modular_slam/realsense_camera.hpp"
 #include "modular_slam/rgbd_file_provider.hpp"
@@ -26,6 +29,9 @@
 #include "slam_thread.hpp"
 
 #include <QPixmap>
+#include <memory>
+#include <spdlog/cfg/env.h>
+#include <spdlog/spdlog.h>
 
 struct ViewerArgs
 {
@@ -67,20 +73,24 @@ auto buildSlam(const ViewerArgs& args)
         dataProvider = std::make_shared<mslam::RgbdFileProvider>(rgbdPaths, mslam::tumRgbdCameraParams());
     }
 
-    auto frontend = std::make_shared<mslam::RgbdFeatureFrontend>(std::make_shared<mslam::MinMseTracker>(),
-                                                                 std::make_shared<mslam::OrbOpenCvDetector>(),
-                                                                 std::make_shared<mslam::OrbOpenCvMatcher>());
+    auto frontend = std::make_shared<mslam::RgbdFeatureFrontend>(
+        std::make_shared<mslam::OpenCvRansacPnp>(), std::make_shared<mslam::OrbOpenCvDetector>(),
+        std::make_shared<mslam::OrbOpenCvMatcher>(), std::make_shared<mslam::BasicFeatureMapComponentsFactory>());
 
     slamBuilder.addParameterHandler(std::make_shared<mslam::BasicParameterHandler>())
         .addDataProvider(dataProvider)
         .addFrontend(frontend)
-        .addBackend(std::make_shared<mslam::CeresBackend>());
+        .addBackend(std::make_shared<mslam::CeresBackend>())
+        // .addMap(std::make_shared<mslam::BasicMap>())
+        ;
 
     return slamBuilder.build();
 }
 
 int main(int argc, char* argv[])
 {
+    spdlog::cfg::load_env_levels();
+
     QApplication::setApplicationName("Modular SLAM Viewer");
     QApplication::setApplicationVersion("1.0");
 
@@ -90,7 +100,7 @@ int main(int argc, char* argv[])
 
     auto slam = buildSlam(args);
 
-    auto mainWindow = new mslam::ViewerMainWindow{};
+    auto mainWindow = new mslam::ViewerMainWindow();
     SlamThread* slamThread = new SlamThread(mainWindow);
     slamThread->setSlam(std::move(slam));
     slamThread->start();

@@ -47,10 +47,8 @@ class ConstraintsInterface
     virtual void visitConstraints(ConstraintVisitor<SensorStateType, LandmarkStateType, KeyframeConstraintType,
                                                     LandmarkConstraintType>& visitor) = 0;
 
-    // virtual void visitLandmarkConstraints(
-    //     LandmarkConstraintVisitor<SensorStateType, LandmarkStateType, LandmarkConstraintType>& visitor) = 0;
-    // virtual void visitKeyframeConstraints(
-    //     KeyframeConstraintVisitor<SensorStateType, LandmarkStateType, KeyframeConstraintType>& visitor) = 0;
+    virtual bool removeKeyframe(const Keyframe<SensorStateType>& keyframe) = 0;
+    virtual bool removeLandmark(const Landmark<LandmarkStateType>& landmark) = 0;
 
     virtual ~ConstraintsInterface() {}
 };

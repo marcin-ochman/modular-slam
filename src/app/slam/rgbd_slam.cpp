@@ -1,9 +1,11 @@
+#include "modular_slam/basic_feature_map_components_factory.hpp"
 #include "modular_slam/basic_parameters_handler.hpp"
 #include "modular_slam/basic_types.hpp"
 #include "modular_slam/ceres_backend.hpp"
+#include "modular_slam/ceres_reprojection_error_pnp.hpp"
+#include "modular_slam/cv_ransac_pnp.hpp"
 #include "modular_slam/data_provider.hpp"
 #include "modular_slam/frontend/rgbd_feature_frontend.hpp"
-#include "modular_slam/min_mse_tracker.hpp"
 #include "modular_slam/orb_feature.hpp"
 #include "modular_slam/realsense_camera.hpp"
 #include "modular_slam/rgbd_file_provider.hpp"
@@ -23,6 +25,8 @@
 #include <QCommandLineParser>
 #include <optional>
 #include <ostream>
+#include <spdlog/cfg/env.h>
+#include <spdlog/spdlog.h>
 
 struct RgbdSlamProgramArgs
 {
@@ -49,6 +53,8 @@ RgbdSlamProgramArgs parseArgs(QApplication& app)
 
 int main(int argc, char* argv[])
 {
+    spdlog::cfg::load_env_levels();
+
     QApplication::setApplicationName("Feature-based RGBD Modular SLAM");
     QApplication::setApplicationVersion("1.0");
     QApplication app{argc, argv};
@@ -65,9 +71,9 @@ int main(int argc, char* argv[])
         dataProvider = std::make_shared<mslam::RgbdFileProvider>(rgbdPaths, mslam::tumRgbdCameraParams());
     }
 
-    auto frontend = std::make_shared<mslam::RgbdFeatureFrontend>(std::make_shared<mslam::MinMseTracker>(),
-                                                                 std::make_shared<mslam::OrbOpenCvDetector>(),
-                                                                 std::make_shared<mslam::OrbOpenCvMatcher>());
+    auto frontend = std::make_shared<mslam::RgbdFeatureFrontend>(
+        std::make_shared<mslam::OpenCvRansacPnp>(), std::make_shared<mslam::OrbOpenCvDetector>(),
+        std::make_shared<mslam::OrbOpenCvMatcher>(), std::make_shared<mslam::BasicFeatureMapComponentsFactory>());
 
     slamBuilder.addParameterHandler(std::make_shared<mslam::BasicParameterHandler>())
         .addDataProvider(dataProvider)

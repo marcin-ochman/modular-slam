@@ -9,7 +9,11 @@
 #include <Eigen/src/Core/Matrix.h>
 #include <bits/chrono.h>
 #include <chrono>
+#include <glm/ext/matrix_transform.hpp>
+#include <glm/ext/scalar_constants.hpp>
 #include <glm/fwd.hpp>
+#include <glm/gtx/euler_angles.hpp>
+#include <glm/gtx/transform.hpp>
 #include <qmatrix4x4.h>
 
 QMatrix4x4 poseToQMatrix(const mslam::slam3d::SensorState& state)
@@ -26,6 +30,7 @@ QMatrix4x4 poseToQMatrix(const mslam::slam3d::SensorState& state)
         for(int j = 0; j < 4; j++)
             pose(i, j) = transformMatrix(i, j);
 
+    // pose.rotate(180, 1, 0, 0);
     return pose;
 }
 
@@ -93,6 +98,10 @@ void pointCloudFromRgbd(const mslam::RgbdFrame& rgbd, const mslam::rgbd::SensorS
     const auto pose = poseToGlmMat4(currentPose);
 
     constexpr float invMultiplier = 1 / 255.f;
+    const auto toGl =
+        // glm::rotate(glm::identity<glm::mat4>(), glm::pi<float>(), glm::vec3(1.f, 0.f, 0.f));
+        glm::eulerAngleZY(glm::radians(180.f), glm::radians(180.f));
+    // glm::scale(glm::vec3(1.f, -1.f, 1.f));
 
     std::size_t outIndex = 0;
     for(auto u = 0; u < depthFrame.size.width; ++u)
@@ -109,7 +118,7 @@ void pointCloudFromRgbd(const mslam::RgbdFrame& rgbd, const mslam::rgbd::SensorS
             const auto g = rgbd.rgb.data[index + 1] * invMultiplier;
             const auto r = rgbd.rgb.data[index + 2] * invMultiplier;
 
-            const glm::vec4 point{x, y, z, 1.0f};
+            const glm::vec4 point = toGl * glm::vec4{x, y, z, 1.0f};
             const glm::vec3 rgb{r, g, b};
 
             outPoints[outIndex] = pose * point;

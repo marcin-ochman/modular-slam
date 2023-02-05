@@ -82,7 +82,7 @@ SlamProcessResult Slam<SensorDataType, SensorStateType, LandmarkStateType>::proc
 
     state = constraints->currentState();
     backend->optimize(*constraints);
-    // map->update(*constraints);
+    // map->update(constraints);
 
     return SlamProcessResult::Success;
 }
