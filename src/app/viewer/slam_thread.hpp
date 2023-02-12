@@ -1,6 +1,13 @@
 #ifndef SLAM_THREAD_H_
 #define SLAM_THREAD_H_
 
+#include "modular_slam/depth_frame.hpp"
+#include "modular_slam/realsense_camera.hpp"
+#include "modular_slam/rgbd_frame.hpp"
+#include "modular_slam/slam.hpp"
+#include "modular_slam/slam3d_types.hpp"
+#include "pointcloud_viewer.hpp"
+#include "slam_statistics.hpp"
 #include <QImage>
 #include <QPixmap>
 #include <QThread>
@@ -8,29 +15,16 @@
 #include <QVector>
 #include <glm/fwd.hpp>
 #include <glm/vec3.hpp>
-#include <set>
-
-#include "modular_slam/depth_frame.hpp"
-#include "modular_slam/keyframe.hpp"
-#include "modular_slam/realsense_camera.hpp"
-#include "modular_slam/rgbd_frame.hpp"
-#include "modular_slam/slam.hpp"
-#include "modular_slam/slam3d_types.hpp"
-#include "pointcloud_viewer.hpp"
-#include "slam_statistics.hpp"
-
-#include <QDebug>
-#include <qobject.h>
 
 class SlamThread : public QThread
 {
     Q_OBJECT
 
   public:
-    SlamThread(QObject* parent);
+    explicit SlamThread(QObject* parent);
     void setSlam(std::unique_ptr<mslam::Slam<mslam::RgbdFrame, mslam::slam3d::SensorState, Eigen::Vector3f>>&& newSlam)
     {
-        m_slam = std::move(newSlam);
+        slam = std::move(newSlam);
     }
 
   public slots:
@@ -49,10 +43,10 @@ class SlamThread : public QThread
     void keyframeAdded(const KeyframeViewData& keyframe);
 
   private:
-    bool isRunning;
-    bool isPaused;
-    std::unique_ptr<mslam::Slam<mslam::RgbdFrame, mslam::slam3d::SensorState, Eigen::Vector3f>> m_slam;
-    std::shared_ptr<mslam::RgbdFrame> m_frame;
+    std::atomic<bool> isRunning;
+    std::atomic<bool> isPaused;
+    std::unique_ptr<mslam::Slam<mslam::RgbdFrame, mslam::slam3d::SensorState, Eigen::Vector3f>> slam;
+    std::shared_ptr<mslam::RgbdFrame> frame;
 };
 
 #endif // SLAM_THREAD_H_

@@ -28,6 +28,9 @@ class ViewerMainWindow : public QMainWindow
     void setSlamStatistics(const SlamStatistics& newSlamStats) { ui->slamStatsViewer->setSlamStatistics(newSlamStats); }
     void addKeyframe(const KeyframeViewData& keyframe) { ui->pointcloudViewer->addKeyframe(keyframe); }
 
+  protected:
+    void closeEvent(QCloseEvent* event) override;
+
   signals:
     void paused();
     void resumed();
@@ -36,6 +39,8 @@ class ViewerMainWindow : public QMainWindow
     void onPauseResume();
 
   private:
+    void saveSettings();
+    void loadSettings();
     bool isPaused = false;
     std::unique_ptr<Ui::ViewerMainWindow> ui;
 };

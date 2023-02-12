@@ -7,6 +7,7 @@
 #include "modular_slam/frontend_interface.hpp"
 #include "modular_slam/keyframe.hpp"
 #include "modular_slam/landmark.hpp"
+#include "modular_slam/loop_detection.hpp"
 #include "modular_slam/map_interface.hpp"
 #include "modular_slam/orb_feature.hpp"
 #include "modular_slam/pnp.hpp"
@@ -36,7 +37,7 @@ class RgbdFeatureFrontend : public FrontendInterface<RgbdFrame, slam3d::SensorSt
         std::shared_ptr<IPnpAlgorithm<slam3d::SensorState, Vector3>> tracker,
         std::shared_ptr<IFeatureDetector<RgbFrame, Eigen::Vector2f, float, 32>> detector,
         std::shared_ptr<IFeatureMatcher<Eigen::Vector2f, float, 32>> matcher,
-        std::shared_ptr<IFeatureMapComponentsFactory<slam3d::SensorState, slam3d::LandmarkState>> mapComponentsFactory);
+        std::shared_ptr<IMapComponentsFactory<slam3d::SensorState, slam3d::LandmarkState>> mapComponentsFactory);
 
     std::shared_ptr<Constraints> prepareConstraints(const RgbdFrame& sensorData) override;
     bool init() override;
@@ -68,7 +69,7 @@ class RgbdFeatureFrontend : public FrontendInterface<RgbdFrame, slam3d::SensorSt
     findKeypointsForNewLandmarks(const std::vector<KeypointDescriptor<Eigen::Vector2f, float>>& keypoints,
                                  const boost::span<std::shared_ptr<rgbd::Landmark>> landmarks) const;
 
-    std::shared_ptr<rgbd::Landmark> addLandmark(std::shared_ptr<rgbd::Keyframe>, const Vector3& state,
+    std::shared_ptr<rgbd::Landmark> addLandmark(std::shared_ptr<rgbd::Keyframe>&, const Vector3& state,
                                                 const KeypointDescriptor<Eigen::Vector2f, float>& keypoint);
 
     void bindLandmark(const KeypointDescriptor<Eigen::Vector2f, float>& keypointWithDescriptor,
@@ -81,20 +82,22 @@ class RgbdFeatureFrontend : public FrontendInterface<RgbdFrame, slam3d::SensorSt
                          std::shared_ptr<ConstraintsInterface<slam3d::SensorState, Vector3>> constraints);
 
     void updateVisibleLandmarks(const std::vector<std::shared_ptr<rgbd::Landmark>>& landmarksOnFrame,
-                                const std::shared_ptr<rgbd::Keyframe> keyframe);
+                                const std::shared_ptr<rgbd::Keyframe>& keyframe);
 
     std::vector<KeypointLandmarkMatch<Eigen::Vector2f, Vector3>>
     matchLandmarks(const std::vector<KeypointDescriptor<Eigen::Vector2f, float>>& keypoints);
 
     std::pair<std::vector<KeypointDescriptor<Eigen::Vector2f, float>>, std::vector<std::shared_ptr<rgbd::Landmark>>>
     getLandmarksWithKeypoints(std::shared_ptr<rgbd::Keyframe> keyframe);
+    void closeLoop(std::shared_ptr<Keyframe<slam3d::SensorState>>& loopCandidate);
 
   private:
     // algorithms
     std::shared_ptr<IFeatureDetector<RgbFrame, Eigen::Vector2f, float, 32>> detector;
     std::shared_ptr<IFeatureMatcher<Eigen::Vector2f, float, 32>> matcher;
     std::shared_ptr<IPnpAlgorithm<slam3d::SensorState, Vector3>> tracker;
-    std::shared_ptr<IFeatureMapComponentsFactory<slam3d::SensorState, slam3d::LandmarkState>> mapComponentsFactory;
+    std::shared_ptr<IMapComponentsFactory<slam3d::SensorState, slam3d::LandmarkState>> mapComponentsFactory;
+    std::shared_ptr<ILoopDetector<slam3d::SensorState>> loopDetector;
 
     // local map/graph data
     std::shared_ptr<rgbd::Keyframe> referenceKeyframe;

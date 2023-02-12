@@ -37,8 +37,7 @@ qt_add_executable(
   viewer/viewer.cpp
   viewer/viewer_main_window.cpp
   viewer/slam_statistics_widget.cpp
-  viewer/slam_thread.cpp
-  viewer/keyframe_thumbnail.cpp)
+  viewer/slam_thread.cpp)
 
 add_executable(ModularSlam::Viewer ALIAS Viewer)
 target_include_directories(Viewer PRIVATE ${CMAKE_CURRENT_BINARY_DIR}

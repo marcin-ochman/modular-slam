@@ -8,5 +8,8 @@
     <file alias="thumbnail.glsl">../shaders/thumbnail.glsl</file>
     <file alias="thumbnail_fragment.glsl">../shaders/thumbnail_fragment.glsl</file>
 
+    <file alias="wireframe.glsl">../shaders/wireframe.glsl</file>
+    <file alias="wireframe_fragment.glsl">../shaders/wireframe_fragment.glsl</file>
+
   </qresource>
 </RCC>

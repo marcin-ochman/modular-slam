@@ -81,8 +81,7 @@ auto buildSlam(const ViewerArgs& args)
         .addDataProvider(dataProvider)
         .addFrontend(frontend)
         .addBackend(std::make_shared<mslam::CeresBackend>())
-        // .addMap(std::make_shared<mslam::BasicMap>())
-        ;
+        .addMap(std::make_shared<mslam::BasicMap>());
 
     return slamBuilder.build();
 }

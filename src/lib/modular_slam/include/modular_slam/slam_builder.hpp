@@ -13,7 +13,7 @@ class SlamBuilder
   public:
     using FrontendInterfaceType = FrontendInterface<SensorDataType, SensorStateType, LandmarkStateType>;
     using BackendInterfaceType = BackendInterface<SensorStateType, LandmarkStateType>;
-    using MapType = MapInterface<SensorStateType, LandmarkStateType>;
+    using MapType = IMap<SensorStateType, LandmarkStateType>;
     using SlamType = Slam<SensorDataType, SensorStateType, LandmarkStateType>;
 
     std::unique_ptr<SlamType> build();

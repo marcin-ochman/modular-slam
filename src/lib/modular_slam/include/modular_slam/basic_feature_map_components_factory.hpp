@@ -6,7 +6,7 @@
 
 namespace mslam
 {
-class BasicFeatureMapComponentsFactory : public IFeatureMapComponentsFactory<slam3d::SensorState, slam3d::LandmarkState>
+class BasicFeatureMapComponentsFactory : public IMapComponentsFactory<slam3d::SensorState, slam3d::LandmarkState>
 {
   public:
     std::shared_ptr<Landmark<slam3d::LandmarkState>> createLandmark() override;

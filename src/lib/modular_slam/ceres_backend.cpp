@@ -58,12 +58,12 @@ struct SnavelyReprojectionError
     double observed_y;
 };
 
-class CeresVisitor : public ConstraintVisitor<slam3d::SensorState, Vector3>
+class CeresVisitor : public IConstraintVisitor<slam3d::SensorState, Vector3>
 {
   public:
     CeresVisitor();
     void visit(const KeyframeConstraint<slam3d::SensorState, Vector3>& constraint) override;
-    void visit(const LandmarkConstraint<slam3d::SensorState, Vector3>& constraint) override;
+    void visit(const LandmarkObservationConstraint<slam3d::SensorState, Vector3>& constraint) override;
 
     void reset() { problem.reset(new ceres::Problem()); }
 
@@ -76,7 +76,7 @@ class CeresVisitor : public ConstraintVisitor<slam3d::SensorState, Vector3>
 CeresVisitor::CeresVisitor() : problem(new ceres::Problem()) {}
 
 void CeresVisitor::visit(const KeyframeConstraint<slam3d::SensorState, Vector3>& constraint) {}
-void CeresVisitor::visit(const LandmarkConstraint<slam3d::SensorState, Vector3>& constraint) {}
+void CeresVisitor::visit(const LandmarkObservationConstraint<slam3d::SensorState, Vector3>& constraint) {}
 
 void CeresBackend::optimize(ConstraintsInterface<mslam::slam3d::SensorState, mslam::Vector3>& constraints)
 {

@@ -10,12 +10,12 @@ mslam::OpenCvRansacPnp::solvePnp(const std::vector<std::shared_ptr<Landmark<Vect
                                  const std::vector<Vector2>& sensorPoints, const slam3d::SensorState& initial)
 {
 
-    cv::Mat objectPoints(landmarks.size(), 3, CV_32F);
+    cv::Mat objectPoints(static_cast<int>(landmarks.size()), 3, CV_32F);
 
-    for(auto i = 0; i < landmarks.size(); ++i)
+    for(std::size_t i = 0; i < landmarks.size(); ++i)
     {
         const auto& landmark = landmarks[i];
-        auto* rowPtr = objectPoints.ptr<float>(i);
+        auto* rowPtr = objectPoints.ptr<float>(static_cast<int>(i));
 
         rowPtr[0] = landmark->state.x();
         rowPtr[1] = landmark->state.y();
@@ -23,10 +23,10 @@ mslam::OpenCvRansacPnp::solvePnp(const std::vector<std::shared_ptr<Landmark<Vect
     }
 
     cv::Mat imagePoints(static_cast<int>(sensorPoints.size()), 2, CV_32F);
-    for(auto i = 0; i < sensorPoints.size(); ++i)
+    for(std::size_t i = 0; i < sensorPoints.size(); ++i)
     {
         const auto& point = sensorPoints[i];
-        auto* rowPtr = imagePoints.ptr<float>(i);
+        auto* rowPtr = imagePoints.ptr<float>(static_cast<int>(i));
 
         rowPtr[0] = point.x();
         rowPtr[1] = point.y();
@@ -41,8 +41,6 @@ mslam::OpenCvRansacPnp::solvePnp(const std::vector<std::shared_ptr<Landmark<Vect
 
     if(!success)
         return std::nullopt;
-
-    slam3d::SensorState result;
 
     const auto angle = cv::norm(cvRotation);
     Eigen::Matrix3f rotation =
@@ -60,6 +58,8 @@ mslam::OpenCvRansacPnp::solvePnp(const std::vector<std::shared_ptr<Landmark<Vect
     transform.block<3, 1>(0, 3) = translation.cast<float>();
 
     const auto invTransform = transform.inverse();
+
+    slam3d::SensorState result;
     result.orientation = invTransform.block<3, 3>(0, 0);
     result.position = invTransform.block<3, 1>(0, 3);
 

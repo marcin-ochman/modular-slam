@@ -107,7 +107,6 @@ void PointCloudDrawable::draw(QOpenGLFunctions& gl, const QMatrix4x4& projection
 {
     QMatrix4x4 model;
     model.setToIdentity();
-    // model.rotate(180, 1, 0, 0);
     vertexBuffer->bind();
     shader.bind();
     shader.enableAttributeArray("pos");
@@ -118,7 +117,6 @@ void PointCloudDrawable::draw(QOpenGLFunctions& gl, const QMatrix4x4& projection
     shader.setAttributeBuffer("color", GL_FLOAT, sizeof(glm::vec3), 3, 2 * sizeof(glm::vec3));
     shader.setUniformValue("mvp", projection * view * model);
 
-    const auto pointsSize = vertexBuffer->size() / static_cast<int>((2 * sizeof(glm::vec3)));
     gl.glDrawArrays(GL_POINTS, 0, pointsSize);
 
     shader.disableAttributeArray("pos");
@@ -131,11 +129,12 @@ void PointCloudDrawable::draw(QOpenGLFunctions& gl, const QMatrix4x4& projection
 void PointCloudDrawable::setPoints(const std::vector<glm::vec3>& newPoints)
 {
     const auto requiredSize = static_cast<int>(sizeof(newPoints[0]) * newPoints.size());
+
     vertexBuffer->bind();
     if(vertexBuffer->size() < requiredSize)
-        vertexBuffer->allocate(&newPoints[0], requiredSize);
-    else
-        vertexBuffer->write(0, &newPoints[0], requiredSize);
+        vertexBuffer->allocate(requiredSize);
 
+    vertexBuffer->write(0, newPoints.data(), requiredSize);
+    pointsSize = static_cast<int>(newPoints.size()) / 2;
     vertexBuffer->release();
 }

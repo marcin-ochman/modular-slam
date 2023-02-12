@@ -12,6 +12,7 @@
 class GlDrawable
 {
   public:
+    virtual ~GlDrawable() = default;
     virtual void draw(QOpenGLFunctions& gl, const QMatrix4x4& projection, const QMatrix4x4& view) = 0;
 };
 
@@ -36,8 +37,9 @@ class PointCloudDrawable : public GlDrawable
     void setPoints(const std::vector<glm::vec3>& newPoints);
 
   private:
+    int pointsSize = 0;
     QOpenGLShaderProgram shader;
-    QOpenGLBuffer* vertexBuffer;
+    QOpenGLBuffer* vertexBuffer = nullptr;
 };
 
 #endif // MSLAM_VIEWER_GRID_HPP_

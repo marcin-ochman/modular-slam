@@ -15,6 +15,12 @@ using SensorState = mslam::State<Vector3, Quaternion>;
 using LandmarkState = Vector3;
 using Keyframe = mslam::Keyframe<SensorState>;
 using Landmark = mslam::Landmark<Vector3>;
+
+namespace feature
+{
+
+}
+
 } // namespace slam3d
 
 } // namespace mslam

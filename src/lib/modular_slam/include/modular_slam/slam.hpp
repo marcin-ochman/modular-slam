@@ -27,7 +27,7 @@ class Slam
     using FrontendInterfaceType = FrontendInterface<SensorDataType, SensorStateType, LandmarkStateType>;
     using BackendInterfaceType = BackendInterface<SensorStateType, LandmarkStateType>;
     using SlamType = Slam<SensorDataType, SensorStateType, LandmarkStateType>;
-    using MapType = MapInterface<SensorStateType, LandmarkStateType>;
+    using MapType = IMap<SensorStateType, LandmarkStateType>;
 
     Slam(std::shared_ptr<ParametersHandlerInterface> parameterHandler,
          std::shared_ptr<DataProviderInterfaceType> dataProviderInterface,
@@ -43,17 +43,17 @@ class Slam
 
     virtual bool init();
     virtual SlamProcessResult process();
-    virtual const SensorStateType& currentState() { return state; }
-    virtual ~Slam() {}
+    const SensorStateType& currentState() { return state; }
+    virtual ~Slam() = default;
 
     std::shared_ptr<FrontendInterfaceType> frontend;
     std::shared_ptr<DataProviderInterface<SensorDataType>> dataProvider;
 
-  private:
     std::shared_ptr<ParametersHandlerInterface> parameterHandler;
     std::shared_ptr<MapType> map;
     std::shared_ptr<BackendInterfaceType> backend;
 
+  private:
     SensorStateType state;
 };
 
@@ -61,7 +61,7 @@ template <typename SensorDataType, typename SensorStateType, typename LandmarkSt
 bool Slam<SensorDataType, SensorStateType, LandmarkStateType>::init()
 {
     auto result =
-        parameterHandler->init() && dataProvider->init() && frontend->init() && backend->init() /* && map->init()*/;
+        parameterHandler->init() && dataProvider->init() && frontend->init() && backend->init() && map->init();
 
     return result;
 }
@@ -78,11 +78,14 @@ SlamProcessResult Slam<SensorDataType, SensorStateType, LandmarkStateType>::proc
     auto constraints = frontend->prepareConstraints(*sensorData);
 
     if(!constraints)
+    {
+        spdlog::error("No constraints available");
         return SlamProcessResult::NoConstraints;
+    }
 
     state = constraints->currentState();
     backend->optimize(*constraints);
-    // map->update(constraints);
+    map->update(constraints);
 
     return SlamProcessResult::Success;
 }

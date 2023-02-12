@@ -1,6 +1,7 @@
 #include "slam_thread.hpp"
 #include "modular_slam/basic_types.hpp"
 #include "modular_slam/frontend_interface.hpp"
+#include "modular_slam/map_interface.hpp"
 #include "modular_slam/rgbd_frame.hpp"
 #include "modular_slam/rgbd_slam_types.hpp"
 #include "modular_slam/slam3d_types.hpp"
@@ -14,6 +15,7 @@
 #include <glm/fwd.hpp>
 #include <glm/gtx/euler_angles.hpp>
 #include <glm/gtx/transform.hpp>
+#include <glm/matrix.hpp>
 #include <qmatrix4x4.h>
 
 QMatrix4x4 poseToQMatrix(const mslam::slam3d::SensorState& state)
@@ -30,7 +32,7 @@ QMatrix4x4 poseToQMatrix(const mslam::slam3d::SensorState& state)
         for(int j = 0; j < 4; j++)
             pose(i, j) = transformMatrix(i, j);
 
-    // pose.rotate(180, 1, 0, 0);
+    pose.rotate(180, 1, 0, 0);
     return pose;
 }
 
@@ -51,13 +53,11 @@ glm::mat4 poseToGlmMat4(const mslam::slam3d::SensorState& state)
     return pose;
 }
 
-class FrontendVisitor : public mslam::KeyframeVisitor<mslam::slam3d::SensorState>,
-                        public mslam::LandmarkVisitor<mslam::Vector3>
-
+class MapVisitor : public mslam::IMapVisitor<mslam::slam3d::SensorState, mslam::slam3d::LandmarkState>
 {
   public:
-    virtual void visit(std::shared_ptr<mslam::Landmark<mslam::Vector3>>&) override;
-    virtual void visit(std::shared_ptr<mslam::Keyframe<mslam::slam3d::SensorState>>&) override;
+    void visit(std::shared_ptr<mslam::slam3d::Landmark> landmark) override;
+    void visit(std::shared_ptr<mslam::slam3d::Keyframe> keyframe) override;
 
     void clearFlags() { keyframeAdded = nullptr; }
     std::shared_ptr<mslam::Keyframe<mslam::slam3d::SensorState>> recentlyKeyframeAdded() const;
@@ -68,12 +68,12 @@ class FrontendVisitor : public mslam::KeyframeVisitor<mslam::slam3d::SensorState
     std::shared_ptr<mslam::Keyframe<mslam::slam3d::SensorState>> keyframeAdded;
 };
 
-void FrontendVisitor::visit(std::shared_ptr<mslam::Landmark<mslam::Vector3>>& landmark)
+void MapVisitor::visit(std::shared_ptr<mslam::slam3d::Landmark> landmark)
 {
     landmarks.insert(landmark);
 }
 
-void FrontendVisitor::visit(std::shared_ptr<mslam::Keyframe<mslam::slam3d::SensorState>>& keyframe)
+void MapVisitor::visit(std::shared_ptr<mslam::slam3d::Keyframe> keyframe)
 {
     if(keyframes.find(keyframe) == std::end(keyframes))
     {
@@ -84,7 +84,7 @@ void FrontendVisitor::visit(std::shared_ptr<mslam::Keyframe<mslam::slam3d::Senso
 
 SlamThread::SlamThread(QObject* parent) : QThread(parent), isRunning(false), isPaused(false) {}
 
-std::shared_ptr<mslam::Keyframe<mslam::slam3d::SensorState>> FrontendVisitor::recentlyKeyframeAdded() const
+std::shared_ptr<mslam::Keyframe<mslam::slam3d::SensorState>> MapVisitor::recentlyKeyframeAdded() const
 {
     return keyframeAdded;
 }
@@ -98,48 +98,49 @@ void pointCloudFromRgbd(const mslam::RgbdFrame& rgbd, const mslam::rgbd::SensorS
     const auto pose = poseToGlmMat4(currentPose);
 
     constexpr float invMultiplier = 1 / 255.f;
-    const auto toGl =
-        // glm::rotate(glm::identity<glm::mat4>(), glm::pi<float>(), glm::vec3(1.f, 0.f, 0.f));
-        glm::eulerAngleZY(glm::radians(180.f), glm::radians(180.f));
-    // glm::scale(glm::vec3(1.f, -1.f, 1.f));
+    const auto toGl = glm::eulerAngleX(glm::radians(180.f));
+
+    const auto toGlPose = toGl * pose;
 
     std::size_t outIndex = 0;
-    for(auto u = 0; u < depthFrame.size.width; ++u)
+    for(auto v = 0; v < depthFrame.size.height; ++v)
     {
-        for(auto v = 0; v < depthFrame.size.height; ++v)
+        for(auto u = 0; u < depthFrame.size.width; ++u)
         {
             const auto z = mslam::getDepth(depthFrame, {u, v});
             const auto isValid = mslam::isDepthValid(z);
             const auto x = (static_cast<float>(u) - depthFrame.cameraParameters.principalPoint.x()) * z * xScale;
             const auto y = (static_cast<float>(v) - depthFrame.cameraParameters.principalPoint.y()) * z * yScale;
 
-            const std::size_t index = static_cast<std::size_t>(3 * (v * depthFrame.size.width + u));
+            const auto index = static_cast<std::size_t>(3 * (v * depthFrame.size.width + u));
             const auto b = rgbd.rgb.data[index] * invMultiplier;
             const auto g = rgbd.rgb.data[index + 1] * invMultiplier;
             const auto r = rgbd.rgb.data[index + 2] * invMultiplier;
 
-            const glm::vec4 point = toGl * glm::vec4{x, y, z, 1.0f};
+            const glm::vec4 point = glm::vec4{x, y, z, 1.0f};
             const glm::vec3 rgb{r, g, b};
 
-            outPoints[outIndex] = pose * point;
+            outPoints[outIndex] = toGlPose * point;
             outIndex += isValid;
             outPoints[outIndex] = rgb;
             outIndex += isValid;
         }
     }
+
+    outPoints.resize(outIndex);
 }
 
 void SlamThread::run()
 {
     isRunning = true;
-    const auto dataProvider = m_slam->dataProvider;
-    auto frontend = m_slam->frontend;
+    const auto dataProvider = slam->dataProvider;
+    auto frontend = slam->frontend;
 
-    m_slam->init();
+    slam->init();
 
     std::vector<glm::vec3> points;
     SlamStatistics stats;
-    FrontendVisitor visitor;
+    MapVisitor visitor;
 
     while(isRunning)
     {
@@ -149,12 +150,12 @@ void SlamThread::run()
         }
 
         auto start = std::chrono::high_resolution_clock::now();
-        m_slam->process();
+        slam->process();
         auto stop = std::chrono::high_resolution_clock::now();
 
         auto rgbd = dataProvider->recentData();
-        if(points.size() < 2 * rgbd->depth.data.size())
-            points.resize(2 * rgbd->depth.data.size());
+        if(points.capacity() < rgbd->depth.data.size())
+            points.reserve(2 * rgbd->depth.data.size());
 
         QImage originalImage{rgbd->rgb.data.data(), rgbd->rgb.size.width, rgbd->rgb.size.height,
                              3 * rgbd->rgb.size.width, QImage::Format_BGR888};
@@ -163,7 +164,7 @@ void SlamThread::run()
         emit newRgbImageAvailable(image);
         emit newDepthImageAvailable(rgbd->depth);
 
-        pointCloudFromRgbd(*rgbd, m_slam->currentState(), points);
+        pointCloudFromRgbd(*rgbd, slam->currentState(), points);
 
         auto microseconds = std::chrono::duration_cast<std::chrono::microseconds>(stop - start).count();
         stats.msPerFrame = static_cast<float>(microseconds) / 1000.0f;
@@ -171,7 +172,7 @@ void SlamThread::run()
         emit newPointsAvailable(points);
 
         visitor.clearFlags();
-        frontend->visitKeyframes(visitor);
+        slam->map->visit(visitor);
 
         if(auto keyframe = visitor.recentlyKeyframeAdded(); keyframe != nullptr)
         {

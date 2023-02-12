@@ -1,10 +1,35 @@
 #include "pointcloud_viewer.hpp"
 
+#include <GL/gl.h>
 #include <QMouseEvent>
 #include <QTimer>
 #include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/transform.hpp>
 #include <glm/vec3.hpp>
 #include <optional>
+#include <qmatrix4x4.h>
+
+// clang-format off
+static const GLfloat textureBoxVertices[] = {
+     1.0f, -1.0f,  0.0f, 1.0f, 1.0f,
+     1.0f,  1.0f,  0.0f, 1.0f, 0.0f,
+    -1.0f,  1.0f,  0.0f, 0.0f, 0.0f,
+    -1.0f, -1.0f,  0.0f, 0.0f, 1.0f,
+      0.0f,  0.0f, -0.5f, 0.0f, 0.0f
+};
+
+
+static const GLuint indices[] = {
+        0, 1, 3,
+        1, 2, 3,
+        0, 4, 3,
+        2, 4, 3,
+        1, 4, 2,
+        1, 4, 0
+};
+// clang-format on
+
+constexpr auto stride = sizeof(glm::vec3) + sizeof(glm::vec2);
 
 PointcloudViewer::PointcloudViewer(QWidget* parent) : QOpenGLWidget(parent), camera{glm::vec3(0, 0, 10)}
 {
@@ -23,22 +48,20 @@ void PointcloudViewer::setPoints(const std::vector<glm::vec3>& newPoints)
 
 void PointcloudViewer::addKeyframe(const KeyframeViewData& keyframe)
 {
-    auto thumbnail = new KeyframeThumbnail(this);
-
-    thumbnail->init();
-    thumbnail->setImage(keyframe.image);
-    thumbnail->setPose(keyframe.pose);
-
-    keyframeThumbnails.push_back(thumbnail);
+    keyframes.addKeyframe(keyframe);
 }
 
 void PointcloudViewer::initializeGL()
 {
     initializeOpenGLFunctions();
     glEnable(GL_PROGRAM_POINT_SIZE);
+    glEnable(GL_BLEND);
+    glEnable(GL_DEPTH_TEST);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     pointcloud.init();
     grid.init();
+    keyframes.init();
 
     updateTimer = new QTimer(this);
     connect(updateTimer, SIGNAL(timeout()), this, SLOT(update()));
@@ -54,7 +77,6 @@ void PointcloudViewer::resizeGL(int w, int h)
 
 void PointcloudViewer::paintGL()
 {
-    glEnable(GL_DEPTH_TEST);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     auto aspectRatio = static_cast<float>(this->width()) / static_cast<float>(this->height());
@@ -70,11 +92,7 @@ void PointcloudViewer::paintGL()
 
     grid.draw(*this, projection, view);
     pointcloud.draw(*this, projection, view);
-
-    for(auto thumbnail : keyframeThumbnails)
-    {
-        thumbnail->draw(*this, projection, view);
-    }
+    keyframes.draw(*this, projection, view);
 }
 
 void PointcloudViewer::mouseMoveEvent(QMouseEvent* event)
@@ -119,4 +137,161 @@ void PointcloudViewer::handleCameraMovement(QMouseEvent* event)
     }
 
     oldMousePosition = currentPosition;
+}
+
+void PointcloudViewer::KeyframesDrawable::draw(QOpenGLFunctions& gl, const QMatrix4x4& projection,
+                                               const QMatrix4x4& view)
+{
+    vertexBuffer->bind();
+    indexBuffer->bind();
+    imageShader.bind();
+
+    imageShader.enableAttributeArray("pos");
+    imageShader.setAttributeBuffer("pos", GL_FLOAT, 0, 3, stride);
+    imageShader.enableAttributeArray("tex");
+    imageShader.setAttributeBuffer("tex", GL_FLOAT, sizeof(glm::vec3), 2, stride);
+
+    const auto projectionView = projection * view;
+
+    if(viewParams.flags.test(static_cast<std::uint8_t>(ThumbnailDrawFlags::DRAW_IMAGE)))
+    {
+        for(auto& thumbnail : keyframes)
+        {
+            thumbnail->drawImage(gl, projectionView, imageShader, viewParams);
+        }
+    }
+
+    imageShader.disableAttributeArray("pos");
+    imageShader.disableAttributeArray("tex");
+    imageShader.release();
+
+    wireframeShader.bind();
+    wireframeShader.enableAttributeArray("pos");
+    wireframeShader.setAttributeBuffer("pos", GL_FLOAT, 0, 3, stride);
+    wireframeShader.setUniformValue("globalColor", viewParams.wireframeColor);
+
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    gl.glLineWidth(5.0);
+    if(viewParams.flags.test(static_cast<std::uint8_t>(ThumbnailDrawFlags::DRAW_WIREFRAME)))
+    {
+        for(auto& thumbnail : keyframes)
+        {
+            thumbnail->drawWireframe(gl, projectionView, wireframeShader, viewParams);
+        }
+    }
+
+    gl.glLineWidth(1.0);
+
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+    vertexBuffer->release();
+    indexBuffer->release();
+}
+
+void PointcloudViewer::KeyframesDrawable::addKeyframe(const KeyframeViewData& keyframe)
+{
+    auto thumbnail = std::make_unique<KeyframeFrustum>();
+
+    thumbnail->init();
+    thumbnail->setImage(keyframe.image);
+    thumbnail->setPose(keyframe.pose);
+
+    keyframes.push_back(std::move(thumbnail));
+}
+
+bool PointcloudViewer::KeyframesDrawable::init()
+{
+    imageShader.addShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/thumbnail.glsl");
+    imageShader.addShaderFromSourceFile(QOpenGLShader::Fragment, ":/shaders/thumbnail_fragment.glsl");
+    imageShader.link();
+
+    vertexBuffer = new QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);
+    indexBuffer = new QOpenGLBuffer(QOpenGLBuffer::IndexBuffer);
+
+    vertexBuffer->create();
+    vertexBuffer->bind();
+    vertexBuffer->setUsagePattern(QOpenGLBuffer::DynamicDraw);
+
+    vertexBuffer->allocate(&textureBoxVertices[0], sizeof(textureBoxVertices));
+
+    imageShader.enableAttributeArray("pos");
+    imageShader.setAttributeBuffer("pos", GL_FLOAT, 0, 3, stride);
+    imageShader.enableAttributeArray("tex");
+    imageShader.setAttributeBuffer("tex", GL_FLOAT, sizeof(glm::vec3), 2, stride);
+
+    indexBuffer->create();
+    indexBuffer->bind();
+    indexBuffer->allocate(&indices[0], sizeof(indices));
+    indexBuffer->setUsagePattern(QOpenGLBuffer::StaticDraw);
+
+    wireframeShader.addShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/wireframe.glsl");
+    wireframeShader.addShaderFromSourceFile(QOpenGLShader::Fragment, ":/shaders/wireframe_fragment.glsl");
+    wireframeShader.link();
+
+    vertexBuffer->release();
+    indexBuffer->release();
+
+    return true;
+}
+
+void PointcloudViewer::KeyframesDrawable::KeyframeFrustum::drawImage(QOpenGLFunctions& gl,
+                                                                     const QMatrix4x4& projectionView,
+                                                                     QOpenGLShaderProgram& shader,
+                                                                     const ThumbnailViewParams& viewParams)
+{
+    if(!texture->isCreated())
+        return;
+
+    texture->bind();
+
+    QMatrix4x4 transform;
+    transform.setToIdentity();
+    transform.scale(1.f, 1.f / aspectRatio);
+    transform.scale(viewParams.scale);
+
+    shader.setUniformValue("mvp", projectionView * pose * transform);
+    shader.setUniformValue("ourTexture", 0);
+
+    gl.glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+    texture->release();
+}
+
+void PointcloudViewer::KeyframesDrawable::KeyframeFrustum::drawWireframe(QOpenGLFunctions& gl,
+                                                                         const QMatrix4x4& projectionView,
+                                                                         QOpenGLShaderProgram& shader,
+                                                                         const ThumbnailViewParams& viewParams)
+{
+    if(!texture->isCreated())
+        return;
+
+    texture->bind();
+
+    QMatrix4x4 transform;
+    transform.setToIdentity();
+    transform.scale(1.f, 1.f / aspectRatio);
+    transform.scale(viewParams.scale);
+
+    shader.setUniformValue("mvp", projectionView * pose * transform);
+    gl.glDrawElements(GL_TRIANGLES, 12, GL_UNSIGNED_INT, (void*)(6 * sizeof(GLuint)));
+
+    texture->release();
+}
+
+void PointcloudViewer::KeyframesDrawable::KeyframeFrustum::setImage(const QImage& image)
+{
+    aspectRatio = static_cast<float>(image.width()) / static_cast<float>(image.height());
+
+    QMatrix4x4 transform;
+    transform.setToIdentity();
+    transform.scale(1.f, 1.f / aspectRatio);
+    transform.scale(1.f, 1.f / aspectRatio);
+
+    texture->setData(image.mirrored());
+}
+
+bool PointcloudViewer::KeyframesDrawable::KeyframeFrustum::init()
+{
+    texture = new QOpenGLTexture(QOpenGLTexture::Target2D);
+    return texture->create();
 }

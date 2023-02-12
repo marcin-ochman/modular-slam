@@ -10,20 +10,37 @@ namespace mslam
 {
 
 template <typename SensorStateType, typename LandmarkStateType>
-class IFeatureMapComponentsFactory
+class IMapComponentsFactory
 {
   public:
     virtual std::shared_ptr<Landmark<LandmarkStateType>> createLandmark() = 0;
     virtual std::shared_ptr<Keyframe<SensorStateType>> createKeyframe() = 0;
-    virtual ~IFeatureMapComponentsFactory() = default;
+    virtual ~IMapComponentsFactory() = default;
+};
+
+struct MapVisitingParams
+{
+    std::optional<float> landmarkRadius;
+    std::optional<float> keyframeRadius;
 };
 
 template <typename SensorStateType, typename LandmarkStateType>
-class MapInterface : public SlamComponent
+class IMapVisitor
+{
+  public:
+    virtual void visit(std::shared_ptr<Landmark<LandmarkStateType>> landmark) {}
+    virtual void visit(std::shared_ptr<Keyframe<SensorStateType>> keyframe) {}
+    virtual ~IMapVisitor() = default;
+};
+
+template <typename SensorStateType, typename LandmarkStateType>
+class IMap : public SlamComponent
 {
   public:
     using Constraints = ConstraintsInterface<SensorStateType, LandmarkStateType>;
     virtual void update(const std::shared_ptr<Constraints> constraints) = 0;
+    virtual void visit(IMapVisitor<SensorStateType, LandmarkStateType>& visitor,
+                       const MapVisitingParams& params = {}) = 0;
 };
 
 } // namespace mslam
