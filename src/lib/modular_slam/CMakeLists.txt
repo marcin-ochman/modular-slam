@@ -13,7 +13,6 @@ find_package(Ceres REQUIRED)
 find_package(spdlog REQUIRED)
 find_package(trompeloeil)
 find_package(Doxygen)
-find_package(fbow REQUIRED)
 
 add_library(
   ModularSlam
