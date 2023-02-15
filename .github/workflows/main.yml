@@ -16,7 +16,7 @@ jobs:
         password: ${{ secrets.container_registry_token }}
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         submodules: recursive
 
