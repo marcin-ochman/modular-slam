@@ -41,6 +41,7 @@ class SlamThread : public QThread
     void newPointsAvailable(const std::vector<glm::vec3>& points);
     void newSlamStatisticsAvailable(const SlamStatistics& stats);
     void keyframeAdded(const KeyframeViewData& keyframe);
+    void currentFrameChanged(const KeyframeViewData& keyframe);
 
   private:
     std::atomic<bool> isRunning;

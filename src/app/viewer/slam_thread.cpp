@@ -164,7 +164,7 @@ void SlamThread::run()
         emit newRgbImageAvailable(image);
         emit newDepthImageAvailable(rgbd->depth);
 
-        pointCloudFromRgbd(*rgbd, slam->currentState(), points);
+        pointCloudFromRgbd(*rgbd, slam->sensorState(), points);
 
         auto microseconds = std::chrono::duration_cast<std::chrono::microseconds>(stop - start).count();
         stats.msPerFrame = static_cast<float>(microseconds) / 1000.0f;
@@ -178,8 +178,13 @@ void SlamThread::run()
         {
             auto keyframePose = poseToQMatrix(keyframe->state);
 
-            KeyframeViewData keyframeView = {image, keyframePose};
+            KeyframeViewData keyframeView = {keyframe->id, image, keyframePose};
+            spdlog::trace("Keyframe added {}", keyframe->id);
             emit keyframeAdded(keyframeView);
         }
+
+        const auto pose = poseToQMatrix(slam->sensorState());
+        KeyframeViewData currentFrameView = {0, image, pose};
+        emit currentFrameChanged(currentFrameView);
     }
 }

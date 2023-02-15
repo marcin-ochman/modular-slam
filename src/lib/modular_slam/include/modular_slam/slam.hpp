@@ -19,6 +19,14 @@ enum class SlamProcessResult
     Error
 };
 
+enum class SlamState
+{
+    NotInitialized,
+    Initialized,
+    Tracking,
+    Lost
+};
+
 template <typename SensorDataType, typename SensorStateType, typename LandmarkStateType>
 class Slam
 {
@@ -43,7 +51,8 @@ class Slam
 
     virtual bool init();
     virtual SlamProcessResult process();
-    const SensorStateType& currentState() { return state; }
+    const SensorStateType& sensorState() { return state; }
+    const SlamState& slamState() { return state; }
     virtual ~Slam() = default;
 
     std::shared_ptr<FrontendInterfaceType> frontend;

@@ -11,6 +11,10 @@ class BasicFeatureMapComponentsFactory : public IMapComponentsFactory<slam3d::Se
   public:
     std::shared_ptr<Landmark<slam3d::LandmarkState>> createLandmark() override;
     std::shared_ptr<Keyframe<slam3d::SensorState>> createKeyframe() override;
+
+  private:
+    Id currentLandmarkId = 0;
+    Id currentKeyframeId = 1;
 };
 } // namespace mslam
 

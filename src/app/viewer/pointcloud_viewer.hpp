@@ -3,6 +3,7 @@
 
 #include "camera.hpp"
 #include "grid.hpp"
+#include "modular_slam/basic_types.hpp"
 
 #include <QEvent>
 #include <QMatrix4x4>
@@ -17,6 +18,7 @@
 
 struct KeyframeViewData
 {
+    mslam::Id id;
     QImage image;
     QMatrix4x4 pose;
 };
@@ -32,6 +34,7 @@ class PointcloudViewer : public QOpenGLWidget, protected QOpenGLFunctions
   public slots:
     void setPoints(const std::vector<glm::vec3>& newPoints);
     void addKeyframe(const KeyframeViewData& keyframe);
+    void setCurrentFrame(const KeyframeViewData& keyframe);
 
   protected:
     void initializeGL() override;
@@ -53,6 +56,10 @@ class PointcloudViewer : public QOpenGLWidget, protected QOpenGLFunctions
         void setWireframeEnabled(bool wireframeEnabled);
         void setImageEnabled(bool imageEnabled);
 
+        void updateKeyframe(const KeyframeViewData& keyframe);
+        void updateKeyframe(mslam::Id id, const QMatrix4x4& pose);
+        void updateKeyframe(mslam::Id id, const QImage& image);
+
       private:
         enum class ThumbnailDrawFlags : std::uint8_t
         {
@@ -68,7 +75,6 @@ class PointcloudViewer : public QOpenGLWidget, protected QOpenGLFunctions
         };
 
         void setFlag(bool value, ThumbnailDrawFlags flags);
-        void drawFrustum();
 
         QOpenGLShaderProgram imageShader;
         QOpenGLShaderProgram wireframeShader;
@@ -87,12 +93,18 @@ class PointcloudViewer : public QOpenGLWidget, protected QOpenGLFunctions
             bool init();
             void setImage(const QImage& newImage);
             void setPose(const QMatrix4x4& newPose) { pose = newPose; }
+            void setId(const mslam::Id& newId) { id = newId; }
+
+            [[nodiscard]] mslam::Id keyframeId() const { return id; };
 
           private:
-            QOpenGLTexture* texture;
+            std::unique_ptr<QOpenGLTexture> texture;
             QMatrix4x4 pose;
             float aspectRatio;
+            mslam::Id id;
         };
+
+        KeyframeFrustum* findKeyframeFrustum(mslam::Id id);
 
         std::vector<std::unique_ptr<KeyframeFrustum>> keyframes;
     };

@@ -6,7 +6,6 @@ namespace mslam
 
 std::shared_ptr<Landmark<slam3d::LandmarkState>> BasicFeatureMapComponentsFactory::createLandmark()
 {
-    static Id currentLandmarkId = 0;
     auto landmark = std::make_shared<Landmark<slam3d::LandmarkState>>();
 
     landmark->id = currentLandmarkId++;
@@ -16,7 +15,10 @@ std::shared_ptr<Landmark<slam3d::LandmarkState>> BasicFeatureMapComponentsFactor
 
 std::shared_ptr<Keyframe<slam3d::SensorState>> BasicFeatureMapComponentsFactory::createKeyframe()
 {
-    return std::make_shared<Keyframe<slam3d::SensorState>>();
+    auto keyframe = std::make_shared<Keyframe<slam3d::SensorState>>();
+
+    keyframe->id = currentKeyframeId++;
+    return keyframe;
 }
 
 } // namespace mslam

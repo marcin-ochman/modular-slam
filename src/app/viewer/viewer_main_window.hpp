@@ -27,6 +27,7 @@ class ViewerMainWindow : public QMainWindow
     void setPoints(const std::vector<glm::vec3>& newPoints) { ui->pointcloudViewer->setPoints(newPoints); }
     void setSlamStatistics(const SlamStatistics& newSlamStats) { ui->slamStatsViewer->setSlamStatistics(newSlamStats); }
     void addKeyframe(const KeyframeViewData& keyframe) { ui->pointcloudViewer->addKeyframe(keyframe); }
+    void setCurrentFrame(const KeyframeViewData& keyframe) { ui->pointcloudViewer->setCurrentFrame(keyframe); }
 
   protected:
     void closeEvent(QCloseEvent* event) override;

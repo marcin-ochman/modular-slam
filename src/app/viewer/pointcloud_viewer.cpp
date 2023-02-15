@@ -7,7 +7,6 @@
 #include <glm/gtx/transform.hpp>
 #include <glm/vec3.hpp>
 #include <optional>
-#include <qmatrix4x4.h>
 
 // clang-format off
 static const GLfloat textureBoxVertices[] = {
@@ -195,8 +194,64 @@ void PointcloudViewer::KeyframesDrawable::addKeyframe(const KeyframeViewData& ke
     thumbnail->init();
     thumbnail->setImage(keyframe.image);
     thumbnail->setPose(keyframe.pose);
+    thumbnail->setId(keyframe.id);
 
     keyframes.push_back(std::move(thumbnail));
+}
+
+void PointcloudViewer::KeyframesDrawable::updateKeyframe(const KeyframeViewData& keyframe)
+{
+    auto* keyframeFrustum = findKeyframeFrustum(keyframe.id);
+
+    if(keyframeFrustum == nullptr)
+        return;
+
+    keyframeFrustum->setImage(keyframe.image);
+    keyframeFrustum->setPose(keyframe.pose);
+}
+
+void PointcloudViewer::KeyframesDrawable::updateKeyframe(mslam::Id id, const QMatrix4x4& pose)
+{
+    auto* keyframeFrustum = findKeyframeFrustum(id);
+
+    if(keyframeFrustum == nullptr)
+        return;
+
+    keyframeFrustum->setPose(pose);
+}
+
+void PointcloudViewer::KeyframesDrawable::updateKeyframe(mslam::Id id, const QImage& image)
+{
+    auto* keyframeFrustum = findKeyframeFrustum(id);
+
+    if(keyframeFrustum == nullptr)
+        return;
+
+    keyframeFrustum->setImage(image);
+}
+
+PointcloudViewer::KeyframesDrawable::KeyframeFrustum*
+PointcloudViewer::KeyframesDrawable::findKeyframeFrustum(mslam::Id keyframeId)
+{
+    const auto endIt = std::end(keyframes);
+    auto foundIt = std::find_if(std::begin(keyframes), endIt,
+                                [keyframeId](auto& keyframePtr) { return keyframePtr->keyframeId() == keyframeId; });
+
+    return foundIt != endIt ? foundIt->get() : nullptr;
+}
+
+void PointcloudViewer::setCurrentFrame(const KeyframeViewData& keyframe)
+{
+    static bool isInit = false;
+    if(!isInit)
+    {
+        isInit = true;
+        KeyframeViewData currentThumbnail = {0, keyframe.image, keyframe.pose};
+        addKeyframe(currentThumbnail);
+    }
+
+    keyframes.updateKeyframe(0, keyframe.image);
+    keyframes.updateKeyframe(0, keyframe.pose);
 }
 
 bool PointcloudViewer::KeyframesDrawable::init()
@@ -262,11 +317,6 @@ void PointcloudViewer::KeyframesDrawable::KeyframeFrustum::drawWireframe(QOpenGL
                                                                          QOpenGLShaderProgram& shader,
                                                                          const ThumbnailViewParams& viewParams)
 {
-    if(!texture->isCreated())
-        return;
-
-    texture->bind();
-
     QMatrix4x4 transform;
     transform.setToIdentity();
     transform.scale(1.f, 1.f / aspectRatio);
@@ -274,8 +324,6 @@ void PointcloudViewer::KeyframesDrawable::KeyframeFrustum::drawWireframe(QOpenGL
 
     shader.setUniformValue("mvp", projectionView * pose * transform);
     gl.glDrawElements(GL_TRIANGLES, 12, GL_UNSIGNED_INT, (void*)(6 * sizeof(GLuint)));
-
-    texture->release();
 }
 
 void PointcloudViewer::KeyframesDrawable::KeyframeFrustum::setImage(const QImage& image)
@@ -285,13 +333,24 @@ void PointcloudViewer::KeyframesDrawable::KeyframeFrustum::setImage(const QImage
     QMatrix4x4 transform;
     transform.setToIdentity();
     transform.scale(1.f, 1.f / aspectRatio);
-    transform.scale(1.f, 1.f / aspectRatio);
 
-    texture->setData(image.mirrored());
+    const auto mirroredImage = image.mirrored();
+    texture->bind();
+
+    if(!texture->isStorageAllocated())
+    {
+        texture->setData(mirroredImage);
+        return;
+    }
+
+    assert(texture->width() == image.width());
+    assert(texture->height() == image.height());
+
+    texture->setData(QOpenGLTexture::BGR, QOpenGLTexture::UInt8, mirroredImage.bits());
 }
 
 bool PointcloudViewer::KeyframesDrawable::KeyframeFrustum::init()
 {
-    texture = new QOpenGLTexture(QOpenGLTexture::Target2D);
+    texture = std::make_unique<QOpenGLTexture>(QOpenGLTexture::Target2D);
     return texture->create();
 }

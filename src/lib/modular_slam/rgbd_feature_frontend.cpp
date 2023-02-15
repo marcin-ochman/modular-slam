@@ -102,7 +102,7 @@ bool isVisibleInFrame(const Vector3& point, const CameraParameters& cameraParams
     const auto inWidth = imagePoint.x() >= 0 && imagePoint.x() < static_cast<float>(resolution.width);
     const auto inHeight = imagePoint.y() >= 0 && imagePoint.y() < static_cast<float>(resolution.height);
 
-    return inWidth && inHeight;
+    return inWidth && inHeight && point.z() > 0.0f;
 }
 
 Vector3 toGlobalCoordinates(const Vector3& point, const slam3d::SensorState& sensorPose)
@@ -401,7 +401,6 @@ RgbdFeatureFrontend::track(const RgbdFrame& sensorData,
     if(isNewKeyframeRequired(pointsMatchedCount))
     {
         auto newKeyframe = addKeyframe(sensorData, pose.value());
-
         auto landmarksOnFrame = findVisibleLocalLandmarks(pose.value(), sensorData);
         const auto newLandmarkKeypoints = findKeypointsForNewLandmarks(keypoints, landmarksOnFrame);
 
@@ -591,9 +590,7 @@ std::shared_ptr<rgbd::Keyframe> RgbdFeatureFrontend::findBetterReferenceKeyframe
     // TODO: optimize, just get local landmarks
     for(const auto& [landmark, keyframesForLandmark] : landmarksInKeyframes)
     {
-        const auto point = toCameraCoordinates(landmark->state, pose);
-
-        if(isVisibleInFrame(point, frame.depth.cameraParameters, frame.rgb.size))
+        if(isVisibleInFrame(landmark->state, pose, frame.depth.cameraParameters, frame.rgb.size))
         {
             for(const auto& keyframe : keyframesForLandmark)
             {
@@ -602,10 +599,10 @@ std::shared_ptr<rgbd::Keyframe> RgbdFeatureFrontend::findBetterReferenceKeyframe
         }
     }
 
-    auto foundIt = std::max_element(std::begin(keyframeCount), std::end(keyframeCount),
-                                    [](const std::pair<std::shared_ptr<rgbd::Keyframe>, int>& firstPair,
-                                       const std::pair<std::shared_ptr<rgbd::Keyframe>, int>& firstSecond)
-                                    { return firstPair.second < firstSecond.second; });
+    const auto foundIt = std::max_element(std::begin(keyframeCount), std::end(keyframeCount),
+                                          [](const std::pair<std::shared_ptr<rgbd::Keyframe>, int>& firstPair,
+                                             const std::pair<std::shared_ptr<rgbd::Keyframe>, int>& secondPair)
+                                          { return firstPair.second < secondPair.second; });
 
     return foundIt != std::end(keyframeCount) ? foundIt->first : nullptr;
 }
