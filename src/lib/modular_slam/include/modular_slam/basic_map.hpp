@@ -13,7 +13,7 @@ class BasicMap : public IMap<slam3d::SensorState, slam3d::LandmarkState>
 {
   public:
     BasicMap();
-    void update(const std::shared_ptr<Constraints> constraints) override;
+    void update(const std::shared_ptr<FrontendOutput<slam3d::SensorState, slam3d::LandmarkState>> constraints) override;
     void visit(IMapVisitor<slam3d::SensorState, slam3d::LandmarkState>& visitor,
                const MapVisitingParams& params = {}) override;
 
@@ -30,8 +30,7 @@ class BasicMap : public IMap<slam3d::SensorState, slam3d::LandmarkState>
     {
       public:
         explicit ConstraintVisitor(BasicMap& map);
-        void
-        visit(const LandmarkObservationConstraint<slam3d::SensorState, slam3d::LandmarkState>& constraint) override;
+        void visit(const LandmarkObservation<slam3d::SensorState, slam3d::LandmarkState>& constraint) override;
         void visit(const KeyframeConstraint<slam3d::SensorState, slam3d::LandmarkState>& constraint) override;
 
       private:

@@ -51,8 +51,8 @@ class Slam
 
     virtual bool init();
     virtual SlamProcessResult process();
-    const SensorStateType& sensorState() { return state; }
-    const SlamState& slamState() { return state; }
+    [[nodiscard]] const SensorStateType& sensorState() const { return m_sensorState; }
+    [[nodiscard]] const SlamState& slamState() const { return m_slamState; }
     virtual ~Slam() = default;
 
     std::shared_ptr<FrontendInterfaceType> frontend;
@@ -63,7 +63,8 @@ class Slam
     std::shared_ptr<BackendInterfaceType> backend;
 
   private:
-    SensorStateType state;
+    SensorStateType m_sensorState;
+    SlamState m_slamState;
 };
 
 template <typename SensorDataType, typename SensorStateType, typename LandmarkStateType>
@@ -84,17 +85,17 @@ SlamProcessResult Slam<SensorDataType, SensorStateType, LandmarkStateType>::proc
         return SlamProcessResult::NoDataAvailable;
 
     auto sensorData = dataProvider->recentData();
-    auto constraints = frontend->prepareConstraints(*sensorData);
+    auto frontendOutput = frontend->processSensorData(*sensorData);
 
-    if(!constraints)
+    if(!frontendOutput)
     {
         spdlog::error("No constraints available");
         return SlamProcessResult::NoConstraints;
     }
 
-    state = constraints->currentState();
-    backend->optimize(*constraints);
-    map->update(constraints);
+    m_sensorState = frontendOutput->sensorState;
+    auto backendOutput = backend->process(*frontendOutput);
+    map->update(frontendOutput);
 
     return SlamProcessResult::Success;
 }

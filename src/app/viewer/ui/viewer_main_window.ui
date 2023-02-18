@@ -43,7 +43,7 @@
     </property>
     <widget class="QMenu" name="menuAdd">
      <property name="title">
-      <string>Add</string>
+      <string>Docks</string>
      </property>
      <addaction name="action3D_View"/>
      <addaction name="actionRGB_View"/>
@@ -64,8 +64,14 @@
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <widget class="QDockWidget" name="dockWidget">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
    <property name="accessibleName">
     <string>RGB Viewer</string>
+   </property>
+   <property name="floating">
+    <bool>true</bool>
    </property>
    <property name="windowTitle">
     <string>RGB Viewer</string>
@@ -115,16 +121,34 @@
    </property>
   </action>
   <action name="action3D_View">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
    <property name="text">
     <string>3D View</string>
    </property>
   </action>
   <action name="actionRGB_View">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
    <property name="text">
     <string>RGB View</string>
    </property>
   </action>
   <action name="actionDepth_View">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
    <property name="text">
     <string>Depth View</string>
    </property>

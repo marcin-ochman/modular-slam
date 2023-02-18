@@ -1,6 +1,7 @@
 #include "modular_slam/ceres_backend.hpp"
 #include "modular_slam/basic_types.hpp"
 #include "modular_slam/constraints_interface.hpp"
+#include "modular_slam/frontend_interface.hpp"
 
 #include <ceres/ceres.h>
 #include <ceres/problem.h>
@@ -63,7 +64,7 @@ class CeresVisitor : public IConstraintVisitor<slam3d::SensorState, Vector3>
   public:
     CeresVisitor();
     void visit(const KeyframeConstraint<slam3d::SensorState, Vector3>& constraint) override;
-    void visit(const LandmarkObservationConstraint<slam3d::SensorState, Vector3>& constraint) override;
+    void visit(const LandmarkObservation<slam3d::SensorState, Vector3>& constraint) override;
 
     void reset() { problem.reset(new ceres::Problem()); }
 
@@ -76,9 +77,10 @@ class CeresVisitor : public IConstraintVisitor<slam3d::SensorState, Vector3>
 CeresVisitor::CeresVisitor() : problem(new ceres::Problem()) {}
 
 void CeresVisitor::visit(const KeyframeConstraint<slam3d::SensorState, Vector3>& constraint) {}
-void CeresVisitor::visit(const LandmarkObservationConstraint<slam3d::SensorState, Vector3>& constraint) {}
+void CeresVisitor::visit(const LandmarkObservation<slam3d::SensorState, Vector3>& constraint) {}
 
-void CeresBackend::optimize(ConstraintsInterface<mslam::slam3d::SensorState, mslam::Vector3>& constraints)
+std::shared_ptr<CeresBackend::BackendOutputType>
+CeresBackend::process(FrontendOutput<mslam::slam3d::SensorState, mslam::Vector3>& frontendOutput)
 {
     CeresVisitor visitor;
 
@@ -91,6 +93,8 @@ void CeresBackend::optimize(ConstraintsInterface<mslam::slam3d::SensorState, msl
 
     auto problem = visitor.getProblem();
     ceres::Solve(options, problem.get(), &summary);
+
+    return nullptr;
 }
 
 } // namespace mslam

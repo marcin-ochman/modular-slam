@@ -1,4 +1,5 @@
 #include "pointcloud_viewer.hpp"
+#include "grid.hpp"
 
 #include <GL/gl.h>
 #include <QMouseEvent>
@@ -14,7 +15,7 @@ static const GLfloat textureBoxVertices[] = {
      1.0f,  1.0f,  0.0f, 1.0f, 0.0f,
     -1.0f,  1.0f,  0.0f, 0.0f, 0.0f,
     -1.0f, -1.0f,  0.0f, 0.0f, 1.0f,
-      0.0f,  0.0f, -0.5f, 0.0f, 0.0f
+     0.0f,  0.0f, -0.5f, 0.0f, 0.0f
 };
 
 
@@ -30,7 +31,7 @@ static const GLuint indices[] = {
 
 constexpr auto stride = sizeof(glm::vec3) + sizeof(glm::vec2);
 
-PointcloudViewer::PointcloudViewer(QWidget* parent) : QOpenGLWidget(parent), camera{glm::vec3(0, 0, 10)}
+PointcloudViewer::PointcloudViewer(QWidget* parent) : QOpenGLWidget(parent), camera{glm::vec3(0, 0, 1)}
 {
     setMouseTracking(true);
 }
@@ -40,9 +41,14 @@ PointcloudViewer::~PointcloudViewer()
     updateTimer->stop();
 }
 
-void PointcloudViewer::setPoints(const std::vector<glm::vec3>& newPoints)
+void PointcloudViewer::setCurrentCameraPoints(const std::vector<glm::vec3>& newPoints)
 {
-    pointcloud.setPoints(newPoints);
+    cameraPointcloud.setPoints(newPoints);
+}
+
+void PointcloudViewer::setLandmarkPoints(const std::vector<glm::vec3>& newLandmarkPoints)
+{
+    landmarksPointcloud.setPoints(newLandmarkPoints);
 }
 
 void PointcloudViewer::addKeyframe(const KeyframeViewData& keyframe)
@@ -57,8 +63,10 @@ void PointcloudViewer::initializeGL()
     glEnable(GL_BLEND);
     glEnable(GL_DEPTH_TEST);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glDepthFunc(GL_LESS);
 
-    pointcloud.init();
+    cameraPointcloud.init();
+    landmarksPointcloud.init();
     grid.init();
     keyframes.init();
 
@@ -90,7 +98,10 @@ void PointcloudViewer::paintGL()
     std::copy(glm::value_ptr(viewMatrix), glm::value_ptr(viewMatrix) + 16, view.data());
 
     grid.draw(*this, projection, view);
-    pointcloud.draw(*this, projection, view);
+    cameraPointcloud.draw(*this, projection, view);
+    glPointSize(5.f);
+    landmarksPointcloud.draw(*this, projection, view);
+    glPointSize(1.f);
     keyframes.draw(*this, projection, view);
 }
 
@@ -170,7 +181,7 @@ void PointcloudViewer::KeyframesDrawable::draw(QOpenGLFunctions& gl, const QMatr
     wireframeShader.setUniformValue("globalColor", viewParams.wireframeColor);
 
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    gl.glLineWidth(5.0);
+    gl.glLineWidth(2.0);
     if(viewParams.flags.test(static_cast<std::uint8_t>(ThumbnailDrawFlags::DRAW_WIREFRAME)))
     {
         for(auto& thumbnail : keyframes)
@@ -180,7 +191,6 @@ void PointcloudViewer::KeyframesDrawable::draw(QOpenGLFunctions& gl, const QMatr
     }
 
     gl.glLineWidth(1.0);
-
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
     vertexBuffer->release();
@@ -339,6 +349,9 @@ void PointcloudViewer::KeyframesDrawable::KeyframeFrustum::setImage(const QImage
 
     if(!texture->isStorageAllocated())
     {
+        texture->setMinificationFilter(QOpenGLTexture::LinearMipMapLinear);
+        texture->setMagnificationFilter(QOpenGLTexture::Linear);
+        texture->setAutoMipMapGenerationEnabled(true);
         texture->setData(mirroredImage);
         return;
     }

@@ -16,7 +16,8 @@
 #include <glm/gtx/euler_angles.hpp>
 #include <glm/gtx/transform.hpp>
 #include <glm/matrix.hpp>
-#include <qmatrix4x4.h>
+#include <iterator>
+#include <unordered_set>
 
 QMatrix4x4 poseToQMatrix(const mslam::slam3d::SensorState& state)
 {
@@ -61,10 +62,22 @@ class MapVisitor : public mslam::IMapVisitor<mslam::slam3d::SensorState, mslam::
 
     void clearFlags() { keyframeAdded = nullptr; }
     std::shared_ptr<mslam::Keyframe<mslam::slam3d::SensorState>> recentlyKeyframeAdded() const;
+    std::size_t keyframesCount() const { return keyframes.size(); }
+    std::size_t landmarksCount() const { return landmarks.size(); }
+
+    const std::unordered_set<std::shared_ptr<mslam::Landmark<mslam::Vector3>>>& maplandmarks() const
+    {
+        return landmarks;
+    }
+
+    const std::unordered_set<std::shared_ptr<mslam::Keyframe<mslam::slam3d::SensorState>>>& mapKeyframes() const
+    {
+        return keyframes;
+    }
 
   private:
-    std::set<std::shared_ptr<mslam::Landmark<mslam::Vector3>>> landmarks;
-    std::set<std::shared_ptr<mslam::Keyframe<mslam::slam3d::SensorState>>> keyframes;
+    std::unordered_set<std::shared_ptr<mslam::Landmark<mslam::Vector3>>> landmarks;
+    std::unordered_set<std::shared_ptr<mslam::Keyframe<mslam::slam3d::SensorState>>> keyframes;
     std::shared_ptr<mslam::Keyframe<mslam::slam3d::SensorState>> keyframeAdded;
 };
 
@@ -78,8 +91,9 @@ void MapVisitor::visit(std::shared_ptr<mslam::slam3d::Keyframe> keyframe)
     if(keyframes.find(keyframe) == std::end(keyframes))
     {
         keyframeAdded = keyframe;
-        keyframes.insert(keyframe);
     }
+
+    keyframes.insert(keyframe);
 }
 
 SlamThread::SlamThread(QObject* parent) : QThread(parent), isRunning(false), isPaused(false) {}
@@ -87,6 +101,23 @@ SlamThread::SlamThread(QObject* parent) : QThread(parent), isRunning(false), isP
 std::shared_ptr<mslam::Keyframe<mslam::slam3d::SensorState>> MapVisitor::recentlyKeyframeAdded() const
 {
     return keyframeAdded;
+}
+
+void pointCloudFromMapLandmarks(const std::unordered_set<std::shared_ptr<mslam::Landmark<mslam::Vector3>>>& landmarks,
+                                std::vector<glm::vec3>& outPoints)
+{
+
+    const auto toGl = glm::eulerAngleX(glm::radians(180.f));
+    const glm::vec3 rgb{255, 255, 255};
+
+    outPoints.clear();
+    for(const auto& landmark : landmarks)
+    {
+        const auto point = toGl * glm::vec4{landmark->state.x(), landmark->state.y(), landmark->state.z(), 1.0f};
+
+        outPoints.emplace_back(point);
+        outPoints.push_back(rgb);
+    }
 }
 
 void pointCloudFromRgbd(const mslam::RgbdFrame& rgbd, const mslam::rgbd::SensorState& currentPose,
@@ -134,11 +165,10 @@ void SlamThread::run()
 {
     isRunning = true;
     const auto dataProvider = slam->dataProvider;
-    auto frontend = slam->frontend;
 
     slam->init();
 
-    std::vector<glm::vec3> points;
+    std::vector<glm::vec3> points, landmarkPoints;
     SlamStatistics stats;
     MapVisitor visitor;
 
@@ -161,18 +191,21 @@ void SlamThread::run()
                              3 * rgbd->rgb.size.width, QImage::Format_BGR888};
         const QImage image = originalImage.copy();
 
-        emit newRgbImageAvailable(image);
-        emit newDepthImageAvailable(rgbd->depth);
+        emit rgbImageChanged(image);
+        emit depthImageChanged(rgbd->depth);
 
         pointCloudFromRgbd(*rgbd, slam->sensorState(), points);
 
         auto microseconds = std::chrono::duration_cast<std::chrono::microseconds>(stop - start).count();
         stats.msPerFrame = static_cast<float>(microseconds) / 1000.0f;
-        emit newSlamStatisticsAvailable(stats);
-        emit newPointsAvailable(points);
+        stats.keyframesCount = visitor.keyframesCount();
+        stats.landmarksCount = visitor.landmarksCount();
+        emit slamStatisticsChanged(stats);
+        emit cameraPointsChanged(points);
 
         visitor.clearFlags();
         slam->map->visit(visitor);
+        pointCloudFromMapLandmarks(visitor.maplandmarks(), landmarkPoints);
 
         if(auto keyframe = visitor.recentlyKeyframeAdded(); keyframe != nullptr)
         {
@@ -186,5 +219,6 @@ void SlamThread::run()
         const auto pose = poseToQMatrix(slam->sensorState());
         KeyframeViewData currentFrameView = {0, image, pose};
         emit currentFrameChanged(currentFrameView);
+        emit landmarkPointsChanged(landmarkPoints);
     }
 }

@@ -15,25 +15,23 @@
 namespace mslam
 {
 
-template <typename CoordinatesType>
 struct Keypoint
 {
     Id id;
-    CoordinatesType coordinates;
+    Eigen::Vector2f coordinates;
 };
 
-template <typename CoordinatesType, typename DescriptorType, int Length = 32>
+template <typename DescriptorType, int Length = 32>
 struct KeypointDescriptor
 {
-    Keypoint<CoordinatesType> keypoint;
+    Keypoint keypoint;
     std::array<DescriptorType, Length> descriptor;
 };
 
-template <typename CoordinatesType>
 struct KeypointMatch
 {
-    Keypoint<CoordinatesType> refKeypoint;
-    Keypoint<CoordinatesType> matchedKeypoint;
+    Keypoint refKeypoint;
+    Keypoint matchedKeypoint;
 };
 
 struct DescriptorMatch
@@ -42,29 +40,28 @@ struct DescriptorMatch
     std::size_t toIndex;
 };
 
-template <typename CoordinatesType, typename LandmarkStateType>
+template <typename LandmarkStateType>
 struct KeypointLandmarkMatch
 {
-    KeypointMatch<CoordinatesType> match;
+    KeypointMatch match;
     std::shared_ptr<Landmark<LandmarkStateType>> landmark;
 };
 
-template <typename SensorData, typename KeypointCoordinatesType, typename DescriptorType, int Length>
+template <typename SensorData, typename DescriptorType, int Length>
 class IFeatureDetector
 {
   public:
-    virtual std::vector<KeypointDescriptor<KeypointCoordinatesType, DescriptorType, Length>>
-    detect(const SensorData& sensorData) = 0;
+    virtual std::vector<KeypointDescriptor<DescriptorType, Length>> detect(const SensorData& sensorData) = 0;
     virtual ~IFeatureDetector() {}
 };
 
-template <typename KeypointCoordinatesType, typename DescriptorType, int Length>
+template <typename DescriptorType, int Length>
 class IFeatureMatcher
 {
   public:
-    virtual std::vector<DescriptorMatch> match(
-        const std::vector<KeypointDescriptor<KeypointCoordinatesType, DescriptorType, Length>>& firstDescriptors,
-        const std::vector<KeypointDescriptor<KeypointCoordinatesType, DescriptorType, Length>>& secondDescriptors) = 0;
+    virtual std::vector<DescriptorMatch>
+    match(const std::vector<KeypointDescriptor<DescriptorType, Length>>& firstDescriptors,
+          const std::vector<KeypointDescriptor<DescriptorType, Length>>& secondDescriptors) = 0;
     virtual ~IFeatureMatcher() {}
 };
 } // namespace mslam

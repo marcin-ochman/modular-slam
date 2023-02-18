@@ -24,7 +24,16 @@ class ViewerMainWindow : public QMainWindow
   public slots:
     void setImage(const QImage& newImage) { ui->imageViewer->drawImage(newImage); }
     void setDepthImage(const mslam::DepthFrame& newImage) { ui->depthImageViewer->drawImage(newImage); }
-    void setPoints(const std::vector<glm::vec3>& newPoints) { ui->pointcloudViewer->setPoints(newPoints); }
+    void setCurrentCameraPoints(const std::vector<glm::vec3>& newPoints)
+    {
+        ui->pointcloudViewer->setCurrentCameraPoints(newPoints);
+    }
+
+    void setLandmarkPoints(const std::vector<glm::vec3>& newPoints)
+    {
+        ui->pointcloudViewer->setLandmarkPoints(newPoints);
+    }
+
     void setSlamStatistics(const SlamStatistics& newSlamStats) { ui->slamStatsViewer->setSlamStatistics(newSlamStats); }
     void addKeyframe(const KeyframeViewData& keyframe) { ui->pointcloudViewer->addKeyframe(keyframe); }
     void setCurrentFrame(const KeyframeViewData& keyframe) { ui->pointcloudViewer->setCurrentFrame(keyframe); }

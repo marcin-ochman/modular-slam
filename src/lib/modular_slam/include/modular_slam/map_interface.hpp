@@ -2,6 +2,7 @@
 #define MSLAM_MAP_INTERFACE_HPP_
 
 #include "modular_slam/constraints_interface.hpp"
+#include "modular_slam/frontend_interface.hpp"
 #include "modular_slam/keyframe.hpp"
 #include "modular_slam/landmark.hpp"
 #include "modular_slam/slam_component.hpp"
@@ -37,8 +38,9 @@ template <typename SensorStateType, typename LandmarkStateType>
 class IMap : public SlamComponent
 {
   public:
-    using Constraints = ConstraintsInterface<SensorStateType, LandmarkStateType>;
-    virtual void update(const std::shared_ptr<Constraints> constraints) = 0;
+    using FrontendOutputType = FrontendOutput<SensorStateType, LandmarkStateType>;
+
+    virtual void update(const std::shared_ptr<FrontendOutputType> constraints) = 0;
     virtual void visit(IMapVisitor<SensorStateType, LandmarkStateType>& visitor,
                        const MapVisitingParams& params = {}) = 0;
 };

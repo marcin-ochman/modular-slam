@@ -13,9 +13,9 @@
 namespace mslam
 {
 
-using IOrbFeatureDetector = IFeatureDetector<RgbFrame, Eigen::Vector2f, float, 32>;
-using IOrbMatcher = IFeatureMatcher<Eigen::Vector2f, float, 32>;
-using OrbKeypoint = KeypointDescriptor<Eigen::Vector2f, float, 32>;
+using IOrbFeatureDetector = IFeatureDetector<RgbFrame, float, 32>;
+using IOrbMatcher = IFeatureMatcher<float, 32>;
+using OrbKeypoint = KeypointDescriptor<float, 32>;
 
 class OrbOpenCvDetector : public IOrbFeatureDetector
 {

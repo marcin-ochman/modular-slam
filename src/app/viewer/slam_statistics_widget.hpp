@@ -14,6 +14,8 @@ class SlamStatisticsWidget : public QWidget
     void setMsPerFrame(float msPerFrame);
     void setFps(float fps);
     void setSlamStatistics(const SlamStatistics& stats);
+    void setLandmarksCount(std::size_t count);
+    void setKeyframesCount(std::size_t count);
 
   private:
     Ui::SlamStatistics ui;

@@ -1,14 +1,19 @@
 #include "modular_slam/basic_map.hpp"
 #include "modular_slam/constraints_interface.hpp"
+#include <algorithm>
 
 namespace mslam
 {
 
 BasicMap::BasicMap() : visitor(*this) {}
 
-void BasicMap::update(const std::shared_ptr<Constraints> constraints)
+void BasicMap::update(const std::shared_ptr<FrontendOutput<slam3d::SensorState, slam3d::LandmarkState>> frontendOutput)
 {
-    constraints->visitConstraints(visitor);
+    if(frontendOutput->newKeyframe != nullptr)
+        addKeyframe(frontendOutput->newKeyframe);
+
+    std::for_each(std::begin(frontendOutput->newLandmarks), std::end(frontendOutput->newLandmarks),
+                  [this](auto& landmark) { addLandmark(landmark); });
 }
 
 void BasicMap::visit(IMapVisitor<slam3d::SensorState, slam3d::LandmarkState>& visitor, const MapVisitingParams& params)
@@ -57,7 +62,7 @@ void BasicMap::removeLandmark(std::shared_ptr<slam3d::Landmark> landmark)
 BasicMap::ConstraintVisitor::ConstraintVisitor(BasicMap& newMap) : map(newMap) {}
 
 void BasicMap::ConstraintVisitor::visit(
-    const LandmarkObservationConstraint<slam3d::SensorState, slam3d::LandmarkState>& constraint)
+    const LandmarkObservation<slam3d::SensorState, slam3d::LandmarkState>& constraint)
 {
     map.addKeyframe(constraint.keyframe);
     map.addLandmark(constraint.landmark);

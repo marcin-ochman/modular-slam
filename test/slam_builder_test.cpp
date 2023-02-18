@@ -1,3 +1,5 @@
+#include "modular_slam/backend_interface.hpp"
+#include "modular_slam/frontend_interface.hpp"
 #include "modular_slam/rgbdi_frame.hpp"
 #include "modular_slam/slam3d_types.hpp"
 #include "modular_slam/slam_builder.hpp"
@@ -25,23 +27,27 @@ class RgbdiDataProviderMock : public mslam::DataProviderInterface<mslam::RgbdiFr
 
 class BackendMock : public mslam::BackendInterface<mslam::slam3d::SensorState, mslam::Vector3>
 {
-    MAKE_MOCK1(optimize, void(mslam::ConstraintsInterface<mslam::slam3d::SensorState, mslam::Vector3>& constraints),
-               override);
+    using BackendOutputPtrType = std::shared_ptr<mslam::BackendOutput<mslam::slam3d::SensorState, mslam::Vector3>>;
+    using FrontendOutputType = mslam::FrontendOutput<mslam::slam3d::SensorState, mslam::Vector3>;
+
+    MAKE_MOCK1(process, BackendOutputPtrType(FrontendOutputType&), override);
 };
 
 class FrontendMock : public mslam::FrontendInterface<mslam::RgbdiFrame, mslam::slam3d::SensorState, mslam::Vector3>
 {
   public:
-    using RetValue = std::shared_ptr<mslam::ConstraintsInterface<mslam::slam3d::SensorState, mslam::Vector3>>;
+    using RetValue = std::shared_ptr<mslam::FrontendOutput<mslam::slam3d::SensorState, mslam::Vector3>>;
     using Arg = mslam::RgbdiFrame;
 
-    MAKE_MOCK1(prepareConstraints, RetValue(const Arg& arg), override);
+    MAKE_MOCK1(processSensorData, RetValue(const Arg& arg), override);
 };
 
 class MapMock : public mslam::IMap<mslam::slam3d::SensorState, mslam::Vector3>
 {
   public:
-    MAKE_MOCK1(update, void(const std::shared_ptr<MapMock::Constraints> constraints), override);
+    using FrontendOutputPtrType = std::shared_ptr<mslam::FrontendOutput<mslam::slam3d::SensorState, mslam::Vector3>>;
+
+    MAKE_MOCK1(update, void(const FrontendOutputPtrType constraints), override);
     MAKE_MOCK2(visit,
                void(mslam::IMapVisitor<mslam::slam3d::SensorState, mslam::slam3d::LandmarkState>&,
                     const mslam::MapVisitingParams& params),

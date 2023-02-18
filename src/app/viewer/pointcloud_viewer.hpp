@@ -32,9 +32,10 @@ class PointcloudViewer : public QOpenGLWidget, protected QOpenGLFunctions
     ~PointcloudViewer();
 
   public slots:
-    void setPoints(const std::vector<glm::vec3>& newPoints);
-    void addKeyframe(const KeyframeViewData& keyframe);
+    void setCurrentCameraPoints(const std::vector<glm::vec3>& newPoints);
     void setCurrentFrame(const KeyframeViewData& keyframe);
+    void addKeyframe(const KeyframeViewData& keyframe);
+    void setLandmarkPoints(const std::vector<glm::vec3>& newLandmarkPoints);
 
   protected:
     void initializeGL() override;
@@ -81,7 +82,7 @@ class PointcloudViewer : public QOpenGLWidget, protected QOpenGLFunctions
         QOpenGLBuffer* vertexBuffer;
         QOpenGLBuffer* indexBuffer;
 
-        ThumbnailViewParams viewParams = {0.25f, 3, QColor(20, 20, 255, 255)};
+        ThumbnailViewParams viewParams = {0.05f, 3, QColor(20, 20, 255, 255)};
 
         class KeyframeFrustum
         {
@@ -114,7 +115,8 @@ class PointcloudViewer : public QOpenGLWidget, protected QOpenGLFunctions
     QTimer* updateTimer;
 
     Grid grid;
-    PointCloudDrawable pointcloud;
+    PointCloudDrawable cameraPointcloud;
+    PointCloudDrawable landmarksPointcloud;
     KeyframesDrawable keyframes;
 };
 

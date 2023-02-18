@@ -104,15 +104,17 @@ int main(int argc, char* argv[])
     slamThread->setSlam(std::move(slam));
     slamThread->start();
 
-    QObject::connect(slamThread, &SlamThread::newRgbImageAvailable, mainWindow, &mslam::ViewerMainWindow::setImage);
-    QObject::connect(slamThread, &SlamThread::newDepthImageAvailable, mainWindow,
-                     &mslam::ViewerMainWindow::setDepthImage);
-    QObject::connect(slamThread, &SlamThread::newPointsAvailable, mainWindow, &mslam::ViewerMainWindow::setPoints);
-    QObject::connect(slamThread, &SlamThread::newSlamStatisticsAvailable, mainWindow,
+    QObject::connect(slamThread, &SlamThread::rgbImageChanged, mainWindow, &mslam::ViewerMainWindow::setImage);
+    QObject::connect(slamThread, &SlamThread::depthImageChanged, mainWindow, &mslam::ViewerMainWindow::setDepthImage);
+    QObject::connect(slamThread, &SlamThread::cameraPointsChanged, mainWindow,
+                     &mslam::ViewerMainWindow::setCurrentCameraPoints);
+    QObject::connect(slamThread, &SlamThread::slamStatisticsChanged, mainWindow,
                      &mslam::ViewerMainWindow::setSlamStatistics);
     QObject::connect(slamThread, &SlamThread::keyframeAdded, mainWindow, &mslam::ViewerMainWindow::addKeyframe);
     QObject::connect(slamThread, &SlamThread::currentFrameChanged, mainWindow,
                      &mslam::ViewerMainWindow::setCurrentFrame);
+    QObject::connect(slamThread, &SlamThread::landmarkPointsChanged, mainWindow,
+                     &mslam::ViewerMainWindow::setLandmarkPoints);
     QObject::connect(mainWindow, &mslam::ViewerMainWindow::paused, slamThread, &SlamThread::pause);
     QObject::connect(mainWindow, &mslam::ViewerMainWindow::resumed, slamThread, &SlamThread::resume);
 

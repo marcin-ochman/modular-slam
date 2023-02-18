@@ -36,10 +36,11 @@ class SlamThread : public QThread
     void run() override;
 
   signals:
-    void newRgbImageAvailable(const QImage& pixmap);
-    void newDepthImageAvailable(const mslam::DepthFrame& depth);
-    void newPointsAvailable(const std::vector<glm::vec3>& points);
-    void newSlamStatisticsAvailable(const SlamStatistics& stats);
+    void rgbImageChanged(const QImage& pixmap);
+    void depthImageChanged(const mslam::DepthFrame& depth);
+    void cameraPointsChanged(const std::vector<glm::vec3>& points);
+    void landmarkPointsChanged(const std::vector<glm::vec3>& points);
+    void slamStatisticsChanged(const SlamStatistics& stats);
     void keyframeAdded(const KeyframeViewData& keyframe);
     void currentFrameChanged(const KeyframeViewData& keyframe);
 
