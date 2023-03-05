@@ -5,6 +5,7 @@
 #include "modular_slam/camera_parameters.hpp"
 #include "modular_slam/landmark.hpp"
 
+#include <boost/dynamic_bitset.hpp>
 #include <memory>
 #include <optional>
 
@@ -15,7 +16,13 @@ template <typename SensorStateType, typename LandmarkStateType>
 class IPnpAlgorithm
 {
   public:
-    virtual std::optional<SensorStateType>
+    struct PnpResult
+    {
+        SensorStateType pose;
+        boost::dynamic_bitset<> inliers;
+    };
+
+    virtual std::optional<PnpResult>
     solvePnp(const std::vector<std::shared_ptr<Landmark<LandmarkStateType>>>& landmarks,
              const std::vector<mslam::Vector2>& imgPoints, const SensorStateType& initial = SensorStateType()) = 0;
 

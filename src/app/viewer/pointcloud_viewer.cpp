@@ -31,7 +31,8 @@ static const GLuint indices[] = {
 
 constexpr auto stride = sizeof(glm::vec3) + sizeof(glm::vec2);
 
-PointcloudViewer::PointcloudViewer(QWidget* parent) : QOpenGLWidget(parent), camera{glm::vec3(0, 0, 1)}
+PointcloudViewer::PointcloudViewer(QWidget* parent)
+    : QOpenGLWidget(parent), camera(65.f, static_cast<float>(width()) / static_cast<float>(height()), 0.01f, 1000.f)
 {
     setMouseTracking(true);
 }
@@ -51,6 +52,16 @@ void PointcloudViewer::setLandmarkPoints(const std::vector<glm::vec3>& newLandma
     landmarksPointcloud.setPoints(newLandmarkPoints);
 }
 
+void PointcloudViewer::setWireframeEnabled(bool wireframeEnabled)
+{
+    keyframes.setWireframeEnabled(wireframeEnabled);
+}
+
+void PointcloudViewer::setThumbnailEnabled(bool imageEnabled)
+{
+    keyframes.setThumbnailEnabled(imageEnabled);
+}
+
 void PointcloudViewer::addKeyframe(const KeyframeViewData& keyframe)
 {
     keyframes.addKeyframe(keyframe);
@@ -63,7 +74,6 @@ void PointcloudViewer::initializeGL()
     glEnable(GL_BLEND);
     glEnable(GL_DEPTH_TEST);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glDepthFunc(GL_LESS);
 
     cameraPointcloud.init();
     landmarksPointcloud.init();
@@ -80,28 +90,29 @@ void PointcloudViewer::initializeGL()
 void PointcloudViewer::resizeGL(int w, int h)
 {
     glViewport(0, 0, w, h);
+    camera.setViewportSize(static_cast<float>(w), static_cast<float>(h));
 }
 
 void PointcloudViewer::paintGL()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    auto aspectRatio = static_cast<float>(this->width()) / static_cast<float>(this->height());
-
     QMatrix4x4 projection, view;
     projection.setToIdentity();
     view.setToIdentity();
 
-    projection.perspective(camera.Zoom, aspectRatio, 0.01f, 1000.f);
-
-    auto viewMatrix = camera.getViewMatrix();
+    auto viewMatrix = camera.viewMatrix();
+    auto projectionMatrix = camera.projectionMatrix();
     std::copy(glm::value_ptr(viewMatrix), glm::value_ptr(viewMatrix) + 16, view.data());
+    std::copy(glm::value_ptr(projectionMatrix), glm::value_ptr(projectionMatrix) + 16, projection.data());
 
     grid.draw(*this, projection, view);
     cameraPointcloud.draw(*this, projection, view);
+
     glPointSize(5.f);
     landmarksPointcloud.draw(*this, projection, view);
     glPointSize(1.f);
+
     keyframes.draw(*this, projection, view);
 }
 
@@ -117,17 +128,21 @@ void PointcloudViewer::mouseMoveEvent(QMouseEvent* event)
 
 void PointcloudViewer::wheelEvent(QWheelEvent* event)
 {
-    const auto scroll = static_cast<float>(event->angleDelta().y()) / 40.0f;
-    camera.processMouseScroll(scroll);
+    const auto scroll = static_cast<float>(event->angleDelta().y()) / 500.0f;
+    camera.zoom(scroll);
 }
 
 void PointcloudViewer::handleCameraRotation(QMouseEvent* event)
 {
-    auto currentPosition = event->pos();
+    auto currentPosition = event->position();
+
     if(oldMousePosition)
     {
-        auto offset = currentPosition - oldMousePosition.value();
-        camera.processMouseMovement(static_cast<float>(offset.x()), static_cast<float>(offset.y()));
+        const auto previous = glm::vec2(oldMousePosition.value().x(), oldMousePosition.value().y());
+        const auto current = glm::vec2(currentPosition.x(), currentPosition.y());
+
+        auto diff = current - previous;
+        camera.rotate(diff);
     }
 
     oldMousePosition = currentPosition;
@@ -135,15 +150,14 @@ void PointcloudViewer::handleCameraRotation(QMouseEvent* event)
 
 void PointcloudViewer::handleCameraMovement(QMouseEvent* event)
 {
-    auto currentPosition = event->pos();
+    auto currentPosition = event->position();
     if(oldMousePosition)
     {
-        auto offset = currentPosition - oldMousePosition.value();
+        const auto previous = glm::vec2(oldMousePosition.value().x(), oldMousePosition.value().y());
+        const auto current = glm::vec2(currentPosition.x(), currentPosition.y());
+        const auto diff = (current - previous) * 0.01f;
 
-        const auto xoffset = static_cast<float>(offset.x()) * 0.01f;
-        const auto yoffset = static_cast<float>(offset.y()) * 0.01f;
-
-        camera.processCameraPlaneMovement(xoffset, yoffset);
+        camera.pan(diff);
     }
 
     oldMousePosition = currentPosition;
@@ -197,6 +211,16 @@ void PointcloudViewer::KeyframesDrawable::draw(QOpenGLFunctions& gl, const QMatr
     indexBuffer->release();
 }
 
+void PointcloudViewer::KeyframesDrawable::setWireframeEnabled(bool wireframeEnabled)
+{
+    setFlag(wireframeEnabled, ThumbnailDrawFlags::DRAW_WIREFRAME);
+}
+
+void PointcloudViewer::KeyframesDrawable::setThumbnailEnabled(bool imageEnabled)
+{
+    setFlag(imageEnabled, ThumbnailDrawFlags::DRAW_IMAGE);
+}
+
 void PointcloudViewer::KeyframesDrawable::addKeyframe(const KeyframeViewData& keyframe)
 {
     auto thumbnail = std::make_unique<KeyframeFrustum>();
@@ -238,6 +262,11 @@ void PointcloudViewer::KeyframesDrawable::updateKeyframe(mslam::Id id, const QIm
         return;
 
     keyframeFrustum->setImage(image);
+}
+
+void PointcloudViewer::KeyframesDrawable::setFlag(bool value, ThumbnailDrawFlags flags)
+{
+    viewParams.flags.set(static_cast<std::size_t>(flags), value);
 }
 
 PointcloudViewer::KeyframesDrawable::KeyframeFrustum*

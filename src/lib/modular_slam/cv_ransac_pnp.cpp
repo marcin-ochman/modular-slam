@@ -1,13 +1,14 @@
 #include "modular_slam/cv_ransac_pnp.hpp"
 
 #include <opencv2/calib3d.hpp>
+#include <opencv2/core/mat.hpp>
 #include <opencv2/core/types.hpp>
 
 namespace mslam
 {
-std::optional<slam3d::SensorState>
-mslam::OpenCvRansacPnp::solvePnp(const std::vector<std::shared_ptr<Landmark<Vector3>>>& landmarks,
-                                 const std::vector<Vector2>& sensorPoints, const slam3d::SensorState& initial)
+std::optional<OpenCvRansacPnp::PnpResult>
+OpenCvRansacPnp::solvePnp(const std::vector<std::shared_ptr<Landmark<Vector3>>>& landmarks,
+                          const std::vector<Vector2>& sensorPoints, const slam3d::SensorState& initial)
 {
 
     cv::Mat objectPoints(static_cast<int>(landmarks.size()), 3, CV_32F);
@@ -36,32 +37,35 @@ mslam::OpenCvRansacPnp::solvePnp(const std::vector<std::shared_ptr<Landmark<Vect
     cv::Mat cameraMatrix = (cv::Mat_<float>(3, 3) << cameraParams.focal.x(), 0, cameraParams.principalPoint.x(), 0,
                             cameraParams.focal.y(), cameraParams.principalPoint.y(), 0, 0, 1);
 
-    const auto success =
-        cv::solvePnPRansac(objectPoints, imagePoints, cameraMatrix, cv::Mat(), cvRotation, cvTranslation);
+    std::vector<int> inliers;
+    const auto success = cv::solvePnPRansac(objectPoints, imagePoints, cameraMatrix, cv::noArray(), cvRotation,
+                                            cvTranslation, true, 100, 8.0, 0.99, inliers);
 
     if(!success)
         return std::nullopt;
 
     const auto angle = cv::norm(cvRotation);
-    Eigen::Matrix3f rotation =
-        Eigen::AngleAxisd(
-            angle,
-            Eigen::Vector3d(cvRotation.at<double>(0), cvRotation.at<double>(1), cvRotation.at<double>(2)) / angle)
-            .toRotationMatrix()
-            .cast<float>();
+    Matrix3 rotation =
+        Eigen::AngleAxisd(angle,
+                          Vector3(cvRotation.at<double>(0), cvRotation.at<double>(1), cvRotation.at<double>(2)) / angle)
+            .toRotationMatrix();
 
     const auto translation =
-        Eigen::Vector3d(cvTranslation.at<double>(0), cvTranslation.at<double>(1), cvTranslation.at<double>(2));
+        Vector3(cvTranslation.at<double>(0), cvTranslation.at<double>(1), cvTranslation.at<double>(2));
 
-    Eigen::Matrix4f transform = Eigen::Matrix4f::Identity();
+    Eigen::Matrix4d transform = Eigen::Matrix4d::Identity();
     transform.block<3, 3>(0, 0) = rotation;
-    transform.block<3, 1>(0, 3) = translation.cast<float>();
+    transform.block<3, 1>(0, 3) = translation;
 
     const auto invTransform = transform.inverse();
 
-    slam3d::SensorState result;
-    result.orientation = invTransform.block<3, 3>(0, 0);
-    result.position = invTransform.block<3, 1>(0, 3);
+    PnpResult result;
+    result.pose.orientation = invTransform.block<3, 3>(0, 0);
+    result.pose.position = invTransform.block<3, 1>(0, 3);
+
+    result.inliers.resize(landmarks.size(), false);
+
+    std::for_each(std::cbegin(inliers), std::cend(inliers), [&result](int index) { result.inliers[index] = false; });
 
     return result;
 }

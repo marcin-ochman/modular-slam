@@ -28,7 +28,7 @@ class PointcloudViewer : public QOpenGLWidget, protected QOpenGLFunctions
     Q_OBJECT
 
   public:
-    PointcloudViewer(QWidget* parent = nullptr);
+    explicit PointcloudViewer(QWidget* parent = nullptr);
     ~PointcloudViewer();
 
   public slots:
@@ -36,6 +36,8 @@ class PointcloudViewer : public QOpenGLWidget, protected QOpenGLFunctions
     void setCurrentFrame(const KeyframeViewData& keyframe);
     void addKeyframe(const KeyframeViewData& keyframe);
     void setLandmarkPoints(const std::vector<glm::vec3>& newLandmarkPoints);
+    void setWireframeEnabled(bool wireframeEnabled);
+    void setThumbnailEnabled(bool imageEnabled);
 
   protected:
     void initializeGL() override;
@@ -54,9 +56,9 @@ class PointcloudViewer : public QOpenGLWidget, protected QOpenGLFunctions
         void addKeyframe(const KeyframeViewData& keyframe);
         bool init();
         void draw(QOpenGLFunctions& gl, const QMatrix4x4& projection, const QMatrix4x4& view) override;
-        void setWireframeEnabled(bool wireframeEnabled);
-        void setImageEnabled(bool imageEnabled);
 
+        void setWireframeEnabled(bool wireframeEnabled);
+        void setThumbnailEnabled(bool imageEnabled);
         void updateKeyframe(const KeyframeViewData& keyframe);
         void updateKeyframe(mslam::Id id, const QMatrix4x4& pose);
         void updateKeyframe(mslam::Id id, const QImage& image);
@@ -111,7 +113,7 @@ class PointcloudViewer : public QOpenGLWidget, protected QOpenGLFunctions
     };
 
     Camera camera;
-    std::optional<QPoint> oldMousePosition;
+    std::optional<QPointF> oldMousePosition;
     QTimer* updateTimer;
 
     Grid grid;

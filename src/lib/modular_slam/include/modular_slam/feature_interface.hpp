@@ -18,7 +18,7 @@ namespace mslam
 struct Keypoint
 {
     Id id;
-    Eigen::Vector2f coordinates;
+    Vector2 coordinates;
 };
 
 template <typename DescriptorType, int Length = 32>

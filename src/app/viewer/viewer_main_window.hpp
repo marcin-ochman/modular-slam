@@ -44,6 +44,7 @@ class ViewerMainWindow : public QMainWindow
   signals:
     void paused();
     void resumed();
+    void isClosing();
 
   private slots:
     void onPauseResume();

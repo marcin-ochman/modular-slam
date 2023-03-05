@@ -9,12 +9,18 @@
 namespace mslam
 {
 
-template <typename SensorStateType, typename LandmarkStateType, typename LandmarkConstraintType = LandmarkStateType>
-struct LandmarkObservation
+template <typename SensorStateType, typename LandmarkStateType>
+struct LandmarkKeyframeObservation
 {
     std::shared_ptr<Keyframe<SensorStateType>> keyframe;
     std::shared_ptr<Landmark<LandmarkStateType>> landmark;
-    LandmarkConstraintType constraint;
+    Keypoint keypoint;
+};
+
+template <typename LandmarkStateType>
+struct LandmarkObservation
+{
+    std::shared_ptr<Landmark<LandmarkStateType>> landmark;
     Keypoint keypoint;
 };
 
@@ -38,7 +44,7 @@ template <typename SensorStateType, typename LandmarkStateType, typename Keyfram
 class IConstraintVisitor
 {
   public:
-    virtual void visit(const LandmarkObservation<SensorStateType, LandmarkStateType>& constraint) = 0;
+    virtual void visit(const LandmarkKeyframeObservation<SensorStateType, LandmarkStateType>& constraint) = 0;
     virtual void visit(const KeyframeConstraint<SensorStateType, LandmarkStateType>& constraint) = 0;
     virtual ~IConstraintVisitor() = default;
 };
@@ -48,8 +54,7 @@ template <typename SensorStateType, typename LandmarkStateType, typename Keyfram
 class ConstraintsInterface
 {
   public:
-    virtual void
-    addConstraint(const LandmarkObservation<SensorStateType, LandmarkStateType, LandmarkConstraintType> constraint) = 0;
+    virtual void addConstraint(const LandmarkKeyframeObservation<SensorStateType, LandmarkStateType> constraint) = 0;
     virtual void
     addConstraint(const KeyframeConstraint<SensorStateType, LandmarkStateType, KeyframeConstraintType> constraint) = 0;
 

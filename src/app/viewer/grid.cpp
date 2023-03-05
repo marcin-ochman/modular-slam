@@ -33,7 +33,7 @@ bool Grid::initBuffers(const int cellsCount)
         {
             const auto x = static_cast<float>(i) - cellsCountFloat / 2.0f;
             const auto z = static_cast<float>(j) - cellsCountFloat / 2.0f;
-            const auto y = 0.0f;
+            const auto y = -1.0f;
 
             vertices.push_back(glm::vec3(x, y, z));
         }

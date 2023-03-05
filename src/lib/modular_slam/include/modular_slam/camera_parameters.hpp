@@ -11,8 +11,8 @@ struct CameraParameters
     float factor;
 };
 
-Eigen::Matrix3f getProjectionMatrix(const CameraParameters& cameraParameters);
-Eigen::Matrix3f getInverseProjectionMatrix(const CameraParameters& cameraParameters);
+Matrix3 getProjectionMatrix(const CameraParameters& cameraParameters);
+Matrix3 getInverseProjectionMatrix(const CameraParameters& cameraParameters);
 
 } // namespace mslam
 

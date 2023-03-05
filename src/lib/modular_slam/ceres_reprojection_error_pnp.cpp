@@ -64,7 +64,7 @@ class ReprojectionErrorFunctor
     const CameraParameters& camera;
 };
 
-std::optional<slam3d::SensorState>
+std::optional<MinMseTracker::PnpResult>
 MinMseTracker::solvePnp(const std::vector<std::shared_ptr<Landmark<Vector3>>>& landmarks,
                         const std::vector<Vector2>& sensorPoints, const slam3d::SensorState& initial)
 {
@@ -105,10 +105,10 @@ MinMseTracker::solvePnp(const std::vector<std::shared_ptr<Landmark<Vector3>>>& l
                           static_cast<float>(axisAnglePoint[2])};
     resultAxis /= resultAngle;
 
-    slam3d::SensorState result;
-    result.position = {static_cast<float>(axisAnglePoint[3]), static_cast<float>(axisAnglePoint[4]),
-                       static_cast<float>(axisAnglePoint[5])};
-    result.orientation = Quaternion{AngleAxis(resultAngle, resultAxis)};
+    PnpResult result;
+    result.pose.position = {static_cast<float>(axisAnglePoint[3]), static_cast<float>(axisAnglePoint[4]),
+                            static_cast<float>(axisAnglePoint[5])};
+    result.pose.orientation = Quaternion{AngleAxis(resultAngle, resultAxis)};
 
     return result;
 }

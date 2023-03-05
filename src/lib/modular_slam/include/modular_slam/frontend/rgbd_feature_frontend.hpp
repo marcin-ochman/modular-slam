@@ -38,7 +38,7 @@ class RgbdFeatureFrontend : public FrontendInterface<RgbdFrame, slam3d::SensorSt
         std::shared_ptr<IFeatureMatcher<float, 32>> matcher,
         std::shared_ptr<IMapComponentsFactory<slam3d::SensorState, slam3d::LandmarkState>> mapComponentsFactory);
 
-    std::shared_ptr<FrontendOutputType> processSensorData(const RgbdFrame& sensorData) override;
+    FrontendOutputType processSensorData(std::shared_ptr<RgbdFrame> sensorData) override;
     bool init() override;
 
   protected:
@@ -48,10 +48,13 @@ class RgbdFeatureFrontend : public FrontendInterface<RgbdFrame, slam3d::SensorSt
     [[nodiscard]] bool isNewKeyframeRequired(const std::size_t matchedLandmarks) const;
     [[nodiscard]] bool hasInitialKeyframe() const { return referenceKeyframe != nullptr; }
     [[nodiscard]] bool isLoopClosureNeeded() const;
-    void initFirstKeyframe(const RgbdFrame& sensorData, const std::vector<KeypointDescriptor<float, 32>>& keypoints);
+    FrontendOutputType initFirstKeyframe(const RgbdFrame& sensorData,
+                                         const std::vector<KeypointDescriptor<float, 32>>& keypoints);
 
     std::shared_ptr<rgbd::Keyframe> relocalize();
-    bool track(const RgbdFrame& sensorData, const std::vector<KeypointDescriptor<float, 32>>& keypoints);
+
+    RgbdFeatureFrontend::FrontendOutputType track(const RgbdFrame& sensorData,
+                                                  const std::vector<KeypointDescriptor<float, 32>>& keypoints);
 
     std::shared_ptr<rgbd::Keyframe> addKeyframe(const RgbdFrame& sensorData, const slam3d::SensorState& pose);
     [[nodiscard]] std::size_t minMatchedPoints() const;
@@ -72,7 +75,9 @@ class RgbdFeatureFrontend : public FrontendInterface<RgbdFrame, slam3d::SensorSt
 
     void addNewLandmarks(const std::vector<KeypointDescriptor<float, 32>>& newLandmarkKeypoints,
                          std::shared_ptr<rgbd::Keyframe> newKeyframe, const RgbdFrame& sensorData,
-                         std::shared_ptr<FrontendOutputType> constraints);
+                         FrontendOutputType& output);
+
+    void addLandmarkObservation(std::shared_ptr<rgbd::Keyframe> keyframe, const rgbd::LandmarkObservation& observation);
 
     void updateVisibleLandmarks(const std::vector<std::shared_ptr<rgbd::Landmark>>& landmarksOnFrame,
                                 const std::shared_ptr<rgbd::Keyframe>& keyframe);
@@ -100,9 +105,9 @@ class RgbdFeatureFrontend : public FrontendInterface<RgbdFrame, slam3d::SensorSt
     std::multimap<std::shared_ptr<rgbd::Landmark>, KeypointDescriptor<float>> landmarkDescriptors;
     std::map<std::shared_ptr<rgbd::Keyframe>, std::vector<std::shared_ptr<rgbd::Landmark>>> keyframesWithLandmarks;
     std::map<std::shared_ptr<rgbd::Landmark>, std::vector<std::shared_ptr<rgbd::Keyframe>>> landmarksInKeyframes;
-    slam3d::SensorState currentPose;
 
-    std::shared_ptr<FrontendOutputType> output;
+    std::map<std::shared_ptr<rgbd::Keyframe>, std::vector<rgbd::LandmarkObservation>> observations;
+    slam3d::SensorState currentPose;
 };
 } // namespace mslam
 

@@ -76,12 +76,16 @@ auto buildSlam(const ViewerArgs& args)
     auto frontend = std::make_shared<mslam::RgbdFeatureFrontend>(
         std::make_shared<mslam::OpenCvRansacPnp>(), std::make_shared<mslam::OrbOpenCvDetector>(),
         std::make_shared<mslam::OrbOpenCvMatcher>(), std::make_shared<mslam::BasicFeatureMapComponentsFactory>());
+    auto map = std::make_shared<mslam::BasicMap>();
+    auto backend = std::make_shared<mslam::CeresBackend>();
+
+    backend->setMap(map);
 
     slamBuilder.addParameterHandler(std::make_shared<mslam::BasicParameterHandler>())
         .addDataProvider(dataProvider)
         .addFrontend(frontend)
-        .addBackend(std::make_shared<mslam::CeresBackend>())
-        .addMap(std::make_shared<mslam::BasicMap>());
+        .addBackend(backend)
+        .addMap(map);
 
     return slamBuilder.build();
 }
@@ -117,6 +121,7 @@ int main(int argc, char* argv[])
                      &mslam::ViewerMainWindow::setLandmarkPoints);
     QObject::connect(mainWindow, &mslam::ViewerMainWindow::paused, slamThread, &SlamThread::pause);
     QObject::connect(mainWindow, &mslam::ViewerMainWindow::resumed, slamThread, &SlamThread::resume);
+    QObject::connect(mainWindow, &mslam::ViewerMainWindow::isClosing, slamThread, &SlamThread::requestInterruption);
 
     mainWindow->show();
 

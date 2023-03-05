@@ -35,8 +35,7 @@ class BackendInterface : public SlamComponent
   public:
     using BackendOutputType = BackendOutput<SensorStateType, LandmarkStateType>;
 
-    virtual std::shared_ptr<BackendOutputType>
-    process(FrontendOutput<SensorStateType, LandmarkStateType>& frontendOutput) = 0;
+    virtual BackendOutputType process(FrontendOutput<SensorStateType, LandmarkStateType>& frontendOutput) = 0;
 };
 
 } // namespace mslam

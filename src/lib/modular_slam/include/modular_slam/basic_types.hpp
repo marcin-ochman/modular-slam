@@ -14,11 +14,14 @@ namespace mslam
 
 using Id = std::uint64_t;
 
-using Vector2 = Eigen::Vector2f;
+using Vector2 = Eigen::Vector2d;
 using Vector2i = Eigen::Vector2i;
-using Vector3 = Eigen::Vector3f;
-using Quaternion = Eigen::Quaternionf;
-using AngleAxis = Eigen::AngleAxisf;
+using Vector3 = Eigen::Vector3d;
+using Quaternion = Eigen::Quaterniond;
+using AngleAxis = Eigen::AngleAxisd;
+
+using Matrix3 = Eigen::Matrix3d;
+using Matrix4 = Eigen::Matrix4d;
 
 struct Size
 {

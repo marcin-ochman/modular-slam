@@ -23,15 +23,15 @@ QMatrix4x4 poseToQMatrix(const mslam::slam3d::SensorState& state)
 {
     QMatrix4x4 pose;
 
-    Eigen::Matrix3f R = state.orientation.toRotationMatrix();
-    Eigen::Vector3f T = state.position;
-    Eigen::Matrix4f transformMatrix = Eigen::Matrix4f::Identity();
+    const auto R = state.orientation.toRotationMatrix();
+    const auto& T = state.position;
+    mslam::Matrix4 transformMatrix = mslam::Matrix4::Identity();
     transformMatrix.block<3, 3>(0, 0) = R;
     transformMatrix.block<3, 1>(0, 3) = T;
 
     for(int i = 0; i < 4; i++)
         for(int j = 0; j < 4; j++)
-            pose(i, j) = transformMatrix(i, j);
+            pose(i, j) = static_cast<float>(transformMatrix(i, j));
 
     pose.rotate(180, 1, 0, 0);
     return pose;
@@ -41,15 +41,16 @@ glm::mat4 poseToGlmMat4(const mslam::slam3d::SensorState& state)
 {
     auto pose = glm::mat4(1);
 
-    const Eigen::Matrix3f R = state.orientation.toRotationMatrix();
-    const Eigen::Vector3f T = state.position;
-    Eigen::Matrix4f transformMatrix = Eigen::Matrix4f::Identity();
+    const mslam::Matrix3 R = state.orientation.toRotationMatrix();
+    const mslam::Vector3& T = state.position;
+
+    mslam::Matrix4 transformMatrix = mslam::Matrix4::Identity();
     transformMatrix.block<3, 3>(0, 0) = R;
     transformMatrix.block<3, 1>(0, 3) = T;
 
     for(int i = 0; i < 4; i++)
         for(int j = 0; j < 4; j++)
-            pose[j][i] = transformMatrix(i, j);
+            pose[j][i] = static_cast<float>(transformMatrix(i, j));
 
     return pose;
 }
@@ -220,5 +221,8 @@ void SlamThread::run()
         KeyframeViewData currentFrameView = {0, image, pose};
         emit currentFrameChanged(currentFrameView);
         emit landmarkPointsChanged(landmarkPoints);
+
+        if(isInterruptionRequested())
+            isRunning = false;
     }
 }

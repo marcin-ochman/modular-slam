@@ -1,6 +1,7 @@
 #include "viewer_main_window.hpp"
 
 #include <QSettings>
+#include <qmainwindow.h>
 
 namespace mslam
 {
@@ -37,6 +38,7 @@ void ViewerMainWindow::loadSettings()
 void ViewerMainWindow::closeEvent(QCloseEvent* event)
 {
     saveSettings();
+    emit isClosing();
     QMainWindow::closeEvent(event);
 }
 

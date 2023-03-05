@@ -85,16 +85,16 @@ SlamProcessResult Slam<SensorDataType, SensorStateType, LandmarkStateType>::proc
         return SlamProcessResult::NoDataAvailable;
 
     auto sensorData = dataProvider->recentData();
-    auto frontendOutput = frontend->processSensorData(*sensorData);
+    auto frontendOutput = frontend->processSensorData(sensorData);
 
-    if(!frontendOutput)
+    if(frontendOutput.landmarkObservations.size() == 0)
     {
         spdlog::error("No constraints available");
         return SlamProcessResult::NoConstraints;
     }
 
-    m_sensorState = frontendOutput->sensorState;
-    auto backendOutput = backend->process(*frontendOutput);
+    m_sensorState = frontendOutput.sensorState;
+    auto backendOutput = backend->process(frontendOutput);
     map->update(frontendOutput);
 
     return SlamProcessResult::Success;

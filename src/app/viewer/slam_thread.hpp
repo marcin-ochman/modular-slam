@@ -4,6 +4,7 @@
 #include "modular_slam/depth_frame.hpp"
 #include "modular_slam/realsense_camera.hpp"
 #include "modular_slam/rgbd_frame.hpp"
+#include "modular_slam/rgbd_slam_types.hpp"
 #include "modular_slam/slam.hpp"
 #include "modular_slam/slam3d_types.hpp"
 #include "pointcloud_viewer.hpp"
@@ -22,7 +23,8 @@ class SlamThread : public QThread
 
   public:
     explicit SlamThread(QObject* parent);
-    void setSlam(std::unique_ptr<mslam::Slam<mslam::RgbdFrame, mslam::slam3d::SensorState, Eigen::Vector3f>>&& newSlam)
+    void setSlam(
+        std::unique_ptr<mslam::Slam<mslam::RgbdFrame, mslam::rgbd::SensorState, mslam::rgbd::LandmarkState>>&& newSlam)
     {
         slam = std::move(newSlam);
     }
@@ -47,7 +49,7 @@ class SlamThread : public QThread
   private:
     std::atomic<bool> isRunning;
     std::atomic<bool> isPaused;
-    std::unique_ptr<mslam::Slam<mslam::RgbdFrame, mslam::slam3d::SensorState, Eigen::Vector3f>> slam;
+    std::unique_ptr<mslam::Slam<mslam::RgbdFrame, mslam::rgbd::SensorState, mslam::rgbd::LandmarkState>> slam;
     std::shared_ptr<mslam::RgbdFrame> frame;
 };
 

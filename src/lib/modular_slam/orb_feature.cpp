@@ -34,7 +34,7 @@ std::vector<OrbKeypoint> OrbOpenCvDetector::detect(const RgbFrame& sensorData)
         OrbKeypoint keypoint;
         const auto& cvKeypoint = keypoints[static_cast<std::size_t>(i)];
         const auto* descriptor = descriptors.ptr<float>(i);
-        keypoint.keypoint.coordinates = Eigen::Vector2f{cvKeypoint.pt.x, cvKeypoint.pt.y};
+        keypoint.keypoint.coordinates = Vector2{cvKeypoint.pt.x, cvKeypoint.pt.y};
 
         std::copy(descriptor, descriptor + descriptorLength, std::begin(keypoint.descriptor));
 
