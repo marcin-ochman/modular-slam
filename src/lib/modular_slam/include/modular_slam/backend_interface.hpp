@@ -27,6 +27,7 @@ struct BackendOutput
     std::vector<std::shared_ptr<LandmarkType>> updatedLandmarks;
     std::vector<std::shared_ptr<KeyframeType>> updatedKeyframes;
     std::vector<MergedLandmarkType> mergedLandmarks;
+    std::vector<LandmarkObservation<LandmarkStateType>> outliersObservation;
 };
 
 template <typename SensorStateType, typename LandmarkStateType>

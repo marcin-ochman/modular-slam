@@ -31,7 +31,7 @@ class CeresBackend : public BackendInterface<mslam::slam3d::SensorState, mslam::
     std::vector<rgbd::KeyframeLandmarkObservation> getObservationsForLBA() const;
     void localBundleAdjustment(const FrontendOutputType& frontendOutput);
     void globalBundleAdjustment(const FrontendOutputType& frontendOutput);
-    void bundleAdjustment();
+    void bundleAdjustment(const MapVisitingParams& visitingParams);
 
     CameraParameters cameraParameters = {{319.5f, 239.5f}, {525, 525}, 1.f / 5000.f};
 

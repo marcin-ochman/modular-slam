@@ -13,6 +13,7 @@
 #include <ceres/problem.h>
 #include <ceres/rotation.h>
 #include <ceres/types.h>
+#include <limits>
 #include <optional>
 #include <spdlog/spdlog.h>
 
@@ -132,7 +133,6 @@ CeresBackend::process(FrontendOutput<mslam::slam3d::SensorState, mslam::Vector3>
     if(needsGlobalBundleAdjustment(frontendOutput))
     {
         globalBundleAdjustment(frontendOutput);
-        return output;
     }
     else if(needsLocalBundleAdjustment(frontendOutput))
     {
@@ -198,10 +198,25 @@ void CeresBackend::localBundleAdjustment(const FrontendOutputType& frontendOutpu
     visitingParams.landmarkKeyframeObservationParams.graphParams->refKeyframeId = frontendOutput.newKeyframe->id;
     visitingParams.landmarkKeyframeObservationParams.graphParams->deepLevel = 1;
 
+    bundleAdjustment(visitingParams);
+}
+
+void CeresBackend::globalBundleAdjustment(const FrontendOutputType& frontendOutput)
+{
+    MapVisitingParams visitingParams;
+    visitingParams.elementsToVisit = MapElementsToVisit::LandmarkKeyframeObservation;
+    visitingParams.landmarkKeyframeObservationParams.graphParams = std::make_optional<GraphBasedParams>();
+    visitingParams.landmarkKeyframeObservationParams.graphParams->refKeyframeId = frontendOutput.newKeyframe->id;
+    visitingParams.landmarkKeyframeObservationParams.graphParams->deepLevel = std::numeric_limits<Id>::max();
+
+    bundleAdjustment(visitingParams);
+}
+
+void CeresBackend::bundleAdjustment(const MapVisitingParams& visitingParams)
+{
     CeresVisitor visitor(cameraParameters);
     map->visit(visitor, visitingParams);
 
-    const std::vector<rgbd::KeyframeLandmarkObservation> allObservations;
     auto& problem = visitor.getProblem();
 
     ceres::Solver::Options options;
@@ -211,12 +226,7 @@ void CeresBackend::localBundleAdjustment(const FrontendOutputType& frontendOutpu
 
     ceres::Solver::Summary summary;
     ceres::Solve(options, &problem, &summary);
-    spdlog::info("Performing LBA {} \n\n {}", problem.NumResidualBlocks(), summary.FullReport());
-}
-
-void CeresBackend::globalBundleAdjustment(const FrontendOutputType& frontendOutputoverride)
-{
-    // TODO: implement
+    spdlog::info("Performing BA {} \n\n {}", problem.NumResidualBlocks(), summary.FullReport());
 }
 
 } // namespace mslam

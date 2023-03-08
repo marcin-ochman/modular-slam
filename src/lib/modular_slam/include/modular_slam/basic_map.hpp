@@ -22,6 +22,7 @@ class BasicMap : public IMap<slam3d::SensorState, slam3d::LandmarkState>
     void visit(IMapVisitor<slam3d::SensorState, slam3d::LandmarkState>& visitor,
                const MapVisitingParams& params = {}) override;
 
+    std::shared_ptr<slam3d::Keyframe> getKeyframeById(Id keyframeId);
     bool hasKeyframe(std::shared_ptr<slam3d::Keyframe> keyframe) const;
     void addKeyframe(std::shared_ptr<slam3d::Keyframe> keyframe);
     void removeKeyframe(std::shared_ptr<slam3d::Keyframe> keyframe);
