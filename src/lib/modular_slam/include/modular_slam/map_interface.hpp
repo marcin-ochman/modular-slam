@@ -2,6 +2,7 @@
 #define MSLAM_MAP_INTERFACE_HPP_
 
 #include "modular_slam/constraints_interface.hpp"
+#include "modular_slam/feature_interface.hpp"
 #include "modular_slam/frontend_interface.hpp"
 #include "modular_slam/keyframe.hpp"
 #include "modular_slam/landmark.hpp"
@@ -35,11 +36,18 @@ struct LandmarkVisitingParams
     std::optional<GraphBasedParams> graphParams;
 };
 
+// TODO it should be templated depending on keypoints
+struct KeyframeSimilarityParams
+{
+    std::vector<KeypointDescriptor<float, 32>> keypoints;
+    double scoreThreshold;
+};
+
 struct KeyframeVisitingParams
 {
-    static constexpr auto maxRadius = std::numeric_limits<double>::max();
-    std::optional<double> radius;
-    std::optional<GraphBasedParams> graphParams;
+    // static constexpr auto maxRadius = std::numeric_limits<double>::max();
+    // std::optional<double> radius;
+    std::optional<KeyframeSimilarityParams> similarity;
 };
 
 struct LandmarkKeyframeObservationParams
@@ -62,7 +70,6 @@ struct MapVisitingParams
     LandmarkVisitingParams landmarkParams;
     KeyframeVisitingParams keyframeParams;
     LandmarkKeyframeObservationParams landmarkKeyframeObservationParams;
-
     MapElementsToVisit elementsToVisit = MapElementsToVisit::All;
 
     // TODO: think about it
@@ -91,27 +98,28 @@ inline bool isVisitLandmarkKeyframeObservationFlagSet(const MapVisitingParams& v
     return isVisitFlagSet(visitingParams, MapElementsToVisit::LandmarkKeyframeObservation);
 }
 
-template <typename SensorStateType, typename LandmarkStateType>
+template <typename SensorStateType, typename LandmarkStateType, typename ObservationType>
 class IMapVisitor
 {
   public:
     virtual void visit(std::shared_ptr<Landmark<LandmarkStateType>> landmark) {}
     virtual void visit(std::shared_ptr<Keyframe<SensorStateType>> keyframe) {}
-    virtual void
-    visit(const LandmarkKeyframeObservation<SensorStateType, LandmarkStateType>& landmarkKeyframeObservation)
+    virtual void visit(const LandmarkKeyframeObservation<SensorStateType, LandmarkStateType, ObservationType>&
+                           landmarkKeyframeObservation)
     {
     }
+
     virtual ~IMapVisitor() = default;
 };
 
-template <typename SensorStateType, typename LandmarkStateType>
+template <typename SensorStateType, typename LandmarkStateType, typename ObservationType>
 class IMap : public SlamComponent
 {
   public:
-    using FrontendOutputType = FrontendOutput<SensorStateType, LandmarkStateType>;
+    using FrontendOutputType = FrontendOutput<SensorStateType, LandmarkStateType, ObservationType>;
 
     virtual void update(const FrontendOutputType& frontendOutput) = 0;
-    virtual void visit(IMapVisitor<SensorStateType, LandmarkStateType>& visitor,
+    virtual void visit(IMapVisitor<SensorStateType, LandmarkStateType, ObservationType>& visitor,
                        const MapVisitingParams& params = {}) = 0;
 };
 

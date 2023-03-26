@@ -27,15 +27,16 @@ enum class SlamState
     Lost
 };
 
-template <typename SensorDataType, typename SensorStateType, typename LandmarkStateType>
+template <typename SensorDataType, typename SensorStateType, typename LandmarkStateType, typename ObservationType>
 class Slam
 {
   public:
     using DataProviderInterfaceType = DataProviderInterface<SensorDataType>;
-    using FrontendInterfaceType = FrontendInterface<SensorDataType, SensorStateType, LandmarkStateType>;
-    using BackendInterfaceType = BackendInterface<SensorStateType, LandmarkStateType>;
-    using SlamType = Slam<SensorDataType, SensorStateType, LandmarkStateType>;
-    using MapType = IMap<SensorStateType, LandmarkStateType>;
+    using FrontendInterfaceType =
+        FrontendInterface<SensorDataType, SensorStateType, LandmarkStateType, ObservationType>;
+    using BackendInterfaceType = BackendInterface<SensorStateType, LandmarkStateType, ObservationType>;
+    using SlamType = Slam<SensorDataType, SensorStateType, LandmarkStateType, ObservationType>;
+    using MapType = IMap<SensorStateType, LandmarkStateType, ObservationType>;
 
     Slam(std::shared_ptr<ParametersHandlerInterface> parameterHandler,
          std::shared_ptr<DataProviderInterfaceType> dataProviderInterface,
@@ -67,8 +68,8 @@ class Slam
     SlamState m_slamState;
 };
 
-template <typename SensorDataType, typename SensorStateType, typename LandmarkStateType>
-bool Slam<SensorDataType, SensorStateType, LandmarkStateType>::init()
+template <typename SensorDataType, typename SensorStateType, typename LandmarkStateType, typename ObservationType>
+bool Slam<SensorDataType, SensorStateType, LandmarkStateType, ObservationType>::init()
 {
     auto result =
         parameterHandler->init() && dataProvider->init() && frontend->init() && backend->init() && map->init();
@@ -76,8 +77,8 @@ bool Slam<SensorDataType, SensorStateType, LandmarkStateType>::init()
     return result;
 }
 
-template <typename SensorDataType, typename SensorStateType, typename LandmarkStateType>
-SlamProcessResult Slam<SensorDataType, SensorStateType, LandmarkStateType>::process()
+template <typename SensorDataType, typename SensorStateType, typename LandmarkStateType, typename ObservationType>
+SlamProcessResult Slam<SensorDataType, SensorStateType, LandmarkStateType, ObservationType>::process()
 {
     auto isNewDataAvailable = dataProvider->fetch();
 
@@ -95,9 +96,8 @@ SlamProcessResult Slam<SensorDataType, SensorStateType, LandmarkStateType>::proc
 
     m_sensorState = frontendOutput.sensorState;
 
-    map->update(frontendOutput);
-
     auto backendOutput = backend->process(frontendOutput);
+    map->update(frontendOutput);
 
     return SlamProcessResult::Success;
 }

@@ -15,6 +15,7 @@ RUN pacman -Syu --noconfirm \
     glm \
     go \
     graphviz \
+    hdf5 \
     htop \
     nlohmann-json \
     opencv \
@@ -23,6 +24,7 @@ RUN pacman -Syu --noconfirm \
     qt5 \
     qt6 \
     valgrind \
+    vtk \
     vim
 
 RUN useradd builduser -m \
@@ -32,6 +34,8 @@ RUN useradd builduser -m \
 
 
 RUN git clone https://aur.archlinux.org/yay.git yay.git && chown builduser -R yay.git && cd yay.git  && sudo -u builduser bash -c "makepkg -si --noconfirm" && cd - && rm -rf yay.git
+
+RUN git clone https://github.com/rmsalinas/fbow.git && cd fbow && mkdir build && cd build && cmake .. -DCMAKE_INSTALL_PREFIX=/opt/fbow -DBUILD_UTILS=OFF && make install && cd -
 
 USER builduser
 RUN yay -Syu --noconfirm librealsense ceres-solver spdlog trompeloeil-git

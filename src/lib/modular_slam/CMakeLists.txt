@@ -13,6 +13,7 @@ find_package(Ceres REQUIRED)
 find_package(spdlog REQUIRED)
 find_package(trompeloeil)
 find_package(Doxygen)
+find_package(DBoW3 REQUIRED)
 
 add_library(
   ModularSlam
@@ -28,20 +29,29 @@ add_library(
   rgbd_feature_frontend.cpp
   rgbd_file_provider.cpp
   orb_feature.cpp
+  orb_relocalizer.cpp
   frame.cpp)
 
 add_library(ModularSlam::ModularSlam ALIAS ModularSlam)
 
+message(WARN "WOOOOOO ${DBoW3_LIBS}")
 target_include_directories(
   ModularSlam
   PUBLIC $<BUILD_INTERFACE:${ModularSlam_BINARY_DIR}/include>
          $<BUILD_INTERFACE:${ModularSlam_SOURCE_DIR}/include>
          $<INSTALL_INTERFACE:include>)
 
+target_include_directories(ModularSlam PUBLIC "${DBoW3_INCLUDE_DIRS}")
+
 target_link_libraries(
   ModularSlam
-  PRIVATE ${realsense2_LIBRARY} opencv_core opencv_video opencv_imgproc
-          opencv_highgui Ceres::ceres
+  PRIVATE ${realsense2_LIBRARY}
+          opencv_core
+          opencv_video
+          opencv_imgproc
+          opencv_highgui
+          Ceres::ceres
+          ${DBoW3_LIBS}
   PUBLIC Boost::filesystem Eigen3::Eigen spdlog::spdlog)
 
 install(

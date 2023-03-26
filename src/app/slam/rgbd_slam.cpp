@@ -1,4 +1,5 @@
 #include "modular_slam/basic_feature_map_components_factory.hpp"
+#include "modular_slam/basic_map.hpp"
 #include "modular_slam/basic_parameters_handler.hpp"
 #include "modular_slam/basic_types.hpp"
 #include "modular_slam/ceres_backend.hpp"
@@ -10,6 +11,7 @@
 #include "modular_slam/realsense_camera.hpp"
 #include "modular_slam/rgbd_file_provider.hpp"
 #include "modular_slam/rgbd_frame.hpp"
+#include "modular_slam/rgbd_slam_types.hpp"
 #include "modular_slam/slam3d_types.hpp"
 #include "modular_slam/slam_builder.hpp"
 
@@ -61,7 +63,8 @@ int main(int argc, char* argv[])
 
     auto args = parseArgs(app);
 
-    mslam::SlamBuilder<mslam::RgbdFrame, mslam::slam3d::SensorState, mslam::Vector3> slamBuilder;
+    mslam::SlamBuilder<mslam::RgbdFrame, mslam::slam3d::SensorState, mslam::Vector3, mslam::rgbd::RgbdKeypoint>
+        slamBuilder;
 
     std::shared_ptr<mslam::DataProviderInterface<mslam::RgbdFrame>> dataProvider =
         std::make_shared<mslam::RealSenseCamera>();
@@ -71,14 +74,16 @@ int main(int argc, char* argv[])
         dataProvider = std::make_shared<mslam::RgbdFileProvider>(rgbdPaths, mslam::tumRgbdCameraParams());
     }
 
+    auto map = std::make_shared<mslam::BasicMap>();
     auto frontend = std::make_shared<mslam::RgbdFeatureFrontend>(
         std::make_shared<mslam::OpenCvRansacPnp>(), std::make_shared<mslam::OrbOpenCvDetector>(),
-        std::make_shared<mslam::OrbOpenCvMatcher>(), std::make_shared<mslam::BasicFeatureMapComponentsFactory>());
+        std::make_shared<mslam::OrbOpenCvMatcher>(), std::make_shared<mslam::BasicFeatureMapComponentsFactory>(), map);
 
     slamBuilder.addParameterHandler(std::make_shared<mslam::BasicParameterHandler>())
         .addDataProvider(dataProvider)
         .addFrontend(frontend)
-        .addBackend(std::make_shared<mslam::CeresBackend>());
+        .addBackend(std::make_shared<mslam::CeresBackend>())
+        .addMap(map);
 
     auto slam = slamBuilder.build();
     slam->init();

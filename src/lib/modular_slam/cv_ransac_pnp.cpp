@@ -1,5 +1,7 @@
 #include "modular_slam/cv_ransac_pnp.hpp"
+#include "modular_slam/basic_types.hpp"
 
+#include <Eigen/src/Core/Matrix.h>
 #include <opencv2/calib3d.hpp>
 #include <opencv2/core/mat.hpp>
 #include <opencv2/core/types.hpp>
@@ -18,9 +20,9 @@ OpenCvRansacPnp::solvePnp(const std::vector<std::shared_ptr<Landmark<Vector3>>>&
         const auto& landmark = landmarks[i];
         auto* rowPtr = objectPoints.ptr<float>(static_cast<int>(i));
 
-        rowPtr[0] = landmark->state.x();
-        rowPtr[1] = landmark->state.y();
-        rowPtr[2] = landmark->state.z();
+        rowPtr[0] = static_cast<float>(landmark->state.x());
+        rowPtr[1] = static_cast<float>(landmark->state.y());
+        rowPtr[2] = static_cast<float>(landmark->state.z());
     }
 
     cv::Mat imagePoints(static_cast<int>(sensorPoints.size()), 2, CV_32F);
@@ -39,7 +41,7 @@ OpenCvRansacPnp::solvePnp(const std::vector<std::shared_ptr<Landmark<Vector3>>>&
 
     std::vector<int> inliers;
     const auto success = cv::solvePnPRansac(objectPoints, imagePoints, cameraMatrix, cv::noArray(), cvRotation,
-                                            cvTranslation, true, 100, 8.0, 0.99, inliers);
+                                            cvTranslation, false, 100, 8.0, 0.99, inliers);
 
     if(!success)
         return std::nullopt;
@@ -64,8 +66,7 @@ OpenCvRansacPnp::solvePnp(const std::vector<std::shared_ptr<Landmark<Vector3>>>&
     result.pose.position = invTransform.block<3, 1>(0, 3);
 
     result.inliers.resize(landmarks.size(), false);
-
-    std::for_each(std::cbegin(inliers), std::cend(inliers), [&result](int index) { result.inliers[index] = false; });
+    std::for_each(std::cbegin(inliers), std::cend(inliers), [&result](int index) { result.inliers[index] = true; });
 
     return result;
 }

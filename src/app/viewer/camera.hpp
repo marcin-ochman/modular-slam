@@ -52,7 +52,7 @@ class Camera
     glm::vec3 m_focalPoint = {0.0f, 0.0f, 0.0f};
 
     float m_distance = 2.0f;
-    float m_pitch = 0.0f;
+    float m_pitch = 3.141592f;
     float m_yaw = 0.f;
     float m_roll = 0.0f;
 

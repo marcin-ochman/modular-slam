@@ -17,22 +17,25 @@ struct LoopDetection
     std::shared_ptr<Keyframe<SensorDataType>> secondKeyframe;
 };
 
-template <typename SensorStateType, typename LandmarkStateType>
+template <typename SensorStateType, typename LandmarkStateType, typename ObservationType>
 struct FrontendOutput
 {
     std::optional<LoopDetection<SensorStateType>> loopDetected;
-    std::vector<LandmarkObservation<LandmarkStateType>> landmarkObservations;
+    std::vector<LandmarkObservation<LandmarkStateType, ObservationType>> landmarkObservations;
     std::shared_ptr<Keyframe<SensorStateType>> newKeyframe;
     std::vector<std::shared_ptr<Landmark<LandmarkStateType>>> newLandmarks;
+
+    // TODO: update with traits!
+    // TODO 2: it would be more efficient to split keypoint / descriptor data
     SensorStateType sensorState;
-    SensorStateType slamState;
+    // SensorStateType slamState;
 };
 
-template <typename SensorDataType, typename SensorStateType, typename LandmarkStateType>
+template <typename SensorDataType, typename SensorStateType, typename LandmarkStateType, typename ObservationType>
 class FrontendInterface : public SlamComponent
 {
   public:
-    using FrontendOutputType = FrontendOutput<SensorStateType, LandmarkStateType>;
+    using FrontendOutputType = FrontendOutput<SensorStateType, LandmarkStateType, ObservationType>;
 
     virtual FrontendOutputType processSensorData(std::shared_ptr<SensorDataType> sensorData) = 0;
     ~FrontendInterface() override = default;

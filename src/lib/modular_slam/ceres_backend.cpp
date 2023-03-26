@@ -9,71 +9,31 @@
 
 #include <Eigen/src/Core/Matrix.h>
 #include <Eigen/src/Geometry/Quaternion.h>
+#include <boost/polymorphic_cast.hpp>
 #include <ceres/ceres.h>
+#include <ceres/cost_function.h>
 #include <ceres/problem.h>
 #include <ceres/rotation.h>
 #include <ceres/types.h>
 #include <limits>
 #include <optional>
 #include <spdlog/spdlog.h>
+#include <type_traits>
+#include <utility>
 
 namespace mslam
 {
 
-// class PoseGraph3dErrorTerm
-// {
-//   public:
-//     PoseGraph3dErrorTerm(mslam::rgbd::SensorState t_ab_measured, Eigen::Matrix<double, 6, 6> sqrt_information)
-//         : t_ab_measured_(std::move(t_ab_measured)), sqrt_information_(std::move(sqrt_information))
-//     {
-//     }
-//     template <typename T>
-//     bool operator()(const T* const p_a_ptr, const T* const q_a_ptr, const T* const p_b_ptr, const T* const q_b_ptr,
-//                     T* residuals_ptr) const
-//     {
-//         Eigen::Map<const Eigen::Matrix<T, 3, 1>> p_a(p_a_ptr);
-//         Eigen::Map<const Eigen::Quaternion<T>> q_a(q_a_ptr);
-//         Eigen::Map<const Eigen::Matrix<T, 3, 1>> p_b(p_b_ptr);
-//         Eigen::Map<const Eigen::Quaternion<T>> q_b(q_b_ptr);
-//         // Compute the relative transformation between the two frames.
-//         Eigen::Quaternion<T> q_a_inverse = q_a.conjugate();
-//         Eigen::Quaternion<T> q_ab_estimated = q_a_inverse * q_b;
-//         // Represent the displacement between the two frames in the A frame.
-//         Eigen::Matrix<T, 3, 1> p_ab_estimated = q_a_inverse * (p_b - p_a);
-//         // Compute the error  between the two orientation estimates.
-//         Eigen::Quaternion<T> delta_q = t_ab_measured_.orientation.template cast<T>() * q_ab_estimated.conjugate();
-//         // Compute the residuals.
-//         // [ position         ]   [ delta_p          ]
-//         // [ orientation (3x1)] = [ 2 * delta_q(0:2) ]
-//         Eigen::Map<Eigen::Matrix<T, 6, 1>> residuals(residuals_ptr);
-//         residuals.template block<3, 1>(0, 0) = p_ab_estimated - t_ab_measured_.position.template cast<T>();
-//         residuals.template block<3, 1>(3, 0) = T(2.0) * delta_q.vec();
-//         // Scale the residuals by the measurement uncertainty.
-//         residuals.applyOnTheLeft(sqrt_information_.template cast<T>());
-
-//         return true;
-//     }
-
-//     static ceres::CostFunction* Create(const mslam::rgbd::SensorState& t_ab_measured,
-//                                        const Eigen::Matrix<double, 6, 6>& sqrt_information)
-//     {
-//         return new ceres::AutoDiffCostFunction<PoseGraph3dErrorTerm, 6, 3, 4, 3, 4>(
-//             new PoseGraph3dErrorTerm(t_ab_measured, sqrt_information));
-//     }
-
-//     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-//   private:
-//     // The measurement for the position of B relative to A in the A frame.
-//     const mslam::rgbd::SensorState t_ab_measured_;
-//     // The square root of the measurement information matrix.
-//     const Eigen::Matrix<double, 6, 6> sqrt_information_;
-// };
-
 struct ReprojectionError
 {
-    ReprojectionError(const Vector2& observation, const mslam::CameraParameters& cameraParameters)
-        : observed(observation), cameraParams(cameraParameters)
+    ReprojectionError(const rgbd::RgbdKeypoint& keypoint, const mslam::CameraParameters& cameraParameters)
+        : cameraParams(cameraParameters)
     {
+        observation.x() = (keypoint.keypoint.coordinates.x() - cameraParams.principalPoint.x()) * keypoint.depth /
+                          cameraParams.focal.x();
+        observation.y() = (keypoint.keypoint.coordinates.y() - cameraParams.principalPoint.y()) * keypoint.depth /
+                          cameraParams.focal.y();
+        observation.z() = keypoint.depth;
     }
 
     template <typename T>
@@ -87,59 +47,68 @@ struct ReprojectionError
 
         const Eigen::Matrix<T, 3, 1> landmarkInCameraCoordinates =
             inverse * landmarkPointMapped - inverse * positionMapped;
-        const Eigen::Matrix<T, 2, 1> predicted = cameraParams.focal.array() *
-                                                     landmarkInCameraCoordinates.template block<2, 1>(0, 0).array() /
-                                                     landmarkInCameraCoordinates.z() +
-                                                 cameraParams.principalPoint.array();
 
-        residuals[0] = predicted.x() - T(observed.x());
-        residuals[1] = predicted.y() - T(observed.y());
+        Eigen::Map<Eigen::Matrix<T, 3, 1>> residualsMapped(residuals);
+        residualsMapped = landmarkInCameraCoordinates - observation.cast<T>();
 
         return true;
     }
 
-    static ceres::CostFunction* Create(const Vector2& keypoint, const CameraParameters& cameraParameters)
+    static ceres::CostFunction* Create(const rgbd::RgbdKeypoint& keypoint, const CameraParameters& cameraParameters)
     {
-        return (new ceres::AutoDiffCostFunction<ReprojectionError, 2, 4, 3, 3>(
+        return (new ceres::AutoDiffCostFunction<ReprojectionError, 3, 4, 3, 3>(
             new ReprojectionError(keypoint, cameraParameters)));
     }
 
-    const Vector2& observed;
+    Vector3 observation;
     const mslam::CameraParameters& cameraParams;
 
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 
-class CeresVisitor : public IMapVisitor<slam3d::SensorState, Vector3>
+struct ObservationWithCostFunction
+{
+    LandmarkKeyframeObservation<slam3d::SensorState, Vector3, rgbd::RgbdKeypoint> observation;
+    ceres::CostFunction* costFunction;
+};
+
+class CeresVisitor : public IMapVisitor<slam3d::SensorState, Vector3, rgbd::RgbdKeypoint>
 {
   public:
     explicit CeresVisitor(CameraParameters& newCameraParams) : cameraParams(newCameraParams) {}
-    // void visit(std::shared_ptr<Landmark<slam3d::LandmarkState>> landmark) override;
-    // void visit(std::shared_ptr<Keyframe<slam3d::SensorState>> keyframe) override;
-    void visit(const LandmarkKeyframeObservation<slam3d::SensorState, Vector3>& landmarkKeyframeObservation) override;
+    void visit(const LandmarkKeyframeObservation<slam3d::SensorState, Vector3, rgbd::RgbdKeypoint>&
+                   landmarkKeyframeObservation) override;
 
     ceres::Problem& getProblem() { return problem; }
+    [[nodiscard]] const std::vector<ObservationWithCostFunction>& getObservationsAndCosts() const
+    {
+        return observationsWithCosts;
+    }
+
+    std::map<Id, int> landmarksCount;
+    std::map<Id, int> keyframesCount;
 
   private:
     ceres::Manifold* quaternionManifold = new ceres::EigenQuaternionManifold;
     ceres::Problem problem;
     const CameraParameters& cameraParams;
+
+    std::vector<ObservationWithCostFunction> observationsWithCosts;
 };
 
 CeresBackend::BackendOutputType
-CeresBackend::process(FrontendOutput<mslam::slam3d::SensorState, mslam::Vector3>& frontendOutput)
+CeresBackend::process(FrontendOutput<mslam::slam3d::SensorState, mslam::Vector3, rgbd::RgbdKeypoint>& frontendOutput)
 {
-    BackendOutputType output;
     if(needsGlobalBundleAdjustment(frontendOutput))
     {
-        globalBundleAdjustment(frontendOutput);
+        return globalBundleAdjustment(frontendOutput);
     }
     else if(needsLocalBundleAdjustment(frontendOutput))
     {
-        localBundleAdjustment(frontendOutput);
+        return localBundleAdjustment(frontendOutput);
     }
 
-    return output;
+    return BackendOutputType();
 }
 
 bool CeresBackend::init()
@@ -148,7 +117,7 @@ bool CeresBackend::init()
     constexpr auto make_param = std::make_pair<ParameterDefinition, ParameterValue>;
 
     const ParamsDefinitionContainer params = {
-        make_param({"ceres_backend/lba_max_num_iterations", ParameterType::Number, {}, {0, 10000, 1}}, 10.f)};
+        make_param({"ceres_backend/lba_max_num_iterations", ParameterType::Number, {}, {0, 10000, 1}}, 100.f)};
 
     for(const auto& [definition, value] : params)
     {
@@ -174,23 +143,29 @@ bool CeresBackend::needsLocalBundleAdjustment(const FrontendOutputType& frontend
     return frontendOutput.newKeyframe != nullptr;
 }
 
-void CeresVisitor::visit(const LandmarkKeyframeObservation<slam3d::SensorState, Vector3>& observation)
+void CeresVisitor::visit(
+    const LandmarkKeyframeObservation<slam3d::SensorState, Vector3, rgbd::RgbdKeypoint>& observation)
 {
     ceres::LossFunction* lossFunction = nullptr;
-    ceres::CostFunction* costFunction = ReprojectionError::Create(observation.keypoint.coordinates, cameraParams);
+    ceres::CostFunction* costFunction = ReprojectionError::Create(observation.observation, cameraParams);
+
+    landmarksCount[observation.landmark->id] += 1;
+    keyframesCount[observation.keyframe->id] += 1;
+
+    observationsWithCosts.push_back({observation, costFunction});
 
     problem.AddResidualBlock(costFunction, lossFunction, observation.keyframe->state.orientation.coeffs().data(),
                              observation.keyframe->state.position.data(), observation.landmark->state.data());
     problem.SetManifold(observation.keyframe->state.orientation.coeffs().data(), quaternionManifold);
 
-    if(observation.keyframe->id == 0)
+    if(observation.keyframe->id == 1)
     {
         problem.SetParameterBlockConstant(observation.keyframe->state.orientation.coeffs().data());
         problem.SetParameterBlockConstant(observation.keyframe->state.position.data());
     }
 }
 
-void CeresBackend::localBundleAdjustment(const FrontendOutputType& frontendOutput)
+CeresBackend::BackendOutputType CeresBackend::localBundleAdjustment(const FrontendOutputType& frontendOutput)
 {
     MapVisitingParams visitingParams;
     visitingParams.elementsToVisit = MapElementsToVisit::LandmarkKeyframeObservation;
@@ -198,22 +173,24 @@ void CeresBackend::localBundleAdjustment(const FrontendOutputType& frontendOutpu
     visitingParams.landmarkKeyframeObservationParams.graphParams->refKeyframeId = frontendOutput.newKeyframe->id;
     visitingParams.landmarkKeyframeObservationParams.graphParams->deepLevel = 1;
 
-    bundleAdjustment(visitingParams);
+    return bundleAdjustment(visitingParams);
 }
 
-void CeresBackend::globalBundleAdjustment(const FrontendOutputType& frontendOutput)
+CeresBackend::BackendOutputType CeresBackend::globalBundleAdjustment(const FrontendOutputType& frontendOutput)
 {
     MapVisitingParams visitingParams;
+
     visitingParams.elementsToVisit = MapElementsToVisit::LandmarkKeyframeObservation;
     visitingParams.landmarkKeyframeObservationParams.graphParams = std::make_optional<GraphBasedParams>();
     visitingParams.landmarkKeyframeObservationParams.graphParams->refKeyframeId = frontendOutput.newKeyframe->id;
     visitingParams.landmarkKeyframeObservationParams.graphParams->deepLevel = std::numeric_limits<Id>::max();
 
-    bundleAdjustment(visitingParams);
+    return bundleAdjustment(visitingParams);
 }
 
-void CeresBackend::bundleAdjustment(const MapVisitingParams& visitingParams)
+CeresBackend::BackendOutputType CeresBackend::bundleAdjustment(const MapVisitingParams& visitingParams)
 {
+    // return CeresBackend::BackendOutputType();
     CeresVisitor visitor(cameraParameters);
     map->visit(visitor, visitingParams);
 
@@ -221,12 +198,45 @@ void CeresBackend::bundleAdjustment(const MapVisitingParams& visitingParams)
 
     ceres::Solver::Options options;
     options.max_num_iterations = lbaMaxIterations();
-    options.minimizer_progress_to_stdout = true;
     options.linear_solver_type = ceres::SPARSE_NORMAL_CHOLESKY;
 
     ceres::Solver::Summary summary;
     ceres::Solve(options, &problem, &summary);
-    spdlog::info("Performing BA {} \n\n {}", problem.NumResidualBlocks(), summary.FullReport());
+    spdlog::debug("Performing BA {} \n\n {}", problem.NumResidualBlocks(), summary.FullReport());
+
+    return createOutput(visitor);
+}
+
+CeresBackend::BackendOutputType CeresBackend::createOutput(const CeresVisitor& visitor) const
+{
+    BackendOutputType output;
+    const auto& allObservations = visitor.getObservationsAndCosts();
+
+    std::unordered_set<std::shared_ptr<slam3d::Keyframe>> keyframes;
+    std::unordered_set<std::shared_ptr<slam3d::Landmark>> landmarks;
+
+    constexpr auto squaredErrorThreshold = 0.15 * 0.15;
+
+    for(const auto& [observation, costFunction] : allObservations)
+    {
+        keyframes.insert(observation.keyframe);
+        landmarks.insert(observation.landmark);
+
+        std::array<const double*, 3> parameters = {observation.keyframe->state.orientation.coeffs().data(),
+                                                   observation.keyframe->state.position.data(),
+                                                   observation.landmark->state.data()};
+
+        Vector3 residuals = Vector3::Zero();
+        costFunction->Evaluate(parameters.data(), residuals.data(), nullptr);
+
+        const auto error = residuals.squaredNorm();
+        if(error > squaredErrorThreshold)
+        {
+            output.outlierObservations.push_back(observation);
+        }
+    }
+
+    return output;
 }
 
 } // namespace mslam

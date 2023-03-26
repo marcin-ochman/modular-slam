@@ -1,8 +1,12 @@
 #include "modular_slam/basic_map.hpp"
 #include "modular_slam/constraints_interface.hpp"
 #include "modular_slam/map_interface.hpp"
+#include "modular_slam/rgbd_slam_types.hpp"
 #include "modular_slam/slam3d_types.hpp"
+
 #include <algorithm>
+#include <boost/range/adaptor/filtered.hpp>
+#include <boost/range/algorithm/for_each.hpp>
 #include <iterator>
 #include <queue>
 
@@ -11,7 +15,8 @@ namespace mslam
 
 BasicMap::BasicMap() {}
 
-void BasicMap::update(const FrontendOutput<slam3d::SensorState, slam3d::LandmarkState>& frontendOutput)
+void BasicMap::update(
+    const FrontendOutput<slam3d::SensorState, slam3d::LandmarkState, rgbd::RgbdKeypoint>& frontendOutput)
 {
     if(frontendOutput.newKeyframe != nullptr)
     {
@@ -20,28 +25,29 @@ void BasicMap::update(const FrontendOutput<slam3d::SensorState, slam3d::Landmark
         std::for_each(std::begin(frontendOutput.newLandmarks), std::end(frontendOutput.newLandmarks),
                       [this](auto& landmark) { addLandmark(landmark); });
 
-        std::for_each(
-            std::begin(frontendOutput.landmarkObservations), std::end(frontendOutput.landmarkObservations),
-            [this, keyframe = frontendOutput.newKeyframe](const LandmarkObservation<slam3d::LandmarkState>& observation)
-            {
-                LandmarkKeyframeObservation<slam3d::SensorState, slam3d::LandmarkState> newObservation = {
-                    keyframe, observation.landmark, observation.keypoint};
+        std::for_each(std::begin(frontendOutput.landmarkObservations), std::end(frontendOutput.landmarkObservations),
+                      [this, keyframe = frontendOutput.newKeyframe](
+                          const LandmarkObservation<slam3d::LandmarkState, rgbd::RgbdKeypoint>& observation)
+                      {
+                          LandmarkKeyframeObservation<slam3d::SensorState, slam3d::LandmarkState, rgbd::RgbdKeypoint>
+                              newObservation = {keyframe, observation.landmark, observation.observation};
 
-                addObservation(newObservation);
-            });
+                          addObservation(newObservation);
+                      });
 
         updateCovisibility(frontendOutput.newKeyframe, frontendOutput.landmarkObservations);
     }
 }
 
 template <typename T>
-void visitElements(IMapVisitor<slam3d::SensorState, slam3d::LandmarkState>& visitor, T&& container)
+void visitElements(IMapVisitor<slam3d::SensorState, slam3d::LandmarkState, rgbd::RgbdKeypoint>& visitor, T&& container)
 {
     std::for_each(std::cbegin(container), std::cend(container),
                   [&visitor](const auto& element) { visitor.visit(element); });
 }
 
-void BasicMap::visit(IMapVisitor<slam3d::SensorState, slam3d::LandmarkState>& visitor, const MapVisitingParams& params)
+void BasicMap::visit(IMapVisitor<slam3d::SensorState, slam3d::LandmarkState, rgbd::RgbdKeypoint>& visitor,
+                     const MapVisitingParams& params)
 {
     if(isVisitKeyframeFlagSet(params))
     {
@@ -62,18 +68,14 @@ void BasicMap::visit(IMapVisitor<slam3d::SensorState, slam3d::LandmarkState>& vi
         }
         else
         {
-            for(const auto& [keyframe, observations] : observations)
-            {
-                visitElements(visitor, observations);
-            }
+            visitElements(visitor, indexedObservations);
         }
     }
 }
 
 std::shared_ptr<slam3d::Keyframe> BasicMap::getKeyframeById(Id keyframeId)
 {
-    // using namespace std::placeholders;
-    // std::bind(std::equal_to(), keyframeId)
+    // TODO: Should keyframes be boost::multiidnex?
     auto foundIt = std::find_if(std::begin(keyframes), std::end(keyframes),
                                 [keyframeId](const std::shared_ptr<slam3d::Keyframe>& keyframe)
                                 { return keyframeId == keyframe->id; });
@@ -97,9 +99,8 @@ void BasicMap::removeKeyframe(std::shared_ptr<slam3d::Keyframe> keyframe)
 }
 
 void BasicMap::addObservation(
-    const LandmarkKeyframeObservation<slam3d::SensorState, slam3d::LandmarkState>& observation)
+    const LandmarkKeyframeObservation<slam3d::SensorState, slam3d::LandmarkState, rgbd::RgbdKeypoint>& observation)
 {
-    observations[observation.keyframe].push_back(observation);
     indexedObservations.insert(observation);
 }
 
@@ -118,34 +119,34 @@ void BasicMap::removeLandmark(std::shared_ptr<slam3d::Landmark> landmark)
     landmarks.erase(landmark);
 }
 
-void BasicMap::updateCovisibility(std::shared_ptr<Keyframe<slam3d::SensorState>> newKeyframe,
-                                  const std::vector<LandmarkObservation<slam3d::LandmarkState>>& landmarkObservations)
+void BasicMap::updateCovisibility(
+    std::shared_ptr<Keyframe<slam3d::SensorState>> newKeyframe,
+    const std::vector<LandmarkObservation<slam3d::LandmarkState, rgbd::RgbdKeypoint>>& landmarkObservations)
 {
-    std::for_each(
-        std::cbegin(landmarkObservations), std::cend(landmarkObservations),
-        [&landmarkIndex = indexedObservations.get<1>(), &neighbours = neighbours,
-         &newKeyframe](const LandmarkObservation<slam3d::LandmarkState>& observation)
-        {
-            auto [foundIterator, endIterator] = landmarkIndex.equal_range(observation.landmark);
+    std::for_each(std::cbegin(landmarkObservations), std::cend(landmarkObservations),
+                  [&landmarkIndex = indexedObservations.get<1>(), &neighbours = neighbours,
+                   &newKeyframe](const LandmarkObservation<slam3d::LandmarkState, rgbd::RgbdKeypoint>& observation)
+                  {
+                      auto [foundIterator, endIterator] = landmarkIndex.equal_range(observation.landmark);
 
-            std::for_each(
-                foundIterator, endIterator,
-                [&neighbours, &newKeyframe](
-                    const LandmarkKeyframeObservation<slam3d::SensorState, slam3d::LandmarkState>& observation)
-                {
-                    if(newKeyframe != observation.keyframe)
-                    {
-                        neighbours[newKeyframe].insert(observation.keyframe);
-                        neighbours[observation.keyframe].insert(newKeyframe);
-                    };
-                });
-        });
+                      std::for_each(foundIterator, endIterator,
+                                    [&neighbours, &newKeyframe](
+                                        const LandmarkKeyframeObservation<slam3d::SensorState, slam3d::LandmarkState,
+                                                                          rgbd::RgbdKeypoint>& observation)
+                                    {
+                                        if(newKeyframe != observation.keyframe)
+                                        {
+                                            neighbours[newKeyframe].insert(observation.keyframe);
+                                            neighbours[observation.keyframe].insert(newKeyframe);
+                                        };
+                                    });
+                  });
 }
 
-void BasicMap::visitNeighbours(IMapVisitor<slam3d::SensorState, slam3d::LandmarkState>& visitor,
+void BasicMap::visitNeighbours(IMapVisitor<slam3d::SensorState, slam3d::LandmarkState, rgbd::RgbdKeypoint>& visitor,
                                const GraphBasedParams& graph, std::shared_ptr<slam3d::Keyframe> refKeyframe)
 {
-    std::set<std::shared_ptr<slam3d::Keyframe>> keyframesToVisit = getNeighbourKeyframes(graph, refKeyframe);
+    const auto keyframesToVisit = getNeighbourKeyframes(graph, refKeyframe);
 
     std::for_each(
         std::begin(keyframesToVisit), std::end(keyframesToVisit),
@@ -153,49 +154,24 @@ void BasicMap::visitNeighbours(IMapVisitor<slam3d::SensorState, slam3d::Landmark
         {
             auto [foundIterator, endIterator] = keyframeIndex.equal_range(keyframe);
 
-            std::for_each(
-                foundIterator, endIterator,
-                [&visitor](const LandmarkKeyframeObservation<slam3d::SensorState, slam3d::LandmarkState>& observation)
-                { visitor.visit(observation); });
+            std::for_each(foundIterator, endIterator,
+                          [&visitor](const LandmarkKeyframeObservation<slam3d::SensorState, slam3d::LandmarkState,
+                                                                       rgbd::RgbdKeypoint>& observation)
+                          { visitor.visit(observation); });
         });
 }
 
-// void bfs(std::shared_ptr<slam3d::Keyframe> keyframe,
-//          const std::map<std::shared_ptr<slam3d::Keyframe>, std::set<std::shared_ptr<slam3d::Keyframe>>>& neighbours,
-//          int level, int maxLevel, std::set<std::shared_ptr<slam3d::Keyframe>>& result)
-// {
-//     if(level > maxLevel)
-//         return;
-
-//     result.insert(keyframe);
-
-//     auto neighboursFoundIt = neighbours.find(keyframe);
-//     if(neighboursFoundIt == std::end(neighbours))
-//         return;
-
-//     for(auto& neighbourKeyframe : neighboursFoundIt->second)
-//     {
-//         auto foundIt = result.find(neighbourKeyframe);
-
-//         if(foundIt == std::end(result))
-//         {
-//             bfs(neighbourKeyframe, neighbours, level + 1, maxLevel, result);
-//         }
-//     }
-// }
-
-std::set<std::shared_ptr<slam3d::Keyframe>>
+std::unordered_set<std::shared_ptr<slam3d::Keyframe>>
 BasicMap::getNeighbourKeyframes(const GraphBasedParams& graph, std::shared_ptr<slam3d::Keyframe> refKeyframe)
 {
-    std::set<std::shared_ptr<slam3d::Keyframe>> result;
+    std::unordered_set<std::shared_ptr<slam3d::Keyframe>> result;
+    std::queue<std::pair<std::shared_ptr<slam3d::Keyframe>, int>> neighboursQueue;
+    neighboursQueue.push(std::make_pair(refKeyframe, 0));
 
-    std::queue<std::pair<std::shared_ptr<slam3d::Keyframe>, int>> queueToVisit;
-    queueToVisit.push(std::make_pair(refKeyframe, 0));
-
-    while(!queueToVisit.empty())
+    while(!neighboursQueue.empty())
     {
-        auto [currentKeyframe, level] = queueToVisit.front();
-        queueToVisit.pop();
+        const auto [currentKeyframe, level] = neighboursQueue.front();
+        neighboursQueue.pop();
 
         result.insert(currentKeyframe);
 
@@ -204,8 +180,10 @@ BasicMap::getNeighbourKeyframes(const GraphBasedParams& graph, std::shared_ptr<s
         {
             for(const auto& neighbourKeyframe : neighboursFoundIt->second)
             {
-                if(result.find(neighbourKeyframe) == std::end(result))
-                    queueToVisit.push(std::make_pair(neighbourKeyframe, level + 1));
+                const auto notAlreadyVisited = result.find(neighbourKeyframe) == std::end(result);
+
+                if(notAlreadyVisited)
+                    neighboursQueue.push(std::make_pair(neighbourKeyframe, level + 1));
             }
         }
     }

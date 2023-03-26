@@ -16,27 +16,26 @@ struct MergedLandmark
 {
 };
 
-template <typename SensorStateType, typename LandmarkStateType>
+template <typename SensorStateType, typename LandmarkStateType, typename ObservationType>
 struct BackendOutput
 {
     using LandmarkType = Landmark<LandmarkStateType>;
     using KeyframeType = Keyframe<SensorStateType>;
     using MergedLandmarkType = MergedLandmark<LandmarkStateType>;
 
-    std::vector<LandmarkType> removedLandmarks;
     std::vector<std::shared_ptr<LandmarkType>> updatedLandmarks;
     std::vector<std::shared_ptr<KeyframeType>> updatedKeyframes;
-    std::vector<MergedLandmarkType> mergedLandmarks;
-    std::vector<LandmarkObservation<LandmarkStateType>> outliersObservation;
+    std::vector<LandmarkKeyframeObservation<SensorStateType, LandmarkStateType, ObservationType>> outlierObservations;
 };
 
-template <typename SensorStateType, typename LandmarkStateType>
+template <typename SensorStateType, typename LandmarkStateType, typename ObservationType>
 class BackendInterface : public SlamComponent
 {
   public:
-    using BackendOutputType = BackendOutput<SensorStateType, LandmarkStateType>;
+    using BackendOutputType = BackendOutput<SensorStateType, LandmarkStateType, ObservationType>;
 
-    virtual BackendOutputType process(FrontendOutput<SensorStateType, LandmarkStateType>& frontendOutput) = 0;
+    virtual BackendOutputType
+    process(FrontendOutput<SensorStateType, LandmarkStateType, ObservationType>& frontendOutput) = 0;
 };
 
 } // namespace mslam

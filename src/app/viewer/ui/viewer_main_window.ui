@@ -63,6 +63,8 @@
      <addaction name="menuKeyframes"/>
      <addaction name="actionShowWireframes"/>
      <addaction name="actionLandmarks"/>
+     <addaction name="separator"/>
+     <addaction name="actionCameraReset"/>
     </widget>
     <addaction name="menuView_2"/>
     <addaction name="menuViewer3d"/>
@@ -125,6 +127,8 @@
    <attribute name="toolBarBreak">
     <bool>false</bool>
    </attribute>
+   <addaction name="pauseResumeAction"/>
+   <addaction name="actionReset_Camera"/>
   </widget>
   <action name="actionExit">
    <property name="text">
@@ -227,6 +231,16 @@
    </property>
    <property name="text">
     <string>Slam Statistics</string>
+   </property>
+  </action>
+  <action name="actionCameraReset">
+   <property name="text">
+    <string>Camera Reset</string>
+   </property>
+  </action>
+  <action name="actionReset_Camera">
+   <property name="text">
+    <string>Reset Camera</string>
    </property>
   </action>
  </widget>
@@ -349,8 +363,8 @@
    <slot>setVisible(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>110</x>
-     <y>496</y>
+     <x>-1</x>
+     <y>-1</y>
     </hint>
     <hint type="destinationlabel">
      <x>110</x>

@@ -23,8 +23,8 @@ class SlamThread : public QThread
 
   public:
     explicit SlamThread(QObject* parent);
-    void setSlam(
-        std::unique_ptr<mslam::Slam<mslam::RgbdFrame, mslam::rgbd::SensorState, mslam::rgbd::LandmarkState>>&& newSlam)
+    void setSlam(std::unique_ptr<mslam::Slam<mslam::RgbdFrame, mslam::rgbd::SensorState, mslam::rgbd::LandmarkState,
+                                             mslam::rgbd::RgbdKeypoint>>&& newSlam)
     {
         slam = std::move(newSlam);
     }
@@ -49,7 +49,9 @@ class SlamThread : public QThread
   private:
     std::atomic<bool> isRunning;
     std::atomic<bool> isPaused;
-    std::unique_ptr<mslam::Slam<mslam::RgbdFrame, mslam::rgbd::SensorState, mslam::rgbd::LandmarkState>> slam;
+    std::unique_ptr<
+        mslam::Slam<mslam::RgbdFrame, mslam::rgbd::SensorState, mslam::rgbd::LandmarkState, mslam::rgbd::RgbdKeypoint>>
+        slam;
     std::shared_ptr<mslam::RgbdFrame> frame;
 };
 

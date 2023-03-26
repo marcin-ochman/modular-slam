@@ -9,19 +9,19 @@
 namespace mslam
 {
 
-template <typename SensorStateType, typename LandmarkStateType>
+template <typename SensorStateType, typename LandmarkStateType, typename ObservationType = Keypoint>
 struct LandmarkKeyframeObservation
 {
     std::shared_ptr<Keyframe<SensorStateType>> keyframe;
     std::shared_ptr<Landmark<LandmarkStateType>> landmark;
-    Keypoint keypoint;
+    ObservationType observation;
 };
 
-template <typename LandmarkStateType>
+template <typename LandmarkStateType, typename ObservationType>
 struct LandmarkObservation
 {
     std::shared_ptr<Landmark<LandmarkStateType>> landmark;
-    Keypoint keypoint;
+    ObservationType observation;
 };
 
 template <typename SensorStateType, typename LandmarkStateType, typename KeyframeConstraintType = SensorStateType>

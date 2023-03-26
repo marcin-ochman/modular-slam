@@ -5,7 +5,9 @@
 #include "modular_slam/depth_frame.hpp"
 #include "modular_slam/feature_interface.hpp"
 #include "modular_slam/loop_detection.hpp"
+#include "modular_slam/map_interface.hpp"
 #include "modular_slam/orb_feature.hpp"
+#include "modular_slam/orb_relocalizer.hpp"
 #include "modular_slam/parameters_handler.hpp"
 #include "modular_slam/rgbd_frame.hpp"
 #include "modular_slam/rgbd_slam_types.hpp"
@@ -17,9 +19,11 @@
 #include <boost/range/adaptor/uniqued.hpp>
 #include <boost/range/adaptors.hpp>
 #include <boost/range/algorithm/copy.hpp>
+#include <boost/range/algorithm/max_element.hpp>
 #include <boost/range/combine.hpp>
 
 #include <algorithm>
+#include <boost/range/iterator_range_core.hpp>
 #include <cstddef>
 #include <cstdint>
 #include <iterator>
@@ -119,7 +123,7 @@ bool RgbdFeatureFrontend::init()
     return true;
 }
 
-std::optional<Vector3> reconstructPoint(const Vector2i& imgPoint, const float depth, const Vector2& principalPoint,
+std::optional<Vector3> reconstructPoint(const Vector2& imgPoint, const float depth, const Vector2& principalPoint,
                                         const Vector2& invFocal)
 {
     if(!isDepthValid(depth))
@@ -128,8 +132,8 @@ std::optional<Vector3> reconstructPoint(const Vector2i& imgPoint, const float de
     }
 
     const auto z = depth;
-    const auto x = (static_cast<float>(imgPoint.x()) - principalPoint.x()) * z * invFocal.x();
-    const auto y = (static_cast<float>(imgPoint.y()) - principalPoint.y()) * z * invFocal.y();
+    const auto x = (imgPoint.x() - principalPoint.x()) * z * invFocal.x();
+    const auto y = (imgPoint.y() - principalPoint.y()) * z * invFocal.y();
 
     return Vector3{x, y, z};
 }
@@ -149,7 +153,8 @@ std::vector<std::optional<Vector3>> pointsFromRgbdKeypoints(const DepthFrame& de
     {
         const Eigen::Vector2i imgPoint = match.match.matchedKeypoint.coordinates.cast<int>();
         const auto depth = getDepth(depthFrame, imgPoint);
-        const auto point = reconstructPoint(imgPoint, depth, depthFrame.cameraParameters.principalPoint, invFocal);
+        const auto point = reconstructPoint(match.match.matchedKeypoint.coordinates, depth,
+                                            depthFrame.cameraParameters.principalPoint, invFocal);
 
         points.push_back(point);
     }
@@ -161,12 +166,16 @@ RgbdFeatureFrontend::RgbdFeatureFrontend(
     std::shared_ptr<IPnpAlgorithm<slam3d::SensorState, Vector3>> newTracker,
     std::shared_ptr<IFeatureDetector<RgbFrame, float, 32>> newDetector,
     std::shared_ptr<IFeatureMatcher<float, 32>> newMatcher,
-    std::shared_ptr<IMapComponentsFactory<slam3d::SensorState, slam3d::LandmarkState>> newMapComponentsFactory)
+    std::shared_ptr<IMapComponentsFactory<slam3d::SensorState, slam3d::LandmarkState>> newMapComponentsFactory,
+    std::shared_ptr<IMap<rgbd::SensorState, rgbd::LandmarkState, rgbd::RgbdKeypoint>> newMap)
 {
-    tracker = std::move(newTracker);
+    pnpAlgorithm = std::move(newTracker);
     detector = std::move(newDetector);
     matcher = std::move(newMatcher);
     mapComponentsFactory = std::move(newMapComponentsFactory);
+    map = std::move(newMap);
+
+    relocalizer = std::make_unique<OrbRelocalizer>();
 }
 
 bool RgbdFeatureFrontend::isNewKeyframeRequired(const std::size_t matchedLandmarks) const
@@ -182,12 +191,15 @@ bool RgbdFeatureFrontend::isLoopClosureNeeded() const
     return false;
 }
 
-std::shared_ptr<rgbd::Keyframe> RgbdFeatureFrontend::addKeyframe(const RgbdFrame& /*sensorData*/,
-                                                                 const slam3d::SensorState& pose)
+std::shared_ptr<rgbd::Keyframe>
+RgbdFeatureFrontend::addKeyframe(const RgbdFrame& /*sensorData*/, const slam3d::SensorState& pose,
+                                 const std::vector<KeypointDescriptor<float, 32>>& keypoints)
 {
     auto newKeyframe = mapComponentsFactory->createKeyframe();
     newKeyframe->state = pose;
     keyframes.push_back(newKeyframe);
+
+    relocalizer->addKeyframe(newKeyframe, keypoints);
 
     spdlog::debug("Added new keyframe: {}, pos: ({}, {}, {}), quat: [{} {} {} {}]", newKeyframe->id, pose.position.x(),
                   pose.position.y(), pose.position.z(), pose.orientation.x(), pose.orientation.y(),
@@ -198,7 +210,7 @@ std::shared_ptr<rgbd::Keyframe> RgbdFeatureFrontend::addKeyframe(const RgbdFrame
 
 RgbdFeatureFrontend::FrontendOutputType RgbdFeatureFrontend::processSensorData(std::shared_ptr<RgbdFrame> sensorData)
 {
-    const auto keypoints = detector->detect(sensorData->rgb);
+    auto keypoints = detector->detect(sensorData->rgb);
 
     if(!hasInitialKeyframe())
     {
@@ -219,46 +231,53 @@ RgbdFeatureFrontend::FrontendOutputType RgbdFeatureFrontend::processSensorData(s
             closeLoop(candidateKeyframe);
         }
 
+        map->update(output);
         return output;
     }
 
-    if(auto newReferenceKeyframe = relocalize(); newReferenceKeyframe != nullptr)
+    spdlog::error("Tracking failed. Performing relocalization");
+
+    if(auto newReferenceKeyframe = relocalize(keypoints); newReferenceKeyframe != nullptr)
     {
         referenceKeyframe = std::move(newReferenceKeyframe);
 
         // TODO: update constraints
+        map->update(output);
         return output;
     }
 
     spdlog::error("Relocalization failed. Tracking lost");
+
+    map->update(output);
     return output;
 }
 
 std::vector<KeypointLandmarkMatch<Vector3>>
-RgbdFeatureFrontend::matchLandmarks(const std::vector<KeypointDescriptor<float, 32>>& keypoints)
+RgbdFeatureFrontend::matchLandmarks(const std::vector<KeypointDescriptor<float, 32>>& keypoints,
+                                    std::shared_ptr<rgbd::Keyframe> keyframe)
 {
-    const auto [refKeyframeKeypoints, landmarks] = getLandmarksWithKeypoints(referenceKeyframe);
-    const auto matches = matcher->match(refKeyframeKeypoints, keypoints);
+    const auto [keyframeKeypoints, landmarks] = getLandmarksWithKeypoints(keyframe);
+    const auto matches = matcher->match(keyframeKeypoints, keypoints);
+
     std::vector<KeypointLandmarkMatch<Vector3>> result;
 
     for(const auto& match : matches)
     {
-        KeypointMatch keypointMatch = {refKeyframeKeypoints[match.fromIndex].keypoint,
-                                       keypoints[match.toIndex].keypoint};
+        KeypointMatch keypointMatch = {keyframeKeypoints[match.fromIndex].keypoint, keypoints[match.toIndex].keypoint};
         const auto landmark = landmarks[match.fromIndex];
         KeypointLandmarkMatch<Vector3> landmarkMatch = {keypointMatch, landmark};
-
         result.push_back(landmarkMatch);
     }
 
     return result;
 }
 
-std::pair<std::vector<KeypointDescriptor<float>>, std::vector<std::shared_ptr<rgbd::Landmark>>>
+std::pair<std::vector<KeypointDescriptor<float, 32>>, std::vector<std::shared_ptr<rgbd::Landmark>>>
 RgbdFeatureFrontend::getLandmarksWithKeypoints(std::shared_ptr<rgbd::Keyframe> keyframe)
 {
     std::vector<std::shared_ptr<rgbd::Landmark>> keyframeLandmarks = keyframesWithLandmarks[keyframe];
-    std::vector<KeypointDescriptor<float>> keypoints;
+    std::vector<KeypointDescriptor<float, 32>> keypoints;
+
     for(const auto& landmark : keyframeLandmarks)
     {
         const auto keypoint = landmarkDescriptors.find(landmark);
@@ -269,14 +288,15 @@ RgbdFeatureFrontend::getLandmarksWithKeypoints(std::shared_ptr<rgbd::Keyframe> k
 }
 
 RgbdFeatureFrontend::FrontendOutputType
-RgbdFeatureFrontend::track(const RgbdFrame& sensorData, const std::vector<KeypointDescriptor<float, 32>>& keypoints)
+RgbdFeatureFrontend::track(const RgbdFrame& sensorData, std::vector<KeypointDescriptor<float, 32>>& keypoints)
 {
     RgbdFeatureFrontend::FrontendOutputType output;
-    const auto matchedLandmarks = matchLandmarks(keypoints);
+
+    const auto matchedLandmarks = matchLandmarks(keypoints, referenceKeyframe);
     auto points = pointsFromRgbdKeypoints(sensorData.depth, matchedLandmarks);
     std::vector<Vector2> cameraPointsForTracking;
     std::vector<std::shared_ptr<rgbd::Landmark>> landmarksForTracking;
-    std::vector<LandmarkObservation<rgbd::LandmarkState>> landmarksObservations;
+    std::vector<LandmarkObservation<rgbd::LandmarkState, rgbd::RgbdKeypoint>> landmarksObservations;
 
     for(const auto& [point, matchedLandmark] : boost::combine(points, matchedLandmarks))
     {
@@ -284,8 +304,8 @@ RgbdFeatureFrontend::track(const RgbdFrame& sensorData, const std::vector<Keypoi
         {
             cameraPointsForTracking.push_back(matchedLandmark.match.matchedKeypoint.coordinates);
             landmarksForTracking.push_back(matchedLandmark.landmark);
-
-            landmarksObservations.push_back({matchedLandmark.landmark, matchedLandmark.match.matchedKeypoint});
+            landmarksObservations.push_back(
+                {matchedLandmark.landmark, {matchedLandmark.match.matchedKeypoint, point->z()}});
         }
     }
 
@@ -298,9 +318,9 @@ RgbdFeatureFrontend::track(const RgbdFrame& sensorData, const std::vector<Keypoi
         return output;
     }
 
-    tracker->setCameraParameters(sensorData.depth.cameraParameters);
+    pnpAlgorithm->setCameraParameters(sensorData.depth.cameraParameters);
 
-    auto pnpResult = tracker->solvePnp(landmarksForTracking, cameraPointsForTracking, currentPose);
+    auto pnpResult = pnpAlgorithm->solvePnp(landmarksForTracking, cameraPointsForTracking, currentPose);
 
     if(!pnpResult)
     {
@@ -310,7 +330,12 @@ RgbdFeatureFrontend::track(const RgbdFrame& sensorData, const std::vector<Keypoi
 
     currentPose = pnpResult->pose;
     output.sensorState = currentPose;
-    output.landmarkObservations = std::move(landmarksObservations);
+
+    boost::range::copy(landmarksObservations | boost::adaptors::indexed() |
+                           boost::adaptors::filtered([&inliers = pnpResult->inliers](auto&& range)
+                                                     { return inliers[range.index()]; }) |
+                           boost::adaptors::transformed([](auto&& range) { return range.value(); }),
+                       std::back_inserter(output.landmarkObservations));
 
     if(isBetterReferenceKeyframeNeeded(pointsMatchedCount))
     {
@@ -324,7 +349,7 @@ RgbdFeatureFrontend::track(const RgbdFrame& sensorData, const std::vector<Keypoi
 
     if(isNewKeyframeRequired(pointsMatchedCount))
     {
-        auto newKeyframe = addKeyframe(sensorData, currentPose);
+        auto newKeyframe = addKeyframe(sensorData, currentPose, keypoints);
         auto landmarksOnFrame = findVisibleLocalLandmarks(currentPose, sensorData);
         const auto newLandmarkKeypoints = findKeypointsForNewLandmarks(keypoints, landmarksOnFrame);
 
@@ -363,7 +388,7 @@ void RgbdFeatureFrontend::addNewLandmarks(const std::vector<KeypointDescriptor<f
     {
         const auto keypointCoordinate = keypoint.keypoint.coordinates.cast<int>();
         const auto landmarkCoordinatesInKeyframe =
-            reconstructPoint(keypointCoordinate, getDepth(sensorData.depth, keypointCoordinate),
+            reconstructPoint(keypoint.keypoint.coordinates, getDepth(sensorData.depth, keypointCoordinate),
                              sensorData.depth.cameraParameters.principalPoint, invFocal);
 
         constexpr auto zThreshold = 5.f;
@@ -372,7 +397,8 @@ void RgbdFeatureFrontend::addNewLandmarks(const std::vector<KeypointDescriptor<f
             auto state = toGlobalCoordinates(landmarkCoordinatesInKeyframe.value(), newKeyframe->state);
             auto landmark = addLandmark(newKeyframe, state, keypoint);
 
-            rgbd::LandmarkObservation landmarkObservation{landmark, keypoint.keypoint};
+            rgbd::LandmarkObservation landmarkObservation{landmark,
+                                                          {keypoint.keypoint, landmarkCoordinatesInKeyframe->z()}};
             addLandmarkObservation(newKeyframe, landmarkObservation);
             output.landmarkObservations.push_back(landmarkObservation);
             output.newLandmarks.push_back(landmark);
@@ -387,21 +413,21 @@ RgbdFeatureFrontend::initFirstKeyframe(const RgbdFrame& sensorData,
     auto output = FrontendOutputType();
 
     const slam3d::SensorState pose = {Vector3(0, 0, 0), Quaternion::Identity()};
-    auto keyframe = addKeyframe(sensorData, pose);
+    auto keyframe = addKeyframe(sensorData, pose, keypoints);
     const Vector2 invFocal = 1.0 / sensorData.depth.cameraParameters.focal.array();
 
     for(const auto& keypointWithDescriptor : keypoints)
     {
         const auto keypointCoordinates = keypointWithDescriptor.keypoint.coordinates.cast<int>();
-        const auto landmarkCoordinates =
-            reconstructPoint(keypointCoordinates, getDepth(sensorData.depth, keypointCoordinates),
-                             sensorData.depth.cameraParameters.principalPoint, invFocal);
+        const auto landmarkCoordinates = reconstructPoint(keypointWithDescriptor.keypoint.coordinates,
+                                                          getDepth(sensorData.depth, keypointCoordinates),
+                                                          sensorData.depth.cameraParameters.principalPoint, invFocal);
 
         if(landmarkCoordinates.has_value())
         {
             auto landmark = addLandmark(keyframe, landmarkCoordinates.value(), keypointWithDescriptor);
-
-            rgbd::LandmarkObservation landmarkObservation{landmark, keypointWithDescriptor.keypoint};
+            rgbd::LandmarkObservation landmarkObservation{landmark,
+                                                          {keypointWithDescriptor.keypoint, landmarkCoordinates->z()}};
 
             addLandmarkObservation(keyframe, landmarkObservation);
             output.landmarkObservations.push_back(landmarkObservation);
@@ -414,6 +440,7 @@ RgbdFeatureFrontend::initFirstKeyframe(const RgbdFrame& sensorData,
     referenceKeyframe = std::move(keyframe);
     currentPose = pose;
 
+    map->update(output);
     return output;
 }
 
@@ -506,10 +533,49 @@ void RgbdFeatureFrontend::markLandmarkInKeyframe(const std::shared_ptr<rgbd::Lan
     landmarksInKeyframes[landmark].push_back(keyframe);
 }
 
-std::shared_ptr<rgbd::Keyframe> RgbdFeatureFrontend::relocalize()
+struct RelocalizationResult
 {
-    // TODO: implement
-    return nullptr;
+    std::shared_ptr<rgbd::Keyframe> keyframe;
+    double score;
+};
+
+std::shared_ptr<rgbd::Keyframe> RgbdFeatureFrontend::relocalize(std::vector<KeypointDescriptor<float, 32>>& keypoints)
+{
+    std::vector<std::shared_ptr<rgbd::Keyframe>> keyframeCandidates = relocalizer->relocalize(keypoints);
+
+    if(keyframeCandidates.empty())
+        return nullptr;
+
+    auto relocalizedCandidates =
+        keyframeCandidates |
+        boost::adaptors::transformed(
+            [this, &keypoints](std::shared_ptr<rgbd::Keyframe> keyframe) -> RelocalizationResult
+            {
+                const auto matches = matchLandmarks(keypoints, keyframe);
+                std::vector<Vector2> cameraPointsForTracking;
+                std::vector<std::shared_ptr<rgbd::Landmark>> landmarksForTracking;
+
+                for(const auto& landmarkMatch : matches)
+                {
+                    cameraPointsForTracking.push_back(landmarkMatch.match.matchedKeypoint.coordinates);
+                    landmarksForTracking.push_back(landmarkMatch.landmark);
+                }
+
+                auto result = pnpAlgorithm->solvePnp(landmarksForTracking, cameraPointsForTracking);
+
+                if(!result.has_value())
+                    return {nullptr, 0.0};
+
+                return {keyframe, static_cast<double>(result->inliers.count())};
+            });
+
+    auto result = boost::range::max_element(
+        relocalizedCandidates, [](const RelocalizationResult& firstREsult, const RelocalizationResult& secondResult)
+        { return firstREsult.score < secondResult.score; });
+
+    constexpr auto scoreThreshold = 60;
+
+    return result->score >= scoreThreshold ? result->keyframe : result->keyframe;
 }
 
 bool RgbdFeatureFrontend::isBetterReferenceKeyframeNeeded(const std::size_t keyframeLandmarksCount) const

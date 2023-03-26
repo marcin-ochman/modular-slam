@@ -33,6 +33,12 @@ Matrix3 getInverseProjectionMatrix(const CameraParameters& cameraParameters)
 bool RealSenseCamera::init()
 {
     pipe.start();
+    // NOTE: due to RS issue of different colors at beginning of the image stream
+    // we are waiting for waitFrames frames
+    constexpr auto waitFrames = 30;
+
+    for(auto i = 0; i < waitFrames; ++i)
+        fetch();
 
     return true;
 }

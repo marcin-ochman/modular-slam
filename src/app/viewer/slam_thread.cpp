@@ -33,7 +33,8 @@ QMatrix4x4 poseToQMatrix(const mslam::slam3d::SensorState& state)
         for(int j = 0; j < 4; j++)
             pose(i, j) = static_cast<float>(transformMatrix(i, j));
 
-    pose.rotate(180, 1, 0, 0);
+    // pose.rotate(180, 0, 0, 1);
+
     return pose;
 }
 
@@ -52,10 +53,13 @@ glm::mat4 poseToGlmMat4(const mslam::slam3d::SensorState& state)
         for(int j = 0; j < 4; j++)
             pose[j][i] = static_cast<float>(transformMatrix(i, j));
 
-    return pose;
+    const auto toGl = glm::eulerAngleZ(glm::radians(180.f));
+
+    return /*toGl * */ pose;
 }
 
-class MapVisitor : public mslam::IMapVisitor<mslam::slam3d::SensorState, mslam::slam3d::LandmarkState>
+class MapVisitor
+    : public mslam::IMapVisitor<mslam::slam3d::SensorState, mslam::slam3d::LandmarkState, mslam::rgbd::RgbdKeypoint>
 {
   public:
     void visit(std::shared_ptr<mslam::slam3d::Landmark> landmark) override;
@@ -108,13 +112,13 @@ void pointCloudFromMapLandmarks(const std::unordered_set<std::shared_ptr<mslam::
                                 std::vector<glm::vec3>& outPoints)
 {
 
-    const auto toGl = glm::eulerAngleX(glm::radians(180.f));
+    // const auto toGl = glm::eulerAngleZ(glm::radians(180.f));
     const glm::vec3 rgb{255, 255, 255};
 
     outPoints.clear();
     for(const auto& landmark : landmarks)
     {
-        const auto point = toGl * glm::vec4{landmark->state.x(), landmark->state.y(), landmark->state.z(), 1.0f};
+        const auto point = glm::vec4{landmark->state.x(), landmark->state.y(), landmark->state.z(), 1.0f};
 
         outPoints.emplace_back(point);
         outPoints.push_back(rgb);
@@ -130,9 +134,9 @@ void pointCloudFromRgbd(const mslam::RgbdFrame& rgbd, const mslam::rgbd::SensorS
     const auto pose = poseToGlmMat4(currentPose);
 
     constexpr float invMultiplier = 1 / 255.f;
-    const auto toGl = glm::eulerAngleX(glm::radians(180.f));
+    const auto toGl = glm::eulerAngleZ(glm::radians(180.f));
 
-    const auto toGlPose = toGl * pose;
+    const auto toGlPose = /*toGl */ pose;
 
     std::size_t outIndex = 0;
     for(auto v = 0; v < depthFrame.size.height; ++v)
@@ -175,7 +179,7 @@ void SlamThread::run()
 
     while(isRunning)
     {
-        while(isPaused)
+        while(isPaused && !isInterruptionRequested())
         {
             msleep(5);
         }

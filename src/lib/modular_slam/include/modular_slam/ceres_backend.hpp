@@ -11,11 +11,14 @@
 
 namespace mslam
 {
-class CeresBackend : public BackendInterface<mslam::slam3d::SensorState, mslam::Vector3>
+
+class CeresVisitor;
+
+class CeresBackend : public BackendInterface<mslam::slam3d::SensorState, mslam::Vector3, rgbd::RgbdKeypoint>
 {
   public:
-    using FrontendOutputType = FrontendOutput<mslam::slam3d::SensorState, mslam::Vector3>;
-    using MapType = IMap<mslam::slam3d::SensorState, mslam::Vector3>;
+    using FrontendOutputType = FrontendOutput<mslam::slam3d::SensorState, mslam::Vector3, rgbd::RgbdKeypoint>;
+    using MapType = IMap<mslam::slam3d::SensorState, mslam::Vector3, mslam::rgbd::RgbdKeypoint>;
 
     BackendOutputType process(FrontendOutputType& frontendOutput) override;
     void setCameraParameters(const CameraParameters& newCameraParameters) { cameraParameters = newCameraParameters; }
@@ -29,11 +32,13 @@ class CeresBackend : public BackendInterface<mslam::slam3d::SensorState, mslam::
     [[nodiscard]] bool needsGlobalBundleAdjustment(const FrontendOutputType& frontendOutput) const;
     [[nodiscard]] bool needsLocalBundleAdjustment(const FrontendOutputType& frontendOutput) const;
     std::vector<rgbd::KeyframeLandmarkObservation> getObservationsForLBA() const;
-    void localBundleAdjustment(const FrontendOutputType& frontendOutput);
-    void globalBundleAdjustment(const FrontendOutputType& frontendOutput);
-    void bundleAdjustment(const MapVisitingParams& visitingParams);
+    BackendOutputType localBundleAdjustment(const FrontendOutputType& frontendOutput);
+    BackendOutputType globalBundleAdjustment(const FrontendOutputType& frontendOutput);
+    BackendOutputType bundleAdjustment(const MapVisitingParams& visitingParams);
 
-    CameraParameters cameraParameters = {{319.5f, 239.5f}, {525, 525}, 1.f / 5000.f};
+    BackendOutputType createOutput(const CeresVisitor& visitor) const;
+
+    CameraParameters cameraParameters; // = {{319.5f, 239.5f}, {525, 525}, 1.f / 5000.f};
 
     std::shared_ptr<MapType> map;
 };
