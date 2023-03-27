@@ -128,7 +128,7 @@
     <bool>false</bool>
    </attribute>
    <addaction name="pauseResumeAction"/>
-   <addaction name="actionReset_Camera"/>
+   <addaction name="actionResetCamera"/>
   </widget>
   <action name="actionExit">
    <property name="text">
@@ -238,7 +238,7 @@
     <string>Camera Reset</string>
    </property>
   </action>
-  <action name="actionReset_Camera">
+  <action name="actionResetCamera">
    <property name="text">
     <string>Reset Camera</string>
    </property>

@@ -1,4 +1,5 @@
 #include "viewer_main_window.hpp"
+#include "pointcloud_viewer.hpp"
 
 #include <QSettings>
 #include <qmainwindow.h>
@@ -10,6 +11,7 @@ ViewerMainWindow::ViewerMainWindow(QWidget* parent) : QMainWindow(parent), ui(ne
 {
     ui->setupUi(this);
     connect(ui->pauseResumeAction, &QAction::triggered, this, &ViewerMainWindow::onPauseResume);
+    connect(ui->actionResetCamera, &QAction::triggered, ui->pointcloudViewer, &PointcloudViewer::resetCamera);
     loadSettings();
 }
 

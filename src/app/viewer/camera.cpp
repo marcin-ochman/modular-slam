@@ -89,6 +89,17 @@ void Camera::updateView()
     m_view = glm::inverse(glm::translate(glm::mat4(1.0f), m_position) * glm::toMat4(orientation));
 }
 
+void Camera::resetView()
+{
+
+    m_distance = 2.0f;
+    m_pitch = 3.141592f;
+    m_yaw = 0.f;
+    m_roll = 0.0f;
+
+    updateView();
+}
+
 glm::vec2 Camera::panSpeed() const
 {
     float x = std::min(m_viewportSize.x / 1000.0f, 2.5f);

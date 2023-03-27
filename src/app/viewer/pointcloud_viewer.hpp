@@ -38,6 +38,7 @@ class PointcloudViewer : public QOpenGLWidget, protected QOpenGLFunctions
     void setLandmarkPoints(const std::vector<glm::vec3>& newLandmarkPoints);
     void setWireframeEnabled(bool wireframeEnabled);
     void setThumbnailEnabled(bool imageEnabled);
+    void resetCamera();
 
   protected:
     void initializeGL() override;

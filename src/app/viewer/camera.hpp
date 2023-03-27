@@ -33,6 +33,8 @@ class Camera
     void zoom(float delta);
     void updateView();
 
+    void resetView();
+
   private:
     void updateProjection();
     glm::vec3 calculatePosition() const noexcept;

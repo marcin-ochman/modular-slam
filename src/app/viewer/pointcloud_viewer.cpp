@@ -62,6 +62,12 @@ void PointcloudViewer::setThumbnailEnabled(bool imageEnabled)
     keyframes.setThumbnailEnabled(imageEnabled);
 }
 
+void PointcloudViewer::resetCamera()
+{
+
+    camera.resetView();
+}
+
 void PointcloudViewer::addKeyframe(const KeyframeViewData& keyframe)
 {
     keyframes.addKeyframe(keyframe);
