@@ -7,8 +7,6 @@
 #include <Eigen/src/Core/Matrix.h>
 #include <algorithm>
 #include <iterator>
-#include <opencv2/core/types.hpp>
-#include <opencv2/features2d.hpp>
 
 namespace mslam
 {
@@ -20,21 +18,29 @@ using OrbKeypoint = KeypointDescriptor<float, 32>;
 class OrbOpenCvDetector : public IOrbFeatureDetector
 {
   public:
+    OrbOpenCvDetector();
+    ~OrbOpenCvDetector() override;
     virtual std::vector<OrbKeypoint> detect(const RgbFrame& sensorData) override;
 
   private:
-    static inline cv::Ptr<cv::Feature2D> detector = cv::ORB::create();
+    class Pimpl;
+
+    std::unique_ptr<Pimpl> pimpl;
 };
 
 class OrbOpenCvMatcher : public IOrbMatcher
 {
   public:
+    OrbOpenCvMatcher();
     std::vector<DescriptorMatch> match(const std::vector<OrbKeypoint>& firstDescriptors,
                                        const std::vector<OrbKeypoint>& secondDescriptors) override;
 
+    ~OrbOpenCvMatcher() override;
+
   private:
-    static inline cv::Ptr<cv::DescriptorMatcher> matcher =
-        cv::DescriptorMatcher::create(cv::DescriptorMatcher::FLANNBASED);
+    class Pimpl;
+
+    std::unique_ptr<Pimpl> pimpl;
 };
 
 } // namespace mslam

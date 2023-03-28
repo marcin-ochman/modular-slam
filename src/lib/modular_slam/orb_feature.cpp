@@ -5,9 +5,9 @@
 #include <algorithm>
 #include <boost/polymorphic_cast.hpp>
 #include <iterator>
-#include <opencv2/core/hal/interface.h>
 
 #include <opencv2/core/types.hpp>
+#include <opencv2/features2d.hpp>
 #include <spdlog/spdlog.h>
 #include <vector>
 
@@ -16,7 +16,21 @@ namespace mslam
 
 static constexpr auto descriptorLength = 32;
 
+class OrbOpenCvDetector::Pimpl
+{
+  public:
+    std::vector<OrbKeypoint> detect(const RgbFrame& sensorData);
+
+  private:
+    cv::Ptr<cv::Feature2D> detector = cv::ORB::create();
+};
+
 std::vector<OrbKeypoint> OrbOpenCvDetector::detect(const RgbFrame& sensorData)
+{
+    return pimpl->detect(sensorData);
+}
+
+std::vector<OrbKeypoint> OrbOpenCvDetector::Pimpl::detect(const RgbFrame& sensorData)
 {
     auto gray = toGrayScale(sensorData);
     cv::Mat cvGray{gray.size.height, gray.size.width, CV_8UC1, const_cast<std::uint8_t*>(gray.data.data())};
@@ -44,8 +58,25 @@ std::vector<OrbKeypoint> OrbOpenCvDetector::detect(const RgbFrame& sensorData)
     return result;
 }
 
-std::vector<DescriptorMatch> OrbOpenCvMatcher::match(const std::vector<OrbKeypoint>& fromDescriptors,
-                                                     const std::vector<OrbKeypoint>& toDescriptors)
+OrbOpenCvDetector::OrbOpenCvDetector()
+{
+    pimpl = std::make_unique<Pimpl>();
+}
+
+OrbOpenCvDetector::~OrbOpenCvDetector() = default;
+
+class OrbOpenCvMatcher::Pimpl
+{
+  public:
+    std::vector<DescriptorMatch> match(const std::vector<OrbKeypoint>& firstDescriptors,
+                                       const std::vector<OrbKeypoint>& secondDescriptors);
+
+  private:
+    cv::Ptr<cv::DescriptorMatcher> matcher = cv::DescriptorMatcher::create(cv::DescriptorMatcher::FLANNBASED);
+};
+
+std::vector<DescriptorMatch> OrbOpenCvMatcher::Pimpl::match(const std::vector<OrbKeypoint>& fromDescriptors,
+                                                            const std::vector<OrbKeypoint>& toDescriptors)
 {
     std::vector<std::vector<cv::DMatch>> cvMatches;
     cv::Mat fromCvDescriptors(static_cast<int>(fromDescriptors.size()), descriptorLength, CV_32F,
@@ -76,5 +107,18 @@ std::vector<DescriptorMatch> OrbOpenCvMatcher::match(const std::vector<OrbKeypoi
 
     return matches;
 }
+
+OrbOpenCvMatcher::OrbOpenCvMatcher()
+{
+    pimpl = std::make_unique<Pimpl>();
+}
+
+std::vector<DescriptorMatch> OrbOpenCvMatcher::match(const std::vector<OrbKeypoint>& fromDescriptors,
+                                                     const std::vector<OrbKeypoint>& toDescriptors)
+{
+    return pimpl->match(fromDescriptors, toDescriptors);
+}
+
+OrbOpenCvMatcher::~OrbOpenCvMatcher() = default;
 
 } // namespace mslam

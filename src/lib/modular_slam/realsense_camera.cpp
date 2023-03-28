@@ -12,24 +12,6 @@
 namespace mslam
 {
 
-Matrix3 getProjectionMatrix(const CameraParameters& cameraParameters)
-{
-    const auto& focal = cameraParameters.focal;
-    const auto& principal = cameraParameters.principalPoint;
-
-    Matrix3 projection;
-    projection << focal.x(), 0.0, principal.x(), 0.0, focal.y(), principal.y(), 0.0, 0.0, 1.0;
-
-    return projection;
-}
-
-Matrix3 getInverseProjectionMatrix(const CameraParameters& cameraParameters)
-{
-    auto projectionMatrix = getProjectionMatrix(cameraParameters);
-
-    return projectionMatrix.inverse();
-}
-
 bool RealSenseCamera::init()
 {
     pipe.start();

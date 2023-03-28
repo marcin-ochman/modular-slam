@@ -20,7 +20,7 @@
 #include <iostream>
 #include <iterator>
 #include <memory>
-#include <opencv2/highgui.hpp>
+// #include <opencv2/highgui.hpp>
 
 #include <QApplication>
 #include <QCommandLineOption>
@@ -93,9 +93,9 @@ int main(int argc, char* argv[])
         slam->process();
         auto data = dataProvider->recentData();
 
-        cv::Mat mat{data->rgb.size.height, data->rgb.size.width, CV_8UC3, data->rgb.data.data()};
-        cv::imshow("rgb", mat);
-        cv::waitKey(1);
+        // cv::Mat mat{data->rgb.size.height, data->rgb.size.width, CV_8UC3, data->rgb.data.data()};
+        // cv::imshow("rgb", mat);
+        // cv::waitKey(1);
     }
 
     return app.exec();

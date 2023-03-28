@@ -45,14 +45,14 @@ target_include_directories(ModularSlam PUBLIC "${DBoW3_INCLUDE_DIRS}")
 
 target_link_libraries(
   ModularSlam
-  PRIVATE ${realsense2_LIBRARY}
-          opencv_core
+  PRIVATE opencv_core
           opencv_video
           opencv_imgproc
-          opencv_highgui
+          opencv_features2d
           Ceres::ceres
+          opencv_imgcodecs
           ${DBoW3_LIBS}
-  PUBLIC Boost::filesystem Eigen3::Eigen spdlog::spdlog)
+  PUBLIC ${realsense2_LIBRARY} Boost::filesystem Eigen3::Eigen spdlog::spdlog)
 
 install(
   TARGETS ModularSlam

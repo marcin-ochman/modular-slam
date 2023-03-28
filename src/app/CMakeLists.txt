@@ -8,7 +8,6 @@ find_package(
 find_package(OpenGL REQUIRED)
 find_package(glm REQUIRED)
 find_package(OpenCV 4 REQUIRED)
-find_package(fbow REQUIRED)
 
 if(NOT TARGET ModularSlam::ModularSlam)
   find_package(ModularSlam CONFIG REQUIRED)
@@ -71,7 +70,8 @@ target_link_libraries(
           OpenGL::GLU
           glm
           opencv_core
-          opencv_imgproc)
+          opencv_imgproc
+          opencv_highgui)
 
 install(
   TARGETS Viewer
