@@ -1,7 +1,6 @@
 #include "modular_slam/frontend/rgbd_feature_frontend.hpp"
 #include "modular_slam/basic_types.hpp"
 #include "modular_slam/camera_parameters.hpp"
-#include "modular_slam/constraints_interface.hpp"
 #include "modular_slam/depth_frame.hpp"
 #include "modular_slam/feature_interface.hpp"
 #include "modular_slam/loop_detection.hpp"
@@ -329,11 +328,11 @@ RgbdFeatureFrontend::track(const RgbdFrame& sensorData, std::vector<KeypointDesc
     }
 
     currentPose = pnpResult->pose;
-    output.sensorState = currentPose;
+    output.pose = currentPose;
 
-    boost::range::copy(landmarksObservations | boost::adaptors::indexed() |
+    boost::range::copy(landmarksObservations | boost::adaptors::indexed(0) |
                            boost::adaptors::filtered([&inliers = pnpResult->inliers](auto&& range)
-                                                     { return inliers[range.index()]; }) |
+                                                     { return inliers[static_cast<std::size_t>(range.index())]; }) |
                            boost::adaptors::transformed([](auto&& range) { return range.value(); }),
                        std::back_inserter(output.landmarkObservations));
 
@@ -435,7 +434,7 @@ RgbdFeatureFrontend::initFirstKeyframe(const RgbdFrame& sensorData,
         }
     }
 
-    output.sensorState = pose;
+    output.pose = pose;
     output.newKeyframe = keyframe;
     referenceKeyframe = std::move(keyframe);
     currentPose = pose;

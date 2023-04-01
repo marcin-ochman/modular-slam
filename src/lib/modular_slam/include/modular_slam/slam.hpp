@@ -19,14 +19,6 @@ enum class SlamProcessResult
     Error
 };
 
-enum class SlamState
-{
-    NotInitialized,
-    Initialized,
-    Tracking,
-    Lost
-};
-
 template <typename SensorDataType, typename SensorStateType, typename LandmarkStateType, typename ObservationType>
 class Slam
 {
@@ -94,10 +86,10 @@ SlamProcessResult Slam<SensorDataType, SensorStateType, LandmarkStateType, Obser
         return SlamProcessResult::NoConstraints;
     }
 
-    m_sensorState = frontendOutput.sensorState;
+    m_sensorState = frontendOutput.pose;
 
-    auto backendOutput = backend->process(frontendOutput);
     map->update(frontendOutput);
+    auto backendOutput = backend->process(frontendOutput);
 
     return SlamProcessResult::Success;
 }

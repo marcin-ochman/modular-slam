@@ -2,7 +2,6 @@
 #define BASIC_MAP_HPP_
 
 #include "modular_slam/basic_types.hpp"
-#include "modular_slam/constraints_interface.hpp"
 #include "modular_slam/feature_interface.hpp"
 #include "modular_slam/map_interface.hpp"
 #include "modular_slam/rgbd_slam_types.hpp"

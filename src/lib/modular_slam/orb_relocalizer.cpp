@@ -39,7 +39,7 @@ void OrbRelocalizer::OrbRelocalizerPImpl::addKeyframe(std::shared_ptr<Keyframe<s
 {
     assert(keypoints.size() > 0);
 
-    cv::Mat features(keypoints.size(), 32, CV_32F, (void*)keypoints[0].descriptor.data(),
+    cv::Mat features(static_cast<int>(keypoints.size()), 32, CV_32F, (void*)keypoints[0].descriptor.data(),
                      static_cast<std::size_t>(sizeof(keypoints[0])));
 
     const auto entryId = database.add(features);

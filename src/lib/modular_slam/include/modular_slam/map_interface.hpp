@@ -1,7 +1,6 @@
 #ifndef MSLAM_MAP_INTERFACE_HPP_
 #define MSLAM_MAP_INTERFACE_HPP_
 
-#include "modular_slam/constraints_interface.hpp"
 #include "modular_slam/feature_interface.hpp"
 #include "modular_slam/frontend_interface.hpp"
 #include "modular_slam/keyframe.hpp"

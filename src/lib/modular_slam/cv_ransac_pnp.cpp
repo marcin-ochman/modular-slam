@@ -29,10 +29,10 @@ OpenCvRansacPnp::solvePnp(const std::vector<std::shared_ptr<Landmark<Vector3>>>&
     for(std::size_t i = 0; i < sensorPoints.size(); ++i)
     {
         const auto& point = sensorPoints[i];
-        auto* rowPtr = imagePoints.ptr<float>(static_cast<int>(i));
+        auto* const rowPtr = imagePoints.ptr<float>(static_cast<int>(i));
 
-        rowPtr[0] = point.x();
-        rowPtr[1] = point.y();
+        rowPtr[0] = static_cast<float>(point.x());
+        rowPtr[1] = static_cast<float>(point.y());
     }
 
     cv::Mat cvRotation, cvTranslation;
@@ -66,7 +66,8 @@ OpenCvRansacPnp::solvePnp(const std::vector<std::shared_ptr<Landmark<Vector3>>>&
     result.pose.position = invTransform.block<3, 1>(0, 3);
 
     result.inliers.resize(landmarks.size(), false);
-    std::for_each(std::cbegin(inliers), std::cend(inliers), [&result](int index) { result.inliers[index] = true; });
+    std::for_each(std::cbegin(inliers), std::cend(inliers),
+                  [&result](int index) { result.inliers[static_cast<std::size_t>(index)] = true; });
 
     return result;
 }

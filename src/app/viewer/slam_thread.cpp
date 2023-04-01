@@ -53,9 +53,7 @@ glm::mat4 poseToGlmMat4(const mslam::slam3d::SensorState& state)
         for(int j = 0; j < 4; j++)
             pose[j][i] = static_cast<float>(transformMatrix(i, j));
 
-    const auto toGl = glm::eulerAngleZ(glm::radians(180.f));
-
-    return /*toGl * */ pose;
+    return pose;
 }
 
 class MapVisitor
@@ -112,7 +110,6 @@ void pointCloudFromMapLandmarks(const std::unordered_set<std::shared_ptr<mslam::
                                 std::vector<glm::vec3>& outPoints)
 {
 
-    // const auto toGl = glm::eulerAngleZ(glm::radians(180.f));
     const glm::vec3 rgb{255, 255, 255};
 
     outPoints.clear();
@@ -132,11 +129,8 @@ void pointCloudFromRgbd(const mslam::RgbdFrame& rgbd, const mslam::rgbd::SensorS
     const auto xScale = 1 / depthFrame.cameraParameters.focal.x();
     const auto yScale = 1 / depthFrame.cameraParameters.focal.y();
     const auto pose = poseToGlmMat4(currentPose);
-
     constexpr float invMultiplier = 1 / 255.f;
-    const auto toGl = glm::eulerAngleZ(glm::radians(180.f));
-
-    const auto toGlPose = /*toGl */ pose;
+    const auto toGlPose = pose;
 
     std::size_t outIndex = 0;
     for(auto v = 0; v < depthFrame.size.height; ++v)

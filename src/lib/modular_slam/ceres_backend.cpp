@@ -1,7 +1,6 @@
 #include "modular_slam/ceres_backend.hpp"
 #include "modular_slam/basic_types.hpp"
 #include "modular_slam/camera_parameters.hpp"
-#include "modular_slam/constraints_interface.hpp"
 #include "modular_slam/frontend_interface.hpp"
 #include "modular_slam/map_interface.hpp"
 #include "modular_slam/rgbd_slam_types.hpp"
@@ -235,6 +234,12 @@ CeresBackend::BackendOutputType CeresBackend::createOutput(const CeresVisitor& v
             output.outlierObservations.push_back(observation);
         }
     }
+
+    output.updatedKeyframes = std::move(keyframes);
+    output.updatedLandmarks = std::move(landmarks);
+
+    // if(!output.outlierObservations.empty())
+    //     spdlog::error("Outlier found! {}", output.outlierObservations.size());
 
     return output;
 }

@@ -1,5 +1,4 @@
 #include "modular_slam/basic_map.hpp"
-#include "modular_slam/constraints_interface.hpp"
 #include "modular_slam/map_interface.hpp"
 #include "modular_slam/rgbd_slam_types.hpp"
 #include "modular_slam/slam3d_types.hpp"

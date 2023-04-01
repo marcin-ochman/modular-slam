@@ -2,7 +2,6 @@
 #define MSLAM_RGBD_FEATURE_FRONTEND_HPP_
 
 #include "modular_slam/basic_types.hpp"
-#include "modular_slam/constraints_interface.hpp"
 #include "modular_slam/feature_interface.hpp"
 #include "modular_slam/frontend_interface.hpp"
 #include "modular_slam/keyframe.hpp"
