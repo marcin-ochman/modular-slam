@@ -89,7 +89,10 @@ SlamProcessResult Slam<SensorDataType, SensorStateType, LandmarkStateType, Obser
     m_sensorState = frontendOutput.pose;
 
     map->update(frontendOutput);
+
     auto backendOutput = backend->process(frontendOutput);
+
+    frontend->update(backendOutput);
 
     return SlamProcessResult::Success;
 }

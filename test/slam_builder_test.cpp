@@ -45,6 +45,7 @@ class FrontendMock : public mslam::FrontendInterface<mslam::RgbdiFrame, mslam::s
     using Arg = std::shared_ptr<mslam::RgbdiFrame>;
 
     MAKE_MOCK1(processSensorData, RetValue(Arg arg), override);
+    MAKE_MOCK1(update, void(const BackendOutputType& arg), override);
 };
 
 class MapMock : public mslam::IMap<mslam::slam3d::SensorState, mslam::Vector3, mslam::rgbd::RgbdKeypoint>
@@ -54,6 +55,7 @@ class MapMock : public mslam::IMap<mslam::slam3d::SensorState, mslam::Vector3, m
         mslam::FrontendOutput<mslam::slam3d::SensorState, mslam::Vector3, mslam::rgbd::RgbdKeypoint>;
 
     MAKE_MOCK1(update, void(const FrontendOutputType& frontendOutput), override);
+    MAKE_MOCK1(update, void(const BackendOutputType& backendOutput), override);
     MAKE_MOCK2(
         visit,
         void(mslam::IMapVisitor<mslam::slam3d::SensorState, mslam::slam3d::LandmarkState, mslam::rgbd::RgbdKeypoint>&,

@@ -21,6 +21,8 @@ class BasicMap : public IMap<slam3d::SensorState, slam3d::LandmarkState, rgbd::R
     BasicMap();
     void update(
         const FrontendOutput<slam3d::SensorState, slam3d::LandmarkState, rgbd::RgbdKeypoint>& frontendOutput) override;
+
+    void update(const BackendOutputType& frontendOutput) override;
     void visit(IMapVisitor<slam3d::SensorState, slam3d::LandmarkState, rgbd::RgbdKeypoint>& visitor,
                const MapVisitingParams& params = {}) override;
 
@@ -40,8 +42,12 @@ class BasicMap : public IMap<slam3d::SensorState, slam3d::LandmarkState, rgbd::R
         std::shared_ptr<Keyframe<slam3d::SensorState>> newKeyframe,
         const std::vector<LandmarkObservation<slam3d::LandmarkState, rgbd::RgbdKeypoint>>& landmarkObservations);
 
-    void visitNeighbours(IMapVisitor<slam3d::SensorState, slam3d::LandmarkState, rgbd::RgbdKeypoint>& visitor,
-                         const GraphBasedParams& graph, std::shared_ptr<slam3d::Keyframe> refKeyframe);
+    void visitKeyframeNeighbours(IMapVisitor<slam3d::SensorState, slam3d::LandmarkState, rgbd::RgbdKeypoint>& visitor,
+                                 const GraphBasedParams& graph, std::shared_ptr<slam3d::Keyframe> refKeyframe);
+
+    void
+    visitLandmarksOfNeighbours(IMapVisitor<slam3d::SensorState, slam3d::LandmarkState, rgbd::RgbdKeypoint>& visitor,
+                               const GraphBasedParams& graph, std::shared_ptr<slam3d::Keyframe> refKeyframe);
 
     std::unordered_set<std::shared_ptr<slam3d::Keyframe>>
     getNeighbourKeyframes(const GraphBasedParams& graph, std::shared_ptr<slam3d::Keyframe> refKeyframe);

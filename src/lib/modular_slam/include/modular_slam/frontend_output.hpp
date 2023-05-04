@@ -8,6 +8,7 @@
 #include "modular_slam/keyframe.hpp"
 #include "modular_slam/landmark.hpp"
 #include "modular_slam/observation.hpp"
+#include "modular_slam/timestamp.hpp"
 
 namespace mslam
 {
@@ -29,6 +30,7 @@ struct LoopDetection
 template <typename SensorStateType, typename LandmarkStateType, typename ObservationType>
 struct FrontendOutput
 {
+    Timestamp timestamp;
     std::optional<LoopDetection<SensorStateType>> loopDetected;
     std::vector<LandmarkObservation<LandmarkStateType, ObservationType>> landmarkObservations;
     std::shared_ptr<Keyframe<SensorStateType>> newKeyframe;

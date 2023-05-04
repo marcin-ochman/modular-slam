@@ -41,26 +41,29 @@ std::vector<std::string> getImages(const fs::path& rootDir)
 
 RgbdFileProvider::RgbdFileProvider(RgbdFilePaths paths, const CameraParameters& params)
 {
-    rgbPaths = std::move(paths.rgbPaths);
-    depthPaths = std::move(paths.depthPaths);
+    filePaths = paths;
+
+    // rgbPaths = std::move(paths.rgbPaths);
+    // depthPaths = std::move(paths.depthPaths);
     cameraParameters = params;
 }
 
 bool RgbdFileProvider::init()
 {
-    return rgbPaths.size() > 0 && rgbPaths.size() == depthPaths.size();
+    return filePaths.rgbPaths.size() > 0 && filePaths.rgbPaths.size() == filePaths.depthPaths.size();
 }
 
 bool RgbdFileProvider::fetch()
 {
-    if(currentIndex >= rgbPaths.size())
+    if(currentIndex >= filePaths.rgbPaths.size())
     {
         recentFrame = nullptr;
         return false;
     }
 
-    const auto& rgbImagePath = rgbPaths[currentIndex];
-    const auto& depthPath = depthPaths[currentIndex];
+    const auto& rgbImagePath = filePaths.rgbPaths[currentIndex];
+    const auto& depthPath = filePaths.depthPaths[currentIndex];
+    const auto& timestamp = filePaths.timestamps[currentIndex];
     auto rgbMat = cv::imread(rgbImagePath);
     auto depthMat = cv::imread(depthPath, cv::IMREAD_ANYDEPTH);
 
@@ -77,6 +80,7 @@ bool RgbdFileProvider::fetch()
     auto depthMemorySize = static_cast<std::size_t>(depthSize.height * depthSize.width * depthMat.channels());
 
     auto newRgbdFrame = std::make_shared<RgbdFrame>();
+    newRgbdFrame->timestamp.timePoint = timestamp;
     newRgbdFrame->rgb.data.resize(rgbMemorySize);
     newRgbdFrame->rgb.size.width = frameSize.width;
     newRgbdFrame->rgb.size.height = frameSize.height;
@@ -114,14 +118,16 @@ RgbdFilePaths readTumRgbdDataset(const std::filesystem::path& tumFile)
     while(std::getline(ifss, line))
     {
         std::istringstream iss{line};
-        std::string temp, rgbPath, depthPath;
+        std::string rgbPath, depthPath, temp;
+        double timestamp;
 
-        iss >> temp >> rgbPath >> temp >> depthPath;
+        iss >> timestamp >> rgbPath >> temp >> depthPath;
 
         if(!iss.fail())
         {
             paths.rgbPaths.push_back(rootDir / rgbPath);
             paths.depthPaths.push_back(rootDir / depthPath);
+            paths.timestamps.push_back(timestamp);
         }
     }
 

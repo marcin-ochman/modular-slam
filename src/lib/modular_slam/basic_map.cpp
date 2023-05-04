@@ -8,6 +8,7 @@
 #include <boost/range/algorithm/for_each.hpp>
 #include <iterator>
 #include <queue>
+#include <utility>
 
 namespace mslam
 {
@@ -38,6 +39,11 @@ void BasicMap::update(
     }
 }
 
+void BasicMap::update(const BackendOutputType& frontendOutput)
+{
+    // TODO: implement
+}
+
 template <typename T>
 void visitElements(IMapVisitor<slam3d::SensorState, slam3d::LandmarkState, rgbd::RgbdKeypoint>& visitor, T&& container)
 {
@@ -55,7 +61,18 @@ void BasicMap::visit(IMapVisitor<slam3d::SensorState, slam3d::LandmarkState, rgb
 
     if(isVisitLandmarkFlagSet(params))
     {
-        visitElements(visitor, landmarks);
+        if(auto graphParams = params.landmarkParams.graphParams; graphParams.has_value())
+        {
+            auto refKeyframe = getKeyframeById(graphParams->refKeyframeId);
+
+            visitLandmarksOfNeighbours(visitor, graphParams.value(), refKeyframe);
+            // visitKeyframeNeighbours(visitor, graphParams.value(), refKeyframe);
+        }
+        else
+        {
+            visitElements(visitor, landmarks);
+        }
+        // if(params.landmarkParams.)
     }
 
     if(isVisitLandmarkKeyframeObservationFlagSet(params))
@@ -63,7 +80,7 @@ void BasicMap::visit(IMapVisitor<slam3d::SensorState, slam3d::LandmarkState, rgb
         if(auto graphParams = params.landmarkKeyframeObservationParams.graphParams; graphParams.has_value())
         {
             auto refKeyframe = getKeyframeById(graphParams->refKeyframeId);
-            visitNeighbours(visitor, graphParams.value(), refKeyframe);
+            visitKeyframeNeighbours(visitor, graphParams.value(), refKeyframe);
         }
         else
         {
@@ -142,8 +159,9 @@ void BasicMap::updateCovisibility(
                   });
 }
 
-void BasicMap::visitNeighbours(IMapVisitor<slam3d::SensorState, slam3d::LandmarkState, rgbd::RgbdKeypoint>& visitor,
-                               const GraphBasedParams& graph, std::shared_ptr<slam3d::Keyframe> refKeyframe)
+void BasicMap::visitKeyframeNeighbours(
+    IMapVisitor<slam3d::SensorState, slam3d::LandmarkState, rgbd::RgbdKeypoint>& visitor, const GraphBasedParams& graph,
+    std::shared_ptr<slam3d::Keyframe> refKeyframe)
 {
     const auto keyframesToVisit = getNeighbourKeyframes(graph, refKeyframe);
 
@@ -158,6 +176,30 @@ void BasicMap::visitNeighbours(IMapVisitor<slam3d::SensorState, slam3d::Landmark
                                                                        rgbd::RgbdKeypoint>& observation)
                           { visitor.visit(observation); });
         });
+}
+
+void BasicMap::visitLandmarksOfNeighbours(
+    IMapVisitor<slam3d::SensorState, slam3d::LandmarkState, rgbd::RgbdKeypoint>& visitor, const GraphBasedParams& graph,
+    std::shared_ptr<slam3d::Keyframe> refKeyframe)
+{
+    const auto neighbourkeyframes = getNeighbourKeyframes(graph, refKeyframe);
+    auto& keyframesIndexed = indexedObservations.get<0>();
+
+    std::unordered_set<std::shared_ptr<rgbd::Landmark>> landmarksToVisit;
+
+    std::for_each(std::begin(neighbourkeyframes), std::end(neighbourkeyframes),
+                  [&landmarksToVisit, &keyframesIndexed](std::shared_ptr<slam3d::Keyframe> keyframe)
+                  {
+                      auto [foundIterator, endIterator] = keyframesIndexed.equal_range(keyframe);
+
+                      std::for_each(foundIterator, endIterator,
+                                    [&landmarksToVisit](
+                                        const LandmarkKeyframeObservation<slam3d::SensorState, slam3d::LandmarkState,
+                                                                          rgbd::RgbdKeypoint>& observation)
+                                    { landmarksToVisit.insert(observation.landmark); });
+                  });
+    std::for_each(std::begin(landmarksToVisit), std::end(landmarksToVisit),
+                  [&visitor](std::shared_ptr<slam3d::Landmark> landmark) { visitor.visit(std::move(landmark)); });
 }
 
 std::unordered_set<std::shared_ptr<slam3d::Keyframe>>

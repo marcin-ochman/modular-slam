@@ -22,6 +22,20 @@ struct RgbdKeypoint
     double depth;
 };
 
+template <typename DescriptorType, int Length = 32>
+struct RgbdKeypointDescriptor
+{
+    RgbdKeypoint keypoint;
+    std::array<DescriptorType, Length> descriptor;
+};
+
+struct Observation
+{
+    RgbdKeypointDescriptor<float, 32> keypoint;
+    std::shared_ptr<rgbd::Landmark> landmark;
+    std::shared_ptr<rgbd::Keyframe> keyframe;
+};
+
 using LandmarkObservation = LandmarkObservation<LandmarkState, RgbdKeypoint>;
 using KeyframeLandmarkObservation = LandmarkKeyframeObservation<SensorState, LandmarkState, RgbdKeypoint>;
 } // namespace mslam::rgbd

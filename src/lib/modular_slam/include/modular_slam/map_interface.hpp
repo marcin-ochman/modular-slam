@@ -1,8 +1,9 @@
 #ifndef MSLAM_MAP_INTERFACE_HPP_
 #define MSLAM_MAP_INTERFACE_HPP_
 
+#include "modular_slam/backend_interface.hpp"
 #include "modular_slam/feature_interface.hpp"
-#include "modular_slam/frontend_interface.hpp"
+#include "modular_slam/frontend_output.hpp"
 #include "modular_slam/keyframe.hpp"
 #include "modular_slam/landmark.hpp"
 #include "modular_slam/slam_component.hpp"
@@ -33,6 +34,7 @@ struct LandmarkVisitingParams
 {
     std::optional<double> radius;
     std::optional<GraphBasedParams> graphParams;
+    std::unordered_set<Id> observedByKeyframes;
 };
 
 // TODO it should be templated depending on keypoints
@@ -116,8 +118,11 @@ class IMap : public SlamComponent
 {
   public:
     using FrontendOutputType = FrontendOutput<SensorStateType, LandmarkStateType, ObservationType>;
+    using BackendOutputType = BackendOutput<SensorStateType, LandmarkStateType, ObservationType>;
+    using VisitorType = IMapVisitor<SensorStateType, LandmarkStateType, ObservationType>;
 
     virtual void update(const FrontendOutputType& frontendOutput) = 0;
+    virtual void update(const BackendOutputType& frontendOutput) = 0;
     virtual void visit(IMapVisitor<SensorStateType, LandmarkStateType, ObservationType>& visitor,
                        const MapVisitingParams& params = {}) = 0;
 };

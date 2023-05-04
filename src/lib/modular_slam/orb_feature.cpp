@@ -22,7 +22,7 @@ class OrbOpenCvDetector::Pimpl
     std::vector<OrbKeypoint> detect(const RgbFrame& sensorData);
 
   private:
-    cv::Ptr<cv::Feature2D> detector = cv::ORB::create();
+    cv::Ptr<cv::Feature2D> detector = cv::ORB::create(1000);
 };
 
 std::vector<OrbKeypoint> OrbOpenCvDetector::detect(const RgbFrame& sensorData)
@@ -95,6 +95,9 @@ std::vector<DescriptorMatch> OrbOpenCvMatcher::Pimpl::match(const std::vector<Or
         if(match[0].distance < 0.7 * match[1].distance)
             goodMatches.push_back(match[0]);
     }
+
+    spdlog::debug("Orb Matcher: From: {} To: {} Total matches: {}, Good matches: {}", fromDescriptors.size(),
+                  toDescriptors.size(), cvMatches.size(), goodMatches.size());
 
     std::vector<DescriptorMatch> matches;
     matches.reserve(goodMatches.size());

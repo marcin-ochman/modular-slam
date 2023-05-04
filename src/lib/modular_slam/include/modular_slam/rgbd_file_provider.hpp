@@ -5,6 +5,7 @@
 #include "modular_slam/data_provider.hpp"
 #include "modular_slam/rgbd_frame.hpp"
 
+#include <chrono>
 #include <filesystem>
 #include <iterator>
 #include <string>
@@ -17,6 +18,7 @@ struct RgbdFilePaths
 {
     std::vector<std::string> rgbPaths;
     std::vector<std::string> depthPaths;
+    std::vector<double> timestamps;
 };
 
 class RgbdFileProvider : public DataProviderInterface<RgbdFrame>
@@ -35,8 +37,10 @@ class RgbdFileProvider : public DataProviderInterface<RgbdFrame>
     RgbdFileProvider& operator=(const RgbdFileProvider&&) = delete;
 
   private:
-    std::vector<std::string> rgbPaths;
-    std::vector<std::string> depthPaths;
+    RgbdFilePaths filePaths;
+
+    // std::vector<std::string> rgbPaths;
+    // std::vector<std::string> depthPaths;
     std::size_t currentIndex = 0;
     std::shared_ptr<RgbdFrame> recentFrame;
 

@@ -5,6 +5,7 @@
 #include "modular_slam/slam.hpp"
 #include <boost/signals2/signal.hpp>
 #include <memory>
+#include <utility>
 
 namespace mslam
 {
@@ -12,6 +13,14 @@ namespace mslam
 template <typename SensorDataType, typename SensorStateType, typename LandmarkStateType, typename ObservationType>
 class SlamBuilder
 {
+  public:
+    using FrontendInterfaceType =
+        FrontendInterface<SensorDataType, SensorStateType, LandmarkStateType, ObservationType>;
+    using BackendInterfaceType = BackendInterface<SensorStateType, LandmarkStateType, ObservationType>;
+    using MapType = IMap<SensorStateType, LandmarkStateType, ObservationType>;
+    using SlamType = Slam<SensorDataType, SensorStateType, LandmarkStateType, ObservationType>;
+
+  private:
     class DataProviderWithActions : public DataProviderInterface<SensorDataType>
     {
       public:
@@ -40,13 +49,43 @@ class SlamBuilder
         boost::signals2::signal<void(std::shared_ptr<SensorDataType>)> dataFetchedSignal;
     };
 
-  public:
-    using FrontendInterfaceType =
-        FrontendInterface<SensorDataType, SensorStateType, LandmarkStateType, ObservationType>;
-    using BackendInterfaceType = BackendInterface<SensorStateType, LandmarkStateType, ObservationType>;
-    using MapType = IMap<SensorStateType, LandmarkStateType, ObservationType>;
-    using SlamType = Slam<SensorDataType, SensorStateType, LandmarkStateType, ObservationType>;
+    class FrontendWithActions : public FrontendInterfaceType
+    {
+      public:
+        explicit FrontendWithActions(std::shared_ptr<FrontendInterfaceType> baseFrontend)
+            : frontend(std::move(baseFrontend))
+        {
+        }
 
+        bool init() override { return frontend->init(); }
+
+        template <typename Callable>
+        void registerFrontendFinishedAction(Callable&& action)
+        {
+            frontendFinishedSignal.connect(action);
+        }
+
+        typename FrontendInterfaceType::FrontendOutputType
+        processSensorData(std::shared_ptr<SensorDataType> sensorData) override
+        {
+            auto result = frontend->processSensorData(sensorData);
+
+            frontendFinishedSignal(result);
+
+            return result;
+        }
+
+        void update(const typename FrontendInterfaceType::BackendOutputType& backendOutput) override
+        {
+            frontend->update(backendOutput);
+        }
+
+      private:
+        std::shared_ptr<FrontendInterfaceType> frontend;
+        boost::signals2::signal<void(typename FrontendInterfaceType::FrontendOutputType)> frontendFinishedSignal;
+    };
+
+  public:
     std::unique_ptr<SlamType> build();
 
     SlamBuilder& addDataProvider(std::shared_ptr<DataProviderInterface<SensorDataType>> dataProvider)
@@ -58,7 +97,10 @@ class SlamBuilder
 
     SlamBuilder& addFrontend(std::shared_ptr<FrontendInterfaceType> frontend)
     {
-        frontendInterface = std::move(frontend);
+        frontend->setParameterHandler(parameterHandler);
+
+        auto frontendWithActions = std::make_shared<FrontendWithActions>(std::move(frontend));
+        frontendInterface = frontendWithActions;
         frontendInterface->setParameterHandler(parameterHandler);
 
         return *this;
@@ -68,6 +110,7 @@ class SlamBuilder
     {
         backendInterface = std::move(backend);
         backendInterface->setParameterHandler(parameterHandler);
+
         return *this;
     }
 
@@ -100,12 +143,26 @@ class SlamBuilder
         return *this;
     }
 
+    template <typename Callable>
+    SlamBuilder& registerFrontendFinishedAction(Callable&& action)
+    {
+        if(frontendInterface == nullptr)
+        {
+            spdlog::error("Cannot add frontend finished action. Add frontend first!");
+            return *this;
+        }
+
+        frontendInterface->registerFrontendFinishedAction(action);
+
+        return *this;
+    }
+
   private:
     std::shared_ptr<ParametersHandlerInterface> parameterHandler;
     std::shared_ptr<DataProviderWithActions> dataProviderInterface;
     std::shared_ptr<MapType> mapInterface;
     std::shared_ptr<BackendInterfaceType> backendInterface;
-    std::shared_ptr<FrontendInterfaceType> frontendInterface;
+    std::shared_ptr<FrontendWithActions> frontendInterface;
 };
 
 template <typename SensorDataType, typename SensorStateType, typename LandmarkStateType, typename ObservationType>
