@@ -10,19 +10,19 @@ jobs:
     runs-on: ubuntu-latest
     environment: modular-slam-ci
     container:
-      image: ghcr.io/marcin-ochman/modular-slam:v0.0.6-arch
+      image: ghcr.io/marcin-ochman/modular-slam:v0.0.8-arch
       credentials:
         username: marcin-ochman
         password: ${{ secrets.container_registry_token }}
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         submodules: recursive
 
     - name: Configure CMake
       shell: bash
-      run: mkdir build; cd build;  cmake -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} ..; cd -
+      run: mkdir build; cd build;  cmake -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_CXX_FLAGS="-Wall -pedantic -Wextra" ..; cd -
 
     - name: Build
       shell: bash

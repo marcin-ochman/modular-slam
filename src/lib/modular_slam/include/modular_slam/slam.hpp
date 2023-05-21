@@ -6,27 +6,29 @@
 #include "modular_slam/frontend_interface.hpp"
 #include "modular_slam/map_interface.hpp"
 
+#include <spdlog/spdlog.h>
+
 namespace mslam
 {
 
 enum class SlamProcessResult
 {
-
     Success,
     NoDataAvailable,
     NoConstraints,
     Error
 };
 
-template <typename SensorDataType, typename SensorStateType, typename LandmarkStateType>
+template <typename SensorDataType, typename SensorStateType, typename LandmarkStateType, typename ObservationType>
 class Slam
 {
   public:
     using DataProviderInterfaceType = DataProviderInterface<SensorDataType>;
-    using FrontendInterfaceType = FrontendInterface<SensorDataType, SensorStateType, LandmarkStateType>;
-    using BackendInterfaceType = BackendInterface<SensorStateType, LandmarkStateType>;
-    using SlamType = Slam<SensorDataType, SensorStateType, LandmarkStateType>;
-    using MapType = MapInterface<SensorStateType, LandmarkStateType>;
+    using FrontendInterfaceType =
+        FrontendInterface<SensorDataType, SensorStateType, LandmarkStateType, ObservationType>;
+    using BackendInterfaceType = BackendInterface<SensorStateType, LandmarkStateType, ObservationType>;
+    using SlamType = Slam<SensorDataType, SensorStateType, LandmarkStateType, ObservationType>;
+    using MapType = IMap<SensorStateType, LandmarkStateType, ObservationType>;
 
     Slam(std::shared_ptr<ParametersHandlerInterface> parameterHandler,
          std::shared_ptr<DataProviderInterfaceType> dataProviderInterface,
@@ -42,26 +44,33 @@ class Slam
 
     virtual bool init();
     virtual SlamProcessResult process();
+    [[nodiscard]] const SensorStateType& sensorState() const { return m_sensorState; }
+    [[nodiscard]] const SlamState& slamState() const { return m_slamState; }
+    virtual ~Slam() = default;
 
-  protected:
-    std::shared_ptr<ParametersHandlerInterface> parameterHandler;
+    std::shared_ptr<FrontendInterfaceType> frontend;
     std::shared_ptr<DataProviderInterface<SensorDataType>> dataProvider;
+
+    std::shared_ptr<ParametersHandlerInterface> parameterHandler;
     std::shared_ptr<MapType> map;
     std::shared_ptr<BackendInterfaceType> backend;
-    std::shared_ptr<FrontendInterfaceType> frontend;
+
+  private:
+    SensorStateType m_sensorState;
+    SlamState m_slamState;
 };
 
-template <typename SensorDataType, typename SensorStateType, typename LandmarkStateType>
-bool Slam<SensorDataType, SensorStateType, LandmarkStateType>::init()
+template <typename SensorDataType, typename SensorStateType, typename LandmarkStateType, typename ObservationType>
+bool Slam<SensorDataType, SensorStateType, LandmarkStateType, ObservationType>::init()
 {
     auto result =
-        parameterHandler->init() && dataProvider->init() && frontend->init() && backend->init() /*&& map->init()*/;
+        parameterHandler->init() && dataProvider->init() && frontend->init() && backend->init() && map->init();
 
     return result;
 }
 
-template <typename SensorDataType, typename SensorStateType, typename LandmarkStateType>
-SlamProcessResult Slam<SensorDataType, SensorStateType, LandmarkStateType>::process()
+template <typename SensorDataType, typename SensorStateType, typename LandmarkStateType, typename ObservationType>
+SlamProcessResult Slam<SensorDataType, SensorStateType, LandmarkStateType, ObservationType>::process()
 {
     auto isNewDataAvailable = dataProvider->fetch();
 
@@ -69,14 +78,21 @@ SlamProcessResult Slam<SensorDataType, SensorStateType, LandmarkStateType>::proc
         return SlamProcessResult::NoDataAvailable;
 
     auto sensorData = dataProvider->recentData();
-    auto constraints = frontend->prepareConstraints(*sensorData);
+    auto frontendOutput = frontend->processSensorData(sensorData);
 
-    // if(constraints)
-    //     return SlamProcessResult::NoConstraints;
+    if(frontendOutput.landmarkObservations.size() == 0)
+    {
+        spdlog::error("No constraints available");
+        return SlamProcessResult::NoConstraints;
+    }
 
-    // backend->optimize(*constraints);
-    // frontend->update(*constraints);
-    // map->update(/*sensorData,*/ *constraints);
+    m_sensorState = frontendOutput.pose;
+
+    map->update(frontendOutput);
+
+    auto backendOutput = backend->process(frontendOutput);
+
+    frontend->update(backendOutput);
 
     return SlamProcessResult::Success;
 }

@@ -3,6 +3,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <limits>
 #include <vector>
 
 #include "modular_slam/basic_types.hpp"
@@ -18,16 +19,16 @@ struct DepthFrame
     CameraParameters cameraParameters;
 };
 
-inline std::uint16_t getDepth(const DepthFrame& depthFrame, int x, int y)
+inline float getDepth(const DepthFrame& depthFrame, const Eigen::Vector2i& imgPoint)
 {
-    std::size_t index = depthFrame.size.width * y + x;
+    const auto index = static_cast<std::size_t>(depthFrame.size.width * imgPoint.y() + imgPoint.x());
 
-    return depthFrame.data[index];
+    return depthFrame.data[index] * depthFrame.cameraParameters.factor;
 }
 
-inline bool isDepthValid(std::uint16_t depth)
+inline bool isDepthValid(const float depth)
 {
-    return depth > 0;
+    return depth > std::numeric_limits<float>::epsilon();
 }
 
 } // namespace mslam

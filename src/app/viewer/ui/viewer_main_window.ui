@@ -41,24 +41,55 @@
     <property name="title">
      <string>View</string>
     </property>
-    <widget class="QMenu" name="menuAdd">
+    <widget class="QMenu" name="menuView_2">
      <property name="title">
-      <string>Add</string>
+      <string>Docks</string>
      </property>
-     <addaction name="action3D_View"/>
-     <addaction name="actionRGB_View"/>
-     <addaction name="actionDepth_View"/>
+     <addaction name="actionRGBView"/>
+     <addaction name="actionDepthView"/>
+     <addaction name="actionSlamStatistics"/>
     </widget>
-    <addaction name="menuAdd"/>
+    <widget class="QMenu" name="menuViewer3d">
+     <property name="title">
+      <string>Viewer 3D</string>
+     </property>
+     <widget class="QMenu" name="menuKeyframes">
+      <property name="title">
+       <string>Keyframes</string>
+      </property>
+      <addaction name="actionWireframes"/>
+      <addaction name="actionThumbnail"/>
+     </widget>
+     <addaction name="menuKeyframes"/>
+     <addaction name="actionShowWireframes"/>
+     <addaction name="actionLandmarks"/>
+     <addaction name="separator"/>
+     <addaction name="actionCameraReset"/>
+    </widget>
+    <addaction name="menuView_2"/>
+    <addaction name="menuViewer3d"/>
+   </widget>
+   <widget class="QMenu" name="menuControl">
+    <property name="title">
+     <string>Control</string>
+    </property>
+    <addaction name="pauseResumeAction"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuView"/>
+   <addaction name="menuControl"/>
    <addaction name="menuHelp"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
-  <widget class="QDockWidget" name="dockWidget">
+  <widget class="QDockWidget" name="imageViewerDockWidget">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
    <property name="accessibleName">
     <string>RGB Viewer</string>
+   </property>
+   <property name="floating">
+    <bool>true</bool>
    </property>
    <property name="windowTitle">
     <string>RGB Viewer</string>
@@ -68,7 +99,7 @@
    </attribute>
    <widget class="ImageViewer" name="imageViewer"/>
   </widget>
-  <widget class="QDockWidget" name="dockWidget_2">
+  <widget class="QDockWidget" name="depthImageViewerDockWidget">
    <property name="windowTitle">
     <string>Depth Viewer</string>
    </property>
@@ -76,6 +107,28 @@
     <number>1</number>
    </attribute>
    <widget class="DepthImageViewer" name="depthImageViewer"/>
+  </widget>
+  <widget class="QDockWidget" name="slamStatsViewerDockWidget">
+   <property name="windowTitle">
+    <string>Slam statistics</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>1</number>
+   </attribute>
+   <widget class="SlamStatisticsWidget" name="slamStatsViewer"/>
+  </widget>
+  <widget class="QToolBar" name="toolBar">
+   <property name="windowTitle">
+    <string>toolBar</string>
+   </property>
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+   <addaction name="pauseResumeAction"/>
+   <addaction name="actionResetCamera"/>
   </widget>
   <action name="actionExit">
    <property name="text">
@@ -87,19 +140,107 @@
     <string>About</string>
    </property>
   </action>
-  <action name="action3D_View">
+  <action name="action3dView">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
    <property name="text">
     <string>3D View</string>
    </property>
   </action>
-  <action name="actionRGB_View">
+  <action name="actionRGBView">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
    <property name="text">
     <string>RGB View</string>
    </property>
   </action>
-  <action name="actionDepth_View">
+  <action name="actionDepthView">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
    <property name="text">
     <string>Depth View</string>
+   </property>
+  </action>
+  <action name="pauseResumeAction">
+   <property name="text">
+    <string>Pause / Resume</string>
+   </property>
+  </action>
+  <action name="actionShowWireframes">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Camera Points</string>
+   </property>
+  </action>
+  <action name="actionWireframes">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Wireframes</string>
+   </property>
+  </action>
+  <action name="actionThumbnail">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Thumbnail</string>
+   </property>
+  </action>
+  <action name="actionLandmarks">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Landmarks</string>
+   </property>
+  </action>
+  <action name="actionSlamStatistics">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Slam Statistics</string>
+   </property>
+  </action>
+  <action name="actionCameraReset">
+   <property name="text">
+    <string>Camera Reset</string>
+   </property>
+  </action>
+  <action name="actionResetCamera">
+   <property name="text">
+    <string>Reset Camera</string>
    </property>
   </action>
  </widget>
@@ -115,11 +256,21 @@
    <extends>QWidget</extends>
    <header>pointcloud_viewer.hpp</header>
    <container>1</container>
+   <slots>
+    <slot>setWireframeEnabled(bool)</slot>
+    <slot>setThumbnailEnabled(bool)</slot>
+   </slots>
   </customwidget>
   <customwidget>
    <class>DepthImageViewer</class>
    <extends>QWidget</extends>
    <header>depth_image_viewer.hpp</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>SlamStatisticsWidget</class>
+   <extends>QWidget</extends>
+   <header>slam_statistics_widget.hpp</header>
    <container>1</container>
   </customwidget>
  </customwidgets>
@@ -138,6 +289,86 @@
     <hint type="destinationlabel">
      <x>399</x>
      <y>299</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionThumbnail</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>pointcloudViewer</receiver>
+   <slot>setThumbnailEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>647</x>
+     <y>318</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionWireframes</sender>
+   <signal>triggered(bool)</signal>
+   <receiver>pointcloudViewer</receiver>
+   <slot>setWireframeEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>647</x>
+     <y>318</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionRGBView</sender>
+   <signal>triggered(bool)</signal>
+   <receiver>imageViewerDockWidget</receiver>
+   <slot>setVisible(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>110</x>
+     <y>140</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionDepthView</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>depthImageViewerDockWidget</receiver>
+   <slot>setVisible(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>110</x>
+     <y>318</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionSlamStatistics</sender>
+   <signal>triggered(bool)</signal>
+   <receiver>slamStatsViewerDockWidget</receiver>
+   <slot>setVisible(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>110</x>
+     <y>496</y>
     </hint>
    </hints>
   </connection>

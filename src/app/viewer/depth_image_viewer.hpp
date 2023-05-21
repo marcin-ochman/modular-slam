@@ -12,15 +12,15 @@ class DepthImageViewer : public QWidget
     DepthImageViewer(QWidget* parent = nullptr) : QWidget(parent) { initialize(); }
 
   public slots:
-    void scaleDrawnImage(int percent);
+    void scaleDrawnImage(int percent) { scaleDrawnImage(static_cast<float>(percent)); }
     void drawImage(const mslam::DepthFrame& newDepth);
 
   protected:
-    void paintEvent(QPaintEvent* event) override;
+    void scaleDrawnImage(float percent);
     void initialize();
 
-    int minDepth() { return ui.minSlider->value() * 10; }
-    int maxDepth() { return ui.maxSlider->value() * 10; }
+    float minDepth() { return static_cast<float>(ui.minSlider->value()) * 0.01f; }
+    float maxDepth() { return static_cast<float>(ui.maxSlider->value()) * 0.01f; }
 
     Ui::DepthImageViewer ui;
     QImage image;

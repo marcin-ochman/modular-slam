@@ -15,6 +15,7 @@ RUN pacman -Syu --noconfirm \
     glm \
     go \
     graphviz \
+    hdf5 \
     htop \
     nlohmann-json \
     opencv \
@@ -23,6 +24,7 @@ RUN pacman -Syu --noconfirm \
     qt5 \
     qt6 \
     valgrind \
+    vtk \
     vim
 
 RUN useradd builduser -m \
@@ -30,10 +32,16 @@ RUN useradd builduser -m \
   && cd /home/builduser \
   && (printf 'builduser ALL=(ALL) ALL\n' | tee -a /etc/sudoers)
 
+COPY dbow3.patch /modular-slam-data/dbow3.patch
 
 RUN git clone https://aur.archlinux.org/yay.git yay.git && chown builduser -R yay.git && cd yay.git  && sudo -u builduser bash -c "makepkg -si --noconfirm" && cd - && rm -rf yay.git
+RUN git clone https://github.com/rmsalinas/DBow3.git && cd DBow3 && mkdir build && git apply /modular-slam-data/dbow3.patch && cd build && cmake .. -DCMAKE_INSTALL_PREFIX=/opt/dbow3 -DBUILD_UTILS=0 && make install && cd -
+
 
 USER builduser
-RUN yay -Syu --noconfirm librealsense ceres-solver trompeloeil-git
+RUN yay -Syu --noconfirm librealsense ceres-solver spdlog trompeloeil-git
+
+ENV LD_LIBRARY_PATH="/opt/dbow3/lib/:${LD_LIBRARY_PATH}"
+ENV LIBRARY_PATH="/opt/dbow3/lib/:${LIBRARY_PATH}"
 
 USER root

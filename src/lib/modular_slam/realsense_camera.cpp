@@ -7,31 +7,20 @@
 #include <cstdint>
 
 #include <iostream>
+#include <spdlog/spdlog.h>
 
 namespace mslam
 {
 
-Eigen::Matrix3f getProjectionMatrix(const CameraParameters& cameraParameters)
-{
-    const auto& focal = cameraParameters.focal;
-    const auto& principal = cameraParameters.principalPoint;
-
-    Eigen::Matrix3f projection;
-    projection << focal.x(), 0.0f, principal.x(), 0.0f, focal.y(), principal.y(), 0.0f, 0.0f, 1.0f;
-
-    return projection;
-}
-
-Eigen::Matrix3f getInverseProjectionMatrix(const CameraParameters& cameraParameters)
-{
-    auto projectionMatrix = getProjectionMatrix(cameraParameters);
-
-    return projectionMatrix.inverse();
-}
-
 bool RealSenseCamera::init()
 {
     pipe.start();
+    // NOTE: due to RS issue of different colors at beginning of the image stream
+    // we are waiting for waitFrames frames
+    constexpr auto waitFrames = 30;
+
+    for(auto i = 0; i < waitFrames; ++i)
+        fetch();
 
     return true;
 }
@@ -46,6 +35,12 @@ bool RealSenseCamera::fetch()
 
     newRgbdFrame->depth.cameraParameters.focal = {intrinsics.fx, intrinsics.fy};
     newRgbdFrame->depth.cameraParameters.principalPoint = {intrinsics.ppx, intrinsics.ppy};
+    newRgbdFrame->depth.cameraParameters.factor = 0.001f;
+
+    // spdlog::info("f: {}, {} c: {}, {}, model: {} coeffs:  {} {} {} {} {}", intrinsics.fx, intrinsics.fy,
+    // intrinsics.ppx,
+    //              intrinsics.ppy, intrinsics.model, intrinsics.coeffs[0], intrinsics.coeffs[1], intrinsics.coeffs[2],
+    //              intrinsics.coeffs[3], intrinsics.coeffs[4]);
 
     rs2::video_frame rgb_frame = frames.first(RS2_STREAM_COLOR);
     rs2::depth_frame depth_frame = frames.first(RS2_STREAM_DEPTH);
@@ -53,8 +48,11 @@ bool RealSenseCamera::fetch()
     assert(rgb_frame.get_width() == depth_frame.get_width());
     assert(rgb_frame.get_height() == depth_frame.get_height());
 
-    auto rgbMemorySize = rgb_frame.get_height() * rgb_frame.get_width() * rgb_frame.get_bytes_per_pixel();
-    auto depthMemorySize = depth_frame.get_height() * depth_frame.get_width() * depth_frame.get_bytes_per_pixel();
+    auto rgbMemorySize =
+        static_cast<std::size_t>(rgb_frame.get_height() * rgb_frame.get_width() * rgb_frame.get_bytes_per_pixel());
+    auto depthMemorySize = static_cast<std::size_t>(depth_frame.get_height() * depth_frame.get_width());
+
+    // assert(depthMemorySize == depth_frame.get_data_size());
 
     newRgbdFrame->rgb.data.resize(rgbMemorySize);
     newRgbdFrame->depth.data.resize(depthMemorySize);
@@ -63,7 +61,7 @@ bool RealSenseCamera::fetch()
     newRgbdFrame->depth.size.height = depth_frame.get_height();
     newRgbdFrame->depth.size.width = depth_frame.get_width();
 
-    std::copy_n(reinterpret_cast<const uint16_t*>(depth_frame.get_data()), depth_frame.get_data_size(),
+    std::copy_n(reinterpret_cast<const uint16_t*>(depth_frame.get_data()), depthMemorySize,
                 newRgbdFrame->depth.data.begin());
 
     cv::Mat rgbMatFrame{rgb_frame.get_height(), rgb_frame.get_width(), CV_8UC3,

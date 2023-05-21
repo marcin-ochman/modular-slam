@@ -4,5 +4,12 @@
     <file alias="mvp.glsl">../shaders/mvp.glsl</file>
     <file alias="pointcloud.glsl">../shaders/pointcloud.glsl</file>
     <file alias="pointcloud_fragment.glsl">../shaders/pointcloud_fragment.glsl</file>
+
+    <file alias="thumbnail.glsl">../shaders/thumbnail.glsl</file>
+    <file alias="thumbnail_fragment.glsl">../shaders/thumbnail_fragment.glsl</file>
+
+    <file alias="wireframe.glsl">../shaders/wireframe.glsl</file>
+    <file alias="wireframe_fragment.glsl">../shaders/wireframe_fragment.glsl</file>
+
   </qresource>
 </RCC>
