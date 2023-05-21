@@ -117,7 +117,7 @@ Vector3 toGlobalCoordinates(const Vector3& point, const slam3d::SensorState& sen
 bool isVisibleInFrame(const Vector3& point, const slam3d::SensorState& cameraPose, const CameraParameters& cameraParams,
                       const Size& resolution)
 {
-    auto pointInCameraCoordinates = toGlobalCoordinates(point, cameraPose);
+    auto pointInCameraCoordinates = toCameraCoordinates(point, cameraPose);
 
     return isVisibleInFrame(pointInCameraCoordinates, cameraParams, resolution);
 }
@@ -337,7 +337,7 @@ RgbdFeatureFrontend::getLandmarksWithKeypoints(std::shared_ptr<rgbd::Keyframe> k
 
     // auto [foundIterator, endIterator] = indexedByLandmark.equal_range(keyframe);
 
-    spdlog::info("{} {}", visitor.landmarks.size(), result.first.size());
+    // spdlog::info("{} {}", visitor.landmarks.size(), result.first.size());
 
     return result;
 }
@@ -407,7 +407,8 @@ RgbdFeatureFrontend::track(const RgbdFrame& sensorData, std::vector<KeypointDesc
     {
         auto newKeyframe = addKeyframe(sensorData, currentPose, keypoints);
         auto landmarksOnFrame = findVisibleLocalLandmarks(currentPose, sensorData);
-        const auto [newLandmarkKeypoints, matchedLandmarks] = findKeypointsForLandmarks(keypoints, landmarksOnFrame);
+        const auto [newLandmarkKeypoints, matchedLandmarks] =
+            findKeypointsForLandmarks(keypoints, landmarksOnFrame, currentPose, sensorData);
 
         addNewLandmarks(newLandmarkKeypoints, newKeyframe, sensorData, output);
         updateVisibleLandmarks(matchedLandmarks, newKeyframe, sensorData);
@@ -462,7 +463,7 @@ void RgbdFeatureFrontend::addNewLandmarks(const std::vector<KeypointDescriptor<f
             reconstructPoint(keypoint.keypoint.coordinates, getDepth(sensorData.depth, keypointCoordinate),
                              sensorData.depth.cameraParameters.principalPoint, invFocal);
 
-        constexpr auto zThreshold = 5.f;
+        constexpr auto zThreshold = 3.f;
         if(landmarkCoordinatesInKeyframe.has_value() && landmarkCoordinatesInKeyframe->z() <= zThreshold)
         {
             auto state = toGlobalCoordinates(landmarkCoordinatesInKeyframe.value(), newKeyframe->state);
@@ -529,7 +530,8 @@ RgbdFeatureFrontend::findVisibleLocalLandmarks(const slam3d::SensorState& pose, 
 
 RgbdFeatureFrontend::LandmarkMatches
 RgbdFeatureFrontend::findKeypointsForLandmarks(const std::vector<KeypointDescriptor<float>>& keypoints,
-                                               const boost::span<std::shared_ptr<rgbd::Landmark>> landmarks) const
+                                               const boost::span<std::shared_ptr<rgbd::Landmark>> landmarks,
+                                               const slam3d::SensorState& cameraPose, const RgbdFrame& sensorData) const
 {
     std::vector<KeypointDescriptor<float, 32>> localLandmarksDescriptors;
     localLandmarksDescriptors.reserve(landmarks.size());
@@ -548,8 +550,8 @@ RgbdFeatureFrontend::findKeypointsForLandmarks(const std::vector<KeypointDescrip
 
     auto matches = matcher->match(localLandmarksDescriptors, keypoints);
 
-    spdlog::debug("Looking for keypoints for new landmarks, visible: {}, matched: {}", landmarks.size(),
-                  matches.size());
+    // spdlog::debug("Looking for keypoints for new landmarks, visible: {}, matched: {}", landmarks.size(),
+    //               matches.size());
 
     std::vector<std::size_t> allIndices, matchedIndices, newKeypointsIndices;
     allIndices.resize(keypoints.size());
@@ -569,15 +571,22 @@ RgbdFeatureFrontend::findKeypointsForLandmarks(const std::vector<KeypointDescrip
                    [&keypoints](std::size_t index) { return keypoints[index]; });
 
     std::unordered_map<std::shared_ptr<rgbd::Landmark>, KeypointDescriptor<float, 32>> matchedWithLandmarks;
-    std::transform(std::begin(matches), std::end(matches),
-                   std::inserter(matchedWithLandmarks, matchedWithLandmarks.begin()),
-                   [&keypoints, &landmarks](const DescriptorMatch& match)
-                   {
-                       auto landmark = landmarks[match.fromIndex];
+    std::for_each(
+        std::begin(matches), std::end(matches),
+        [&keypoints, &landmarks, &cameraPose, &sensorData, &matchedWithLandmarks](const DescriptorMatch& match)
+        {
+            auto landmark = landmarks[match.fromIndex];
+            const auto& keypoint = keypoints[match.toIndex];
+            auto positionOnImage = projectOnImage(landmark->state, sensorData.depth.cameraParameters, cameraPose);
+            // toCameraCoordinates(landmark->state, cameraPose);
 
-                       return std::make_pair(landmark, keypoints[match.toIndex]);
-                   });
+            auto diff = keypoint.keypoint.coordinates - positionOnImage;
+            if(diff.squaredNorm() <= 25.0f)
+                matchedWithLandmarks.emplace(landmark, keypoint);
+            // std::make_pair();
+        });
 
+    spdlog::info("new: {}, matched: {} ", newKeypoints.size(), matchedWithLandmarks.size());
     return {newKeypoints, matchedWithLandmarks};
 }
 
@@ -709,8 +718,8 @@ std::shared_ptr<rgbd::Keyframe> RgbdFeatureFrontend::findBetterReferenceKeyframe
         }
     }
 
-    for(const auto& [keyframe, count] : keyframeCount)
-        spdlog::info("Observed by kfr {}: {}", keyframe->id, count);
+    // for(const auto& [keyframe, count] : keyframeCount)
+    //     spdlog::info("Observed by kfr {}: {}", keyframe->id, count);
 
     const auto foundIt = std::max_element(std::begin(keyframeCount), std::end(keyframeCount),
                                           [](const std::pair<std::shared_ptr<rgbd::Keyframe>, int>& firstPair,

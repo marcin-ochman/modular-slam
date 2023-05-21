@@ -81,7 +81,8 @@ class RgbdFeatureFrontend : public FrontendInterface<RgbdFrame, slam3d::SensorSt
 
     [[nodiscard]] LandmarkMatches
     findKeypointsForLandmarks(const std::vector<KeypointDescriptor<float, 32>>& keypoints,
-                              const boost::span<std::shared_ptr<rgbd::Landmark>> landmarks) const;
+                              const boost::span<std::shared_ptr<rgbd::Landmark>> landmarks,
+                              const slam3d::SensorState& pose, const RgbdFrame& sensorData) const;
 
     std::shared_ptr<rgbd::Landmark> addLandmark(std::shared_ptr<rgbd::Keyframe>&, const Vector3& state,
                                                 const KeypointDescriptor<float, 32>& keypoint);

@@ -98,6 +98,7 @@ class CeresVisitor : public IMapVisitor<slam3d::SensorState, Vector3, rgbd::Rgbd
 CeresBackend::BackendOutputType
 CeresBackend::process(FrontendOutput<mslam::slam3d::SensorState, mslam::Vector3, rgbd::RgbdKeypoint>& frontendOutput)
 {
+
     if(needsGlobalBundleAdjustment(frontendOutput))
     {
         return globalBundleAdjustment(frontendOutput);

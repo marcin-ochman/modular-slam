@@ -96,8 +96,8 @@ std::vector<DescriptorMatch> OrbOpenCvMatcher::Pimpl::match(const std::vector<Or
             goodMatches.push_back(match[0]);
     }
 
-    spdlog::debug("Orb Matcher: From: {} To: {} Total matches: {}, Good matches: {}", fromDescriptors.size(),
-                  toDescriptors.size(), cvMatches.size(), goodMatches.size());
+    // spdlog::debug("Orb Matcher: From: {} To: {} Total matches: {}, Good matches: {}", fromDescriptors.size(),
+    //               toDescriptors.size(), cvMatches.size(), goodMatches.size());
 
     std::vector<DescriptorMatch> matches;
     matches.reserve(goodMatches.size());

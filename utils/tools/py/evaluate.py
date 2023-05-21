@@ -99,7 +99,7 @@ def generate_plots_command(args):
 def generate_data_command(args):
     trajectories, ref_trajectory = prepare_trajectories(args.trajectories, args.ref_trajectory, args.names)
     results = {}
-    ape_metric = metrics.APE(metrics.PoseRelation.full_transformation)
+    ape_metric = metrics.APE(metrics.PoseRelation.translation_part)
 
     for name, trajectory in trajectories.items():
         traj_ref_associated, traj_est = sync.associate_trajectories(ref_trajectory, trajectory)
@@ -109,6 +109,10 @@ def generate_data_command(args):
 
     results_dict = { key: [metrics[metric_name] for metric_name in sorted(metrics.keys()) ]
                                   for key, metrics in results.items()}
+
+    print(results)
+    print()
+    print(results_dict)
     columns = list(results[list(results.keys())[0]].keys())
     df = pd.DataFrame.from_dict(results_dict,
                                 orient='index', columns=columns)
