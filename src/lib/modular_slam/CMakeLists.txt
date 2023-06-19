@@ -34,7 +34,6 @@ add_library(
 
 add_library(ModularSlam::ModularSlam ALIAS ModularSlam)
 
-message(WARN "WOOOOOO ${DBoW3_LIBS}")
 target_include_directories(
   ModularSlam
   PUBLIC $<BUILD_INTERFACE:${ModularSlam_BINARY_DIR}/include>

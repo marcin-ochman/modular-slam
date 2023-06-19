@@ -51,7 +51,7 @@ OpenCvRansacPnp::solvePnp(const std::vector<std::shared_ptr<Landmark<Vector3>>>&
 
     std::vector<int> inliers;
     const auto success = cv::solvePnPRansac(objectPoints, imagePoints, cameraMatrix, cv::noArray(), cvRotation,
-                                            cvTranslation, false, 100, 8.0, 0.99, inliers);
+                                            cvTranslation, true, 100, 8.0, 0.99, inliers);
 
     if(!success)
     {

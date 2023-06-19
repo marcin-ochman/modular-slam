@@ -18,7 +18,7 @@ class SlamBuilder
         FrontendInterface<SensorDataType, SensorStateType, LandmarkStateType, ObservationType>;
     using BackendInterfaceType = BackendInterface<SensorStateType, LandmarkStateType, ObservationType>;
     using MapType = IMap<SensorStateType, LandmarkStateType, ObservationType>;
-    using SlamType = Slam<SensorDataType, SensorStateType, LandmarkStateType, ObservationType>;
+    using SlamType = KeypointSlam<SensorDataType, SensorStateType, LandmarkStateType, ObservationType>;
 
   private:
     class DataProviderWithActions : public DataProviderInterface<SensorDataType>
@@ -40,7 +40,9 @@ class SlamBuilder
         bool fetch() override
         {
             const auto result = dataProvider->fetch();
-            dataFetchedSignal(recentData());
+            if(result)
+                dataFetchedSignal(recentData());
+
             return result;
         }
 
@@ -82,7 +84,7 @@ class SlamBuilder
 
       private:
         std::shared_ptr<FrontendInterfaceType> frontend;
-        boost::signals2::signal<void(typename FrontendInterfaceType::FrontendOutputType)> frontendFinishedSignal;
+        boost::signals2::signal<void(const typename FrontendInterfaceType::FrontendOutputType&)> frontendFinishedSignal;
     };
 
   public:

@@ -66,13 +66,11 @@ void BasicMap::visit(IMapVisitor<slam3d::SensorState, slam3d::LandmarkState, rgb
             auto refKeyframe = getKeyframeById(graphParams->refKeyframeId);
 
             visitLandmarksOfNeighbours(visitor, graphParams.value(), refKeyframe);
-            // visitKeyframeNeighbours(visitor, graphParams.value(), refKeyframe);
         }
         else
         {
             visitElements(visitor, landmarks);
         }
-        // if(params.landmarkParams.)
     }
 
     if(isVisitLandmarkKeyframeObservationFlagSet(params))
@@ -111,6 +109,8 @@ void BasicMap::addKeyframe(std::shared_ptr<slam3d::Keyframe> keyframe)
 
 void BasicMap::removeKeyframe(std::shared_ptr<slam3d::Keyframe> keyframe)
 {
+    auto& keyframesIndexed = indexedObservations.get<0>();
+    keyframesIndexed.erase(keyframe);
     keyframes.erase(keyframe);
 }
 
@@ -132,6 +132,9 @@ void BasicMap::addLandmark(std::shared_ptr<slam3d::Landmark> landmark)
 
 void BasicMap::removeLandmark(std::shared_ptr<slam3d::Landmark> landmark)
 {
+    auto& landmarksIndexed = indexedObservations.get<1>();
+    landmarksIndexed.erase(landmark);
+
     landmarks.erase(landmark);
 }
 

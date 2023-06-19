@@ -13,7 +13,6 @@
 #include "modular_slam/rgbd_slam_types.hpp"
 #include "modular_slam/slam3d_types.hpp"
 
-#include <Eigen/src/Core/Matrix.h>
 #include <boost/range/adaptor/filtered.hpp>
 #include <boost/range/adaptor/map.hpp>
 #include <boost/range/adaptor/transformed.hpp>
@@ -32,8 +31,6 @@
 #include <numeric>
 #include <opencv2/core/mat.hpp>
 #include <opencv2/core/types.hpp>
-#include <opencv2/features2d.hpp>
-#include <opencv2/highgui.hpp>
 #include <opencv2/imgproc.hpp>
 #include <optional>
 #include <spdlog/spdlog.h>
@@ -41,8 +38,6 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
-
-#include <opencv2/imgproc.hpp>
 
 namespace mslam
 {
@@ -237,13 +232,12 @@ RgbdFeatureFrontend::FrontendOutputType RgbdFeatureFrontend::processSensorData(s
 
     FrontendOutputType output = track(*sensorData, keypoints);
 
-    const auto isTrackingSuccessful = output.landmarkObservations.size() > 0;
+    const auto isTrackingSuccessful = !output.landmarkObservations.empty();
 
     if(isTrackingSuccessful)
     {
         if(isLoopClosureNeeded())
         {
-            // TODO: run loop closure  detection
             auto candidateKeyframe = loopDetector->detectLoop();
 
             closeLoop(candidateKeyframe);
@@ -280,8 +274,6 @@ std::vector<KeypointLandmarkMatch<Vector3>>
 RgbdFeatureFrontend::matchLandmarks(const std::vector<KeypointDescriptor<float, 32>>& keypoints,
                                     std::shared_ptr<rgbd::Keyframe> keyframe)
 {
-    spdlog::debug("Matching landmarks...");
-
     const auto [keyframeKeypoints, landmarks] = getLandmarksWithKeypoints(keyframe);
     const auto matches = matcher->match(keyframeKeypoints, keypoints);
 
@@ -301,20 +293,7 @@ RgbdFeatureFrontend::matchLandmarks(const std::vector<KeypointDescriptor<float, 
 std::pair<std::vector<KeypointDescriptor<float, 32>>, std::vector<std::shared_ptr<rgbd::Landmark>>>
 RgbdFeatureFrontend::getLandmarksWithKeypoints(std::shared_ptr<rgbd::Keyframe> keyframe)
 {
-    // auto& indexedByKeyframe = allObservations.get<0>();
-    // auto [foundIterator, endIterator] = indexedByKeyframe.equal_range(keyframe);
-    // // TODO: get local landmarks and match them
-
     std::pair<std::vector<KeypointDescriptor<float, 32>>, std::vector<std::shared_ptr<rgbd::Landmark>>> result;
-
-    // std::for_each(foundIterator, endIterator,
-    //               [&result](const rgbd::Observation& observation)
-    //               {
-    //                   KeypointDescriptor<float, 32> keypoint = {observation.keypoint.keypoint.keypoint,
-    //                                                             observation.keypoint.descriptor};
-    //                   result.first.push_back(keypoint);
-    //                   result.second.push_back(observation.landmark);
-    //               });
 
     auto& indexedByLandmark = allObservations.get<1>();
 
@@ -335,10 +314,6 @@ RgbdFeatureFrontend::getLandmarksWithKeypoints(std::shared_ptr<rgbd::Keyframe> k
             result.second.push_back(std::move(landmark));
         });
 
-    // auto [foundIterator, endIterator] = indexedByLandmark.equal_range(keyframe);
-
-    // spdlog::info("{} {}", visitor.landmarks.size(), result.first.size());
-
     return result;
 }
 
@@ -353,6 +328,9 @@ RgbdFeatureFrontend::track(const RgbdFrame& sensorData, std::vector<KeypointDesc
     std::vector<Vector2> cameraPointsForTracking;
     std::vector<std::shared_ptr<rgbd::Landmark>> landmarksForTracking;
     std::vector<LandmarkObservation<rgbd::LandmarkState, rgbd::RgbdKeypoint>> landmarksObservations;
+
+    cameraPointsForTracking.reserve(points.size());
+    landmarksForTracking.reserve(points.size());
 
     for(const auto& [point, matchedLandmark] : boost::combine(points, matchedLandmarks))
     {
@@ -583,7 +561,6 @@ RgbdFeatureFrontend::findKeypointsForLandmarks(const std::vector<KeypointDescrip
             auto diff = keypoint.keypoint.coordinates - positionOnImage;
             if(diff.squaredNorm() <= 25.0f)
                 matchedWithLandmarks.emplace(landmark, keypoint);
-            // std::make_pair();
         });
 
     spdlog::info("new: {}, matched: {} ", newKeypoints.size(), matchedWithLandmarks.size());
@@ -607,12 +584,7 @@ void RgbdFeatureFrontend::bindKeypointToLandmark(const KeypointDescriptor<float,
                                                  std::shared_ptr<rgbd::Landmark> landmark,
                                                  std::shared_ptr<rgbd::Keyframe> keyframe)
 {
-    // landmarkDescriptors.insert(std::make_pair(landmark, keypointWithDescriptor));
-
-    // keyframesWithLandmarks[keyframe].insert(landmark);
-    // landmarksInKeyframes[landmark].insert(keyframe);
-
-    rgbd::Observation observation; // = {keypointWithDescriptor, std::move(landmark), std::move(keyframe)};
+    rgbd::Observation observation;
 
     observation.keyframe = keyframe;
     observation.landmark = landmark;
@@ -717,9 +689,6 @@ std::shared_ptr<rgbd::Keyframe> RgbdFeatureFrontend::findBetterReferenceKeyframe
             }
         }
     }
-
-    // for(const auto& [keyframe, count] : keyframeCount)
-    //     spdlog::info("Observed by kfr {}: {}", keyframe->id, count);
 
     const auto foundIt = std::max_element(std::begin(keyframeCount), std::end(keyframeCount),
                                           [](const std::pair<std::shared_ptr<rgbd::Keyframe>, int>& firstPair,

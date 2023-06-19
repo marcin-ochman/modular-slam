@@ -1,6 +1,7 @@
 #ifndef SLAM_THREAD_H_
 #define SLAM_THREAD_H_
 
+#include "image_viewer.hpp"
 #include "modular_slam/depth_frame.hpp"
 #include "modular_slam/realsense_camera.hpp"
 #include "modular_slam/rgbd_frame.hpp"
@@ -23,10 +24,18 @@ class SlamThread : public QThread
 
   public:
     explicit SlamThread(QObject* parent);
-    void setSlam(std::unique_ptr<mslam::Slam<mslam::RgbdFrame, mslam::rgbd::SensorState, mslam::rgbd::LandmarkState,
-                                             mslam::rgbd::RgbdKeypoint>>&& newSlam)
+    void setSlam(std::unique_ptr<mslam::KeypointSlam<mslam::RgbdFrame, mslam::rgbd::SensorState,
+                                                     mslam::rgbd::LandmarkState, mslam::rgbd::RgbdKeypoint>>&& newSlam)
     {
         slam = std::move(newSlam);
+    }
+
+    void setRecentFrame(std::shared_ptr<mslam::RgbdFrame> newFrame) { rgbd = std::move(newFrame); }
+    void setRecentObservations(
+        const std::vector<mslam::LandmarkObservation<mslam::slam3d::LandmarkState, mslam::rgbd::RgbdKeypoint>>&
+            newObservations)
+    {
+        landmarkObservations = newObservations;
     }
 
   public slots:
@@ -38,7 +47,7 @@ class SlamThread : public QThread
     void run() override;
 
   signals:
-    void rgbImageChanged(const QImage& pixmap);
+    void rgbImageChanged(const QImage& pixmap, const QVector<QObservation>& observations);
     void depthImageChanged(const mslam::DepthFrame& depth);
     void cameraPointsChanged(const std::vector<glm::vec3>& points);
     void landmarkPointsChanged(const std::vector<glm::vec3>& points);
@@ -49,10 +58,13 @@ class SlamThread : public QThread
   private:
     std::atomic<bool> isRunning;
     std::atomic<bool> isPaused;
-    std::unique_ptr<
-        mslam::Slam<mslam::RgbdFrame, mslam::rgbd::SensorState, mslam::rgbd::LandmarkState, mslam::rgbd::RgbdKeypoint>>
+    std::unique_ptr<mslam::KeypointSlam<mslam::RgbdFrame, mslam::rgbd::SensorState, mslam::rgbd::LandmarkState,
+                                        mslam::rgbd::RgbdKeypoint>>
         slam;
-    std::shared_ptr<mslam::RgbdFrame> frame;
+
+    std::shared_ptr<mslam::RgbdFrame> rgbd;
+    std::vector<mslam::LandmarkObservation<mslam::slam3d::LandmarkState, mslam::rgbd::RgbdKeypoint>>
+        landmarkObservations;
 };
 
 #endif // SLAM_THREAD_H_

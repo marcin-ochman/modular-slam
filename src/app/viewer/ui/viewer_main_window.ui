@@ -29,6 +29,16 @@
     <property name="title">
      <string>File</string>
     </property>
+    <widget class="QMenu" name="menuSave">
+     <property name="title">
+      <string>Save</string>
+     </property>
+     <addaction name="save3dViewAction"/>
+     <addaction name="saveRgbAction"/>
+     <addaction name="actionDepth_Image"/>
+    </widget>
+    <addaction name="menuSave"/>
+    <addaction name="separator"/>
     <addaction name="actionExit"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
@@ -241,6 +251,21 @@
   <action name="actionResetCamera">
    <property name="text">
     <string>Reset Camera</string>
+   </property>
+  </action>
+  <action name="save3dViewAction">
+   <property name="text">
+    <string>3D View</string>
+   </property>
+  </action>
+  <action name="saveRgbAction">
+   <property name="text">
+    <string>RGB Image</string>
+   </property>
+  </action>
+  <action name="actionDepth_Image">
+   <property name="text">
+    <string>Depth Image</string>
    </property>
   </action>
  </widget>

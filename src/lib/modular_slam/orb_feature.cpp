@@ -37,7 +37,7 @@ std::vector<OrbKeypoint> OrbOpenCvDetector::Pimpl::detect(const RgbFrame& sensor
     std::vector<cv::KeyPoint> keypoints;
     cv::Mat descriptors;
 
-    detector->detectAndCompute(cvGray, cv::Mat(), keypoints, descriptors);
+    detector->detectAndCompute(cvGray, cv::noArray(), keypoints, descriptors);
     descriptors.convertTo(descriptors, CV_32F);
 
     std::vector<OrbKeypoint> result;
@@ -95,9 +95,6 @@ std::vector<DescriptorMatch> OrbOpenCvMatcher::Pimpl::match(const std::vector<Or
         if(match[0].distance < 0.7 * match[1].distance)
             goodMatches.push_back(match[0]);
     }
-
-    // spdlog::debug("Orb Matcher: From: {} To: {} Total matches: {}, Good matches: {}", fromDescriptors.size(),
-    //               toDescriptors.size(), cvMatches.size(), goodMatches.size());
 
     std::vector<DescriptorMatch> matches;
     matches.reserve(goodMatches.size());

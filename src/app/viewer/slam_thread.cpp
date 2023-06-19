@@ -1,9 +1,11 @@
 #include "slam_thread.hpp"
+#include "image_viewer.hpp"
 #include "modular_slam/basic_types.hpp"
 #include "modular_slam/frontend_interface.hpp"
 #include "modular_slam/map_interface.hpp"
 #include "modular_slam/rgbd_frame.hpp"
 #include "modular_slam/rgbd_slam_types.hpp"
+#include "modular_slam/slam.hpp"
 #include "modular_slam/slam3d_types.hpp"
 #include "pointcloud_viewer.hpp"
 #include "slam_statistics.hpp"
@@ -17,6 +19,7 @@
 #include <glm/gtx/transform.hpp>
 #include <glm/matrix.hpp>
 #include <iterator>
+#include <qpoint.h>
 #include <unordered_set>
 
 QMatrix4x4 poseToQMatrix(const mslam::slam3d::SensorState& state)
@@ -163,7 +166,6 @@ void pointCloudFromRgbd(const mslam::RgbdFrame& rgbd, const mslam::rgbd::SensorS
 void SlamThread::run()
 {
     isRunning = true;
-    const auto dataProvider = slam->dataProvider;
 
     slam->init();
 
@@ -179,10 +181,15 @@ void SlamThread::run()
         }
 
         auto start = std::chrono::high_resolution_clock::now();
-        slam->process();
+        auto result = slam->process();
         auto stop = std::chrono::high_resolution_clock::now();
 
-        auto rgbd = dataProvider->recentData();
+        if(result == mslam::SlamProcessResult::NoDataAvailable)
+        {
+            isRunning = false;
+            continue;
+        }
+
         if(points.capacity() < rgbd->depth.data.size())
             points.reserve(2 * rgbd->depth.data.size());
 
@@ -190,8 +197,36 @@ void SlamThread::run()
                              3 * rgbd->rgb.size.width, QImage::Format_BGR888};
         const QImage image = originalImage.copy();
 
-        emit rgbImageChanged(image);
         emit depthImageChanged(rgbd->depth);
+
+        auto state = slam->sensorState();
+        QVector<QObservation> observations;
+        const mslam::Matrix3 R = state.orientation.toRotationMatrix().transpose();
+        const mslam::Vector3& T = -R * state.position;
+
+        mslam::Matrix4 transformMatrix = mslam::Matrix4::Identity();
+        transformMatrix.block<3, 3>(0, 0) = R;
+        transformMatrix.block<3, 1>(0, 3) = T;
+
+        for(const auto& observation : landmarkObservations)
+        {
+            QObservation guiObservation;
+            guiObservation.keypoint = QPoint(observation.observation.keypoint.coordinates.x(),
+                                             observation.observation.keypoint.coordinates.y());
+
+            const auto& pp = rgbd->depth.cameraParameters.principalPoint;
+            const auto& f = rgbd->depth.cameraParameters.focal;
+
+            auto point = f.array() * (R * observation.landmark->state + T).block<2, 1>(0, 0).array() /
+                             observation.landmark->state.z() +
+                         pp.array();
+
+            guiObservation.projectedLandmark = QPoint(point.x(), point.y());
+
+            observations.push_back(guiObservation);
+        }
+
+        emit rgbImageChanged(image, observations);
 
         pointCloudFromRgbd(*rgbd, slam->sensorState(), points);
 
@@ -199,6 +234,7 @@ void SlamThread::run()
         stats.msPerFrame = static_cast<float>(microseconds) / 1000.0f;
         stats.keyframesCount = visitor.keyframesCount();
         stats.landmarksCount = visitor.landmarksCount();
+
         emit slamStatisticsChanged(stats);
         emit cameraPointsChanged(points);
 

@@ -3,6 +3,7 @@
 
 #include "modular_slam/basic_types.hpp"
 #include "modular_slam/feature_interface.hpp"
+#include "modular_slam/frontend/feature_frontend.hpp"
 #include "modular_slam/frontend_interface.hpp"
 #include "modular_slam/keyframe.hpp"
 #include "modular_slam/landmark.hpp"
@@ -34,7 +35,7 @@
 namespace mslam
 {
 
-class RgbdFeatureFrontend : public FrontendInterface<RgbdFrame, slam3d::SensorState, Vector3, rgbd::RgbdKeypoint>
+class RgbdFeatureFrontend : public FeatureFrontend<RgbdFrame, slam3d::SensorState, Vector3, rgbd::RgbdKeypoint>
 {
   public:
     using FrontendOutputType =
@@ -137,7 +138,7 @@ class RgbdFeatureFrontend : public FrontendInterface<RgbdFrame, slam3d::SensorSt
     ObservationsMultiIndexContainer allObservations;
 
     // ****************************************************************************************************************************************//*
-    //
+
     slam3d::SensorState currentPose;
     std::shared_ptr<IMap<rgbd::SensorState, rgbd::LandmarkState, rgbd::RgbdKeypoint>> map;
 };

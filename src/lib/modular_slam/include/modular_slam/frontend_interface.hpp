@@ -22,7 +22,6 @@ class FrontendInterface : public SlamComponent
     ~FrontendInterface() override = default;
 
     virtual void update(const BackendOutputType& sensorData) = 0;
-    // ~FrontendInterface() override = default;
 };
 } // namespace mslam
 

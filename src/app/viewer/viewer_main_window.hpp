@@ -23,6 +23,10 @@ class ViewerMainWindow : public QMainWindow
 
   public slots:
     void setImage(const QImage& newImage) { ui->imageViewer->drawImage(newImage); }
+    void setImageWithObservations(const QImage& newImage, const QVector<QObservation>& observations)
+    {
+        ui->imageViewer->drawImageWithObservations(newImage, observations);
+    }
     void setDepthImage(const mslam::DepthFrame& newImage) { ui->depthImageViewer->drawImage(newImage); }
     void setCurrentCameraPoints(const std::vector<glm::vec3>& newPoints)
     {
@@ -40,6 +44,8 @@ class ViewerMainWindow : public QMainWindow
 
   protected:
     void closeEvent(QCloseEvent* event) override;
+    void save3dView();
+    void saveRgbImage();
 
   signals:
     void paused();

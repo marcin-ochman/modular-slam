@@ -6,13 +6,10 @@
 
 namespace mslam
 {
-template <typename SensorDataType, typename SensorStateType, typename LandmarkStateType>
-class FeatureFrontend : public FrontendInterface<SensorDataType, SensorStateType, LandmarkStateType>
+template <typename SensorDataType, typename SensorStateType, typename LandmarkStateType, typename ObservationType>
+class FeatureFrontend : public FrontendInterface<SensorDataType, SensorStateType, LandmarkStateType, ObservationType>
 {
   public:
-    using Constraints = typename FrontendInterface<SensorDataType, SensorStateType, LandmarkStateType>::Constraints;
-
-    virtual std::shared_ptr<Constraints> prepareConstraints(const SensorDataType& sensorData) = 0;
 };
 } // namespace mslam
 
