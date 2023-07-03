@@ -3,6 +3,7 @@
 #include "modular_slam/basic_types.hpp"
 #include "modular_slam/frontend_interface.hpp"
 #include "modular_slam/map_interface.hpp"
+#include "modular_slam/projection.hpp"
 #include "modular_slam/rgbd_frame.hpp"
 #include "modular_slam/rgbd_slam_types.hpp"
 #include "modular_slam/slam.hpp"
@@ -35,8 +36,6 @@ QMatrix4x4 poseToQMatrix(const mslam::slam3d::SensorState& state)
     for(int i = 0; i < 4; i++)
         for(int j = 0; j < 4; j++)
             pose(i, j) = static_cast<float>(transformMatrix(i, j));
-
-    // pose.rotate(180, 0, 0, 1);
 
     return pose;
 }
@@ -201,12 +200,11 @@ void SlamThread::run()
 
         auto state = slam->sensorState();
         QVector<QObservation> observations;
-        const mslam::Matrix3 R = state.orientation.toRotationMatrix().transpose();
-        const mslam::Vector3& T = -R * state.position;
+        const auto rotation = state.orientation.inverse();
+        const mslam::Vector3 T = rotation * state.position;
 
-        mslam::Matrix4 transformMatrix = mslam::Matrix4::Identity();
-        transformMatrix.block<3, 3>(0, 0) = R;
-        transformMatrix.block<3, 1>(0, 3) = T;
+        const auto& pp = rgbd->depth.cameraParameters.principalPoint;
+        const auto& f = rgbd->depth.cameraParameters.focal;
 
         for(const auto& observation : landmarkObservations)
         {
@@ -214,13 +212,7 @@ void SlamThread::run()
             guiObservation.keypoint = QPoint(observation.observation.keypoint.coordinates.x(),
                                              observation.observation.keypoint.coordinates.y());
 
-            const auto& pp = rgbd->depth.cameraParameters.principalPoint;
-            const auto& f = rgbd->depth.cameraParameters.focal;
-
-            auto point = f.array() * (R * observation.landmark->state + T).block<2, 1>(0, 0).array() /
-                             observation.landmark->state.z() +
-                         pp.array();
-
+            auto point = mslam::projectOnImage(observation.landmark->state, rgbd->depth.cameraParameters, state);
             guiObservation.projectedLandmark = QPoint(point.x(), point.y());
 
             observations.push_back(guiObservation);

@@ -30,6 +30,7 @@ add_library(
   rgbd_file_provider.cpp
   orb_feature.cpp
   orb_relocalizer.cpp
+  projection.cpp
   frame.cpp)
 
 add_library(ModularSlam::ModularSlam ALIAS ModularSlam)

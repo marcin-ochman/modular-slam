@@ -16,6 +16,7 @@ OpenCvRansacPnp::solvePnp(const std::vector<std::shared_ptr<Landmark<Vector3>>>&
                           const std::vector<Vector2>& sensorPoints, const slam3d::SensorState& initial)
 {
 
+    assert(landmarks.size() == sensorPoints.size());
     cv::Mat objectPoints(static_cast<int>(landmarks.size()), 3, CV_32F);
 
     for(std::size_t i = 0; i < landmarks.size(); ++i)
@@ -51,7 +52,7 @@ OpenCvRansacPnp::solvePnp(const std::vector<std::shared_ptr<Landmark<Vector3>>>&
 
     std::vector<int> inliers;
     const auto success = cv::solvePnPRansac(objectPoints, imagePoints, cameraMatrix, cv::noArray(), cvRotation,
-                                            cvTranslation, true, 100, 8.0, 0.99, inliers);
+                                            cvTranslation, true, 100, 2.0, 0.99, inliers);
 
     if(!success)
     {
@@ -60,23 +61,31 @@ OpenCvRansacPnp::solvePnp(const std::vector<std::shared_ptr<Landmark<Vector3>>>&
     }
 
     const auto angle = cv::norm(cvRotation);
-    Matrix3 rotation =
+    Eigen::AngleAxisd angleAxisResult =
         Eigen::AngleAxisd(angle,
                           Vector3(cvRotation.at<double>(0), cvRotation.at<double>(1), cvRotation.at<double>(2)) / angle)
-            .toRotationMatrix();
+            .inverse();
+
+    spdlog::info("Inliers {} / {}  angle: {}, initialAngle: {} ,  [{}, {}, {}], initPos: [{}, {}, {}]", inliers.size(),
+                 landmarks.size(), angle, angleAxis.angle(), angleAxis.axis().x(), angleAxis.axis().y(),
+                 angleAxis.axis().z(), initial.position.x(), initial.position.y(), initial.position.z());
+
+    // Matrix3 rotation = angleAxisResult.toRotationMatrix();
 
     const auto translation =
         Vector3(cvTranslation.at<double>(0), cvTranslation.at<double>(1), cvTranslation.at<double>(2));
 
-    Eigen::Matrix4d transform = Eigen::Matrix4d::Identity();
-    transform.block<3, 3>(0, 0) = rotation;
-    transform.block<3, 1>(0, 3) = translation;
-
-    const auto invTransform = transform.inverse();
+    // Eigen::Matrix4d transform = Eigen::Matrix4d::Identity();
+    // transform.block<3, 3>(0, 0) = rotation;
+    // transform.block<3, 1>(0, 3) = translation;
+    // const auto invTransform = transform.inverse();
 
     PnpResult result;
-    result.pose.orientation = invTransform.block<3, 3>(0, 0);
-    result.pose.position = invTransform.block<3, 1>(0, 3);
+    result.pose.orientation = angleAxisResult;
+    result.pose.position = -(angleAxisResult * translation);
+
+    // result.pose.orientation = invTransform.block<3, 3>(0, 0);
+    // result.pose.position = invTransform.block<3, 1>(0, 3);
 
     result.inliers.resize(landmarks.size(), false);
     std::for_each(std::cbegin(inliers), std::cend(inliers),

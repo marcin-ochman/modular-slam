@@ -98,8 +98,6 @@ class RgbdFeatureFrontend : public FeatureFrontend<RgbdFrame, slam3d::SensorStat
                          std::shared_ptr<rgbd::Keyframe> newKeyframe, const RgbdFrame& sensorData,
                          FrontendOutputType& output);
 
-    void addLandmarkObservation(std::shared_ptr<rgbd::Keyframe> keyframe, const rgbd::LandmarkObservation& observation);
-
     void updateVisibleLandmarks(
         const std::unordered_map<std::shared_ptr<rgbd::Landmark>, KeypointDescriptor<float, 32>>& matchedLandmarks,
         const std::shared_ptr<rgbd::Keyframe>& keyframe, const RgbdFrame& sensorData);
