@@ -1,7 +1,5 @@
-#define CATCH_CONFIG_MAIN
-
 #include "modular_slam/plugin_loader.hpp"
-#include <catch2/catch.hpp>
+#include <catch2/catch_test_macros.hpp>
 #include <filesystem>
 
 using std::filesystem::path;

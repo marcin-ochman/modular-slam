@@ -3,8 +3,9 @@
 
 #include <memory>
 
-#include "modular_slam/feature_interface.hpp"
-#include "modular_slam/landmark.hpp"
+#include "modular_slam/frontend/feature/feature_interface.hpp" // TODO change
+#include "modular_slam/types/keyframe.hpp"
+#include "modular_slam/types/landmark.hpp"
 
 namespace mslam
 {

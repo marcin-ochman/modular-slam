@@ -1,10 +1,10 @@
 #ifndef MSLAM_SLAM_HPP_
 #define MSLAM_SLAM_HPP_
 
-#include "modular_slam/backend_interface.hpp"
-#include "modular_slam/data_provider.hpp"
-#include "modular_slam/frontend_interface.hpp"
-#include "modular_slam/map_interface.hpp"
+#include "modular_slam/backend/backend_interface.hpp"
+#include "modular_slam/frontend/frontend_interface.hpp"
+#include "modular_slam/map/map_interface.hpp"
+#include "modular_slam/sensors/data_provider.hpp"
 
 #include <spdlog/spdlog.h>
 

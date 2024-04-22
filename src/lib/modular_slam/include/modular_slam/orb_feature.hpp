@@ -1,19 +1,20 @@
 #ifndef MSLAM_ORB_FEATURE_HPP_
 #define MSLAM_ORB_FEATURE_HPP_
 
-#include "modular_slam/feature_interface.hpp"
-#include "modular_slam/landmark.hpp"
-#include "modular_slam/rgb_frame.hpp"
+#include "modular_slam/frontend/feature/feature_interface.hpp"
+#include "modular_slam/types/rgb_frame.hpp"
 #include <Eigen/src/Core/Matrix.h>
 #include <algorithm>
+#include <cstddef>
+#include <cstdint>
 #include <iterator>
 
 namespace mslam
 {
 
-using IOrbFeatureDetector = IFeatureDetector<RgbFrame, float, 32>;
-using IOrbMatcher = IFeatureMatcher<float, 32>;
-using OrbKeypoint = KeypointDescriptor<float, 32>;
+using IOrbFeatureDetector = IFeatureDetector<RgbFrame, std::uint8_t, 32>;
+using IOrbMatcher = IFeatureMatcher<std::uint8_t, 32>;
+using OrbKeypoint = KeypointDescriptor<std::uint8_t, 32>;
 
 class OrbOpenCvDetector : public IOrbFeatureDetector
 {

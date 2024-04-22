@@ -1,7 +1,7 @@
 #ifndef MSLAM_VIEWER_DEPTH_VIEWER_HPP_
 #define MSLAM_VIEWER_DEPTH_VIEWER_HPP_
 
-#include "modular_slam/depth_frame.hpp"
+#include "modular_slam/types/depth_frame.hpp"
 #include "ui_depth_image_viewer.h"
 #include <QWidget>
 

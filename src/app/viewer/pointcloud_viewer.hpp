@@ -3,7 +3,7 @@
 
 #include "camera.hpp"
 #include "grid.hpp"
-#include "modular_slam/basic_types.hpp"
+#include "modular_slam/types/basic_types.hpp"
 
 #include <QEvent>
 #include <QMatrix4x4>
@@ -47,6 +47,8 @@ class PointcloudViewer : public QOpenGLWidget, protected QOpenGLFunctions
 
     void mouseMoveEvent(QMouseEvent* event) override;
     void wheelEvent(QWheelEvent* event) override;
+    void keyPressEvent(QKeyEvent* event) override;
+
     void handleCameraRotation(QMouseEvent* event);
     void handleCameraMovement(QMouseEvent* event);
 

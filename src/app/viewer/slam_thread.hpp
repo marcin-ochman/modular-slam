@@ -2,12 +2,10 @@
 #define SLAM_THREAD_H_
 
 #include "image_viewer.hpp"
-#include "modular_slam/depth_frame.hpp"
-#include "modular_slam/realsense_camera.hpp"
-#include "modular_slam/rgbd_frame.hpp"
-#include "modular_slam/rgbd_slam_types.hpp"
+#include "modular_slam/sensors/realsense_camera.hpp"
 #include "modular_slam/slam.hpp"
-#include "modular_slam/slam3d_types.hpp"
+#include "modular_slam/types/rgbd_frame.hpp"
+#include "modular_slam/types/rgbd_slam_types.hpp"
 #include "pointcloud_viewer.hpp"
 #include "slam_statistics.hpp"
 #include <QImage>
@@ -24,16 +22,17 @@ class SlamThread : public QThread
 
   public:
     explicit SlamThread(QObject* parent);
-    void setSlam(std::unique_ptr<mslam::KeypointSlam<mslam::RgbdFrame, mslam::rgbd::SensorState,
-                                                     mslam::rgbd::LandmarkState, mslam::rgbd::RgbdKeypoint>>&& newSlam)
+    void
+    setSlam(std::unique_ptr<mslam::KeypointSlam<mslam::RgbdFrame, mslam::rgbd::SensorState, mslam::rgbd::LandmarkState,
+                                                mslam::rgbd::RgbdOrbKeypointDescriptor>>&& newSlam)
     {
         slam = std::move(newSlam);
     }
 
     void setRecentFrame(std::shared_ptr<mslam::RgbdFrame> newFrame) { rgbd = std::move(newFrame); }
     void setRecentObservations(
-        const std::vector<mslam::LandmarkObservation<mslam::slam3d::LandmarkState, mslam::rgbd::RgbdKeypoint>>&
-            newObservations)
+        const std::vector<mslam::LandmarkObservation<mslam::slam3d::LandmarkState,
+                                                     mslam::rgbd::RgbdOrbKeypointDescriptor>>& newObservations)
     {
         landmarkObservations = newObservations;
     }
@@ -59,11 +58,11 @@ class SlamThread : public QThread
     std::atomic<bool> isRunning;
     std::atomic<bool> isPaused;
     std::unique_ptr<mslam::KeypointSlam<mslam::RgbdFrame, mslam::rgbd::SensorState, mslam::rgbd::LandmarkState,
-                                        mslam::rgbd::RgbdKeypoint>>
+                                        mslam::rgbd::RgbdOrbKeypointDescriptor>>
         slam;
 
     std::shared_ptr<mslam::RgbdFrame> rgbd;
-    std::vector<mslam::LandmarkObservation<mslam::slam3d::LandmarkState, mslam::rgbd::RgbdKeypoint>>
+    std::vector<mslam::LandmarkObservation<mslam::slam3d::LandmarkState, mslam::rgbd::RgbdOrbKeypointDescriptor>>
         landmarkObservations;
 };
 

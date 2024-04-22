@@ -198,11 +198,13 @@ RUN set -x && \
   cd /tmp && \
   rm -rf *
 
-
-
 # stella_vslam
+ARG STELLA_VERSION=0.4.0
+ARG STELLA_PATCH=""
 RUN git clone --recursive https://github.com/stella-cv/stella_vslam.git
 WORKDIR stella_vslam
+RUN git checkout $STELLA_VERSION
+RUN if [[ -z "STELLA_PATCH" ]] ; then echo "No patch provided. Using original StellaVSLAM code." ; else git apply $STELLA_PATCH; fi
 RUN set -x && \
   mkdir -p build && \
   cd build && \

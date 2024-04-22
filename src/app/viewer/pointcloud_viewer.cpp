@@ -35,6 +35,7 @@ PointcloudViewer::PointcloudViewer(QWidget* parent)
     : QOpenGLWidget(parent), camera(65.f, static_cast<float>(width()) / static_cast<float>(height()), 0.01f, 1000.f)
 {
     setMouseTracking(true);
+    setFocusPolicy(Qt::StrongFocus);
 }
 
 PointcloudViewer::~PointcloudViewer()
@@ -136,6 +137,25 @@ void PointcloudViewer::wheelEvent(QWheelEvent* event)
 {
     const auto scroll = static_cast<float>(event->angleDelta().y()) / 500.0f;
     camera.zoom(scroll);
+}
+
+void PointcloudViewer::keyPressEvent(QKeyEvent* event)
+{
+    switch(event->key())
+    {
+        case Qt::Key_A:
+            camera.pan(glm::vec2(0.2f, 0.0f));
+            break;
+        case Qt::Key_D:
+            camera.pan(glm::vec2(-0.2f, 0.0f));
+            break;
+        case Qt::Key_W:
+            camera.move_forward(0.2f);
+            break;
+        case Qt::Key_S:
+            camera.move_forward(-0.2f);
+            break;
+    }
 }
 
 void PointcloudViewer::handleCameraRotation(QMouseEvent* event)

@@ -1,7 +1,7 @@
 #ifndef LOOP_DETECTION_HPP_
 #define LOOP_DETECTION_HPP_
 
-#include "modular_slam/keyframe.hpp"
+#include "modular_slam/types/keyframe.hpp"
 
 #include <memory>
 

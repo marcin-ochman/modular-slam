@@ -1,13 +1,10 @@
 #include "slam_thread.hpp"
 #include "image_viewer.hpp"
-#include "modular_slam/basic_types.hpp"
-#include "modular_slam/frontend_interface.hpp"
-#include "modular_slam/map_interface.hpp"
+#include "modular_slam/frontend/frontend_interface.hpp"
 #include "modular_slam/projection.hpp"
-#include "modular_slam/rgbd_frame.hpp"
-#include "modular_slam/rgbd_slam_types.hpp"
 #include "modular_slam/slam.hpp"
-#include "modular_slam/slam3d_types.hpp"
+#include "modular_slam/types/rgbd_frame.hpp"
+#include "modular_slam/types/rgbd_slam_types.hpp"
 #include "pointcloud_viewer.hpp"
 #include "slam_statistics.hpp"
 #include <Eigen/src/Core/Matrix.h>
@@ -58,8 +55,8 @@ glm::mat4 poseToGlmMat4(const mslam::slam3d::SensorState& state)
     return pose;
 }
 
-class MapVisitor
-    : public mslam::IMapVisitor<mslam::slam3d::SensorState, mslam::slam3d::LandmarkState, mslam::rgbd::RgbdKeypoint>
+class MapVisitor : public mslam::IMapVisitor<mslam::slam3d::SensorState, mslam::slam3d::LandmarkState,
+                                             mslam::rgbd::RgbdOrbKeypointDescriptor>
 {
   public:
     void visit(std::shared_ptr<mslam::slam3d::Landmark> landmark) override;
@@ -203,14 +200,11 @@ void SlamThread::run()
         const auto rotation = state.orientation.inverse();
         const mslam::Vector3 T = rotation * state.position;
 
-        const auto& pp = rgbd->depth.cameraParameters.principalPoint;
-        const auto& f = rgbd->depth.cameraParameters.focal;
-
         for(const auto& observation : landmarkObservations)
         {
             QObservation guiObservation;
-            guiObservation.keypoint = QPoint(observation.observation.keypoint.coordinates.x(),
-                                             observation.observation.keypoint.coordinates.y());
+            guiObservation.keypoint = QPoint(observation.observation.keypoint.keypoint.coordinates.x(),
+                                             observation.observation.keypoint.keypoint.coordinates.y());
 
             auto point = mslam::projectOnImage(observation.landmark->state, rgbd->depth.cameraParameters, state);
             guiObservation.projectedLandmark = QPoint(point.x(), point.y());

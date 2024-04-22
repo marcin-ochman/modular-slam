@@ -1,5 +1,4 @@
 #include "depth_image_viewer.hpp"
-#include "modular_slam/depth_frame.hpp"
 #include <QPainter>
 #include <cstdint>
 #include <opencv2/core.hpp>

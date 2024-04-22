@@ -1,4 +1,4 @@
-#include "modular_slam/parameters_handler.hpp"
+#include "modular_slam/parameters/parameters_handler.hpp"
 
 #include <algorithm>
 

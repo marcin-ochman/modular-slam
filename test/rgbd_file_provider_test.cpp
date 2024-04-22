@@ -1,9 +1,8 @@
-#include "modular_slam/camera_parameters.hpp"
-#include "modular_slam/rgbd_file_provider.hpp"
+#include "modular_slam/sensors/rgbd_file_provider.hpp"
 #include <cstddef>
 
 #include <algorithm>
-#include <catch2/catch.hpp>
+#include <catch2/catch_test_macros.hpp>
 #include <opencv2/imgcodecs.hpp>
 
 namespace mslam

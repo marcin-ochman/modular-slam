@@ -1,5 +1,4 @@
-#include "modular_slam/basic_parameters_handler.hpp"
-#include "modular_slam/parameters_handler.hpp"
+#include "modular_slam/parameters/basic_parameters_handler.hpp"
 #include <optional>
 
 namespace mslam

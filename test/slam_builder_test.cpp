@@ -1,11 +1,11 @@
-#include "modular_slam/backend_interface.hpp"
-#include "modular_slam/frontend_interface.hpp"
-#include "modular_slam/rgbd_slam_types.hpp"
-#include "modular_slam/rgbdi_frame.hpp"
-#include "modular_slam/slam3d_types.hpp"
+#include "modular_slam/backend/backend_interface.hpp"
+#include "modular_slam/frontend/frontend_interface.hpp"
 #include "modular_slam/slam_builder.hpp"
+#include "modular_slam/types/rgbd_slam_types.hpp"
+#include "modular_slam/types/rgbdi_frame.hpp"
+#include "modular_slam/types/slam3d_types.hpp"
 
-#include <catch2/catch.hpp>
+#include <catch2/catch_test_macros.hpp>
 #include <catch2/trompeloeil.hpp>
 #include <trompeloeil.hpp>
 

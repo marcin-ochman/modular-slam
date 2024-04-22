@@ -1,7 +1,7 @@
 #ifndef MSLAM_SLAM_BUILDER_HPP_
 #define MSLAM_SLAM_BUILDER_HPP_
 
-#include "modular_slam/data_provider.hpp"
+#include "modular_slam/sensors/data_provider.hpp"
 #include "modular_slam/slam.hpp"
 #include <boost/signals2/signal.hpp>
 #include <memory>

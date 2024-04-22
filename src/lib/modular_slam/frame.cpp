@@ -1,4 +1,4 @@
-#include "modular_slam/rgb_frame.hpp"
+#include "modular_slam/types/rgb_frame.hpp"
 
 namespace mslam
 {

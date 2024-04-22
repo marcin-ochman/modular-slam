@@ -1,10 +1,8 @@
 cmake_minimum_required(VERSION 3.19)
 project(ModularSlamApplications VERSION 0.0.1)
 
-find_package(
-  Qt6
-  COMPONENTS Widgets OpenGL OpenGLWidgets Gui Charts
-  REQUIRED)
+find_package(Qt6 REQUIRED COMPONENTS Widgets OpenGL OpenGLWidgets Gui Core)
+
 find_package(OpenGL REQUIRED)
 find_package(glm REQUIRED)
 find_package(OpenCV 4 REQUIRED)
@@ -44,18 +42,19 @@ add_executable(ModularSlam::Viewer ALIAS Viewer)
 target_include_directories(Viewer PRIVATE ${CMAKE_CURRENT_BINARY_DIR}
                                           ${CMAKE_CURRENT_SOURCE_DIR}/viewer)
 
+target_compile_definitions(Viewer PRIVATE GLM_ENABLE_EXPERIMENTAL)
+
 target_link_libraries(
   Viewer
   PRIVATE Qt6::Widgets
           Qt6::OpenGL
           Qt6::OpenGLWidgets
           Qt6::Gui
-          Qt6::Charts
+          Qt6::Core
           ModularSlam::ModularSlam
           OpenGL::GLU
           glm
-          opencv_core
-          opencv_imgproc)
+          ${OpenCV_LIBS})
 
 add_executable(RgbdSlam slam/rgbd_slam.cpp)
 target_link_libraries(
@@ -65,13 +64,21 @@ target_link_libraries(
           Qt6::OpenGL
           Qt6::OpenGLWidgets
           Qt6::Gui
-          Qt6::Charts
+          Qt6::Core
           ModularSlam::ModularSlam
           OpenGL::GLU
           glm
-          opencv_core
-          opencv_imgproc
-          opencv_highgui)
+          ${OpenCV_LIBS})
+
+get_target_property(QT_CORE_INCLUDE_DIRS Qt6::Core
+                    INTERFACE_INCLUDE_DIRECTORIES)
+get_target_property(QT_GUI_INCLUDE_DIRS Qt6::Gui INTERFACE_INCLUDE_DIRECTORIES)
+get_target_property(QT_WIDGETS_INCLUDE_DIRS Qt6::Widgets
+                    INTERFACE_INCLUDE_DIRECTORIES)
+
+message(STATUS "Qt6 Core include dirs: ${QT_CORE_INCLUDE_DIRS}")
+message(STATUS "Qt6 Gui include dirs: ${QT_GUI_INCLUDE_DIRS}")
+message(STATUS "Qt6 Widgets include dirs: ${QT_WIDGETS_INCLUDE_DIRS}")
 
 install(
   TARGETS Viewer

@@ -1,8 +1,8 @@
 #ifndef MSLAM_RELOCALIZER_HPP_
 #define MSLAM_RELOCALIZER_HPP_
 
-#include "modular_slam/feature_interface.hpp"
-#include "modular_slam/keyframe.hpp"
+#include "modular_slam/frontend/feature/feature_interface.hpp"
+#include "modular_slam/types/keyframe.hpp"
 
 #include <memory>
 

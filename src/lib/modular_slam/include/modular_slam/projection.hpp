@@ -1,9 +1,9 @@
 #ifndef MSLAM_PROJECTION_HPP_
 #define MSLAM_PROJECTION_HPP_
 
-#include "modular_slam/basic_types.hpp"
-#include "modular_slam/camera_parameters.hpp"
-#include "modular_slam/slam3d_types.hpp"
+#include "modular_slam/sensors/camera_parameters.hpp"
+#include "modular_slam/types/basic_types.hpp"
+#include "modular_slam/types/slam3d_types.hpp"
 
 namespace mslam
 {

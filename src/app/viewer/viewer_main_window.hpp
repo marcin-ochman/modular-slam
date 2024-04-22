@@ -1,7 +1,7 @@
 #ifndef VIEWER_MAIN_WINDOW_HPP_
 #define VIEWER_MAIN_WINDOW_HPP_
 
-#include "modular_slam/depth_frame.hpp"
+#include "modular_slam/types/depth_frame.hpp"
 #include "pointcloud_viewer.hpp"
 #include "slam_statistics.hpp"
 #include "ui_viewer_main_window.h"

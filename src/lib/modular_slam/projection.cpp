@@ -56,7 +56,7 @@ Vector3 toGlobalCoordinates(const Vector3& point, const slam3d::SensorState& sen
 bool isVisibleInFrame(const Vector3& point, const slam3d::SensorState& cameraPose, const CameraParameters& cameraParams,
                       const Size& resolution)
 {
-    auto pointInCameraCoordinates = toCameraCoordinates(point, cameraPose);
+    const auto pointInCameraCoordinates = toCameraCoordinates(point, cameraPose);
 
     return isVisibleInFrame(pointInCameraCoordinates, cameraParams, resolution);
 }

@@ -28,11 +28,11 @@ class Camera
     glm::vec3 up() const noexcept;
     glm::vec3 right() const noexcept;
 
+    void move_forward(float diff);
     void pan(glm::vec2 diff);
     void rotate(glm::vec2 diff);
     void zoom(float delta);
     void updateView();
-
     void resetView();
 
   private:

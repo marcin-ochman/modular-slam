@@ -1,5 +1,5 @@
 #include "modular_slam/cv_ransac_pnp.hpp"
-#include "modular_slam/basic_types.hpp"
+#include "modular_slam/projection.hpp"
 
 #include <Eigen/src/Core/Matrix.h>
 #include <Eigen/src/Geometry/AngleAxis.h>
@@ -39,20 +39,22 @@ OpenCvRansacPnp::solvePnp(const std::vector<std::shared_ptr<Landmark<Vector3>>>&
         rowPtr[1] = static_cast<float>(point.y());
     }
 
+    auto initialProjection = toCameraCoordinateSystemProjection(initial);
+
     Eigen::AngleAxisd angleAxis;
-    angleAxis = initial.orientation;
+    angleAxis = initialProjection.orientation;
 
     cv::Mat cvRotation = ((cv::Mat_<double>(3, 1) << angleAxis.axis().x() * angleAxis.angle(),
                            angleAxis.axis().y() * angleAxis.angle(), angleAxis.axis().z() * angleAxis.angle()));
-    cv::Mat cvTranslation =
-        (cv::Mat_<double>(3, 1) << initial.position.x(), initial.position.y(), initial.position.z());
+    cv::Mat cvTranslation = (cv::Mat_<double>(3, 1) << initialProjection.position.x(), initialProjection.position.y(),
+                             initialProjection.position.z());
 
     cv::Mat cameraMatrix = (cv::Mat_<float>(3, 3) << cameraParams.focal.x(), 0, cameraParams.principalPoint.x(), 0,
                             cameraParams.focal.y(), cameraParams.principalPoint.y(), 0, 0, 1);
 
     std::vector<int> inliers;
     const auto success = cv::solvePnPRansac(objectPoints, imagePoints, cameraMatrix, cv::noArray(), cvRotation,
-                                            cvTranslation, true, 100, 2.0, 0.99, inliers);
+                                            cvTranslation, true, 100, 5.0, 0.99, inliers);
 
     if(!success)
     {
@@ -66,26 +68,14 @@ OpenCvRansacPnp::solvePnp(const std::vector<std::shared_ptr<Landmark<Vector3>>>&
                           Vector3(cvRotation.at<double>(0), cvRotation.at<double>(1), cvRotation.at<double>(2)) / angle)
             .inverse();
 
-    spdlog::info("Inliers {} / {}  angle: {}, initialAngle: {} ,  [{}, {}, {}], initPos: [{}, {}, {}]", inliers.size(),
-                 landmarks.size(), angle, angleAxis.angle(), angleAxis.axis().x(), angleAxis.axis().y(),
-                 angleAxis.axis().z(), initial.position.x(), initial.position.y(), initial.position.z());
-
-    // Matrix3 rotation = angleAxisResult.toRotationMatrix();
+    spdlog::info("Inliers {} / {} ", inliers.size(), landmarks.size());
 
     const auto translation =
         Vector3(cvTranslation.at<double>(0), cvTranslation.at<double>(1), cvTranslation.at<double>(2));
 
-    // Eigen::Matrix4d transform = Eigen::Matrix4d::Identity();
-    // transform.block<3, 3>(0, 0) = rotation;
-    // transform.block<3, 1>(0, 3) = translation;
-    // const auto invTransform = transform.inverse();
-
     PnpResult result;
     result.pose.orientation = angleAxisResult;
     result.pose.position = -(angleAxisResult * translation);
-
-    // result.pose.orientation = invTransform.block<3, 3>(0, 0);
-    // result.pose.position = invTransform.block<3, 1>(0, 3);
 
     result.inliers.resize(landmarks.size(), false);
     std::for_each(std::cbegin(inliers), std::cend(inliers),

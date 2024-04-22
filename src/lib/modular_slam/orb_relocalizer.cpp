@@ -3,6 +3,7 @@
 #include "DBoW3/Database.h"
 #include "DBoW3/QueryResults.h"
 #include "DBoW3/Vocabulary.h"
+#include <cstdint>
 #include <memory>
 #include <opencv2/core/mat.hpp>
 
@@ -13,9 +14,9 @@ struct OrbRelocalizer::OrbRelocalizerPImpl
 {
     OrbRelocalizerPImpl();
     std::vector<std::shared_ptr<Keyframe<slam3d::SensorState>>>
-    relocalize(const std::vector<KeypointDescriptor<float, 32>>& keypoints);
+    relocalize(const std::vector<KeypointDescriptor<std::uint8_t, 32>>& keypoints);
     void addKeyframe(std::shared_ptr<Keyframe<slam3d::SensorState>> keyframe,
-                     const std::vector<KeypointDescriptor<float, 32>>& keypoints);
+                     const std::vector<KeypointDescriptor<std::uint8_t, 32>>& keypoints);
     void removeKeyframe(std::shared_ptr<Keyframe<slam3d::SensorState>> keyframe);
     DBoW3::Database database;
 
@@ -29,22 +30,23 @@ OrbRelocalizer::OrbRelocalizerPImpl::OrbRelocalizerPImpl()
 }
 
 std::vector<std::shared_ptr<Keyframe<slam3d::SensorState>>>
-OrbRelocalizer::OrbRelocalizerPImpl::relocalize(const std::vector<KeypointDescriptor<float, 32>>& keypoints)
+OrbRelocalizer::OrbRelocalizerPImpl::relocalize(const std::vector<KeypointDescriptor<std::uint8_t, 32>>& keypoints)
 {
     return {};
 }
 
-void OrbRelocalizer::OrbRelocalizerPImpl::addKeyframe(std::shared_ptr<Keyframe<slam3d::SensorState>> keyframe,
-                                                      const std::vector<KeypointDescriptor<float, 32>>& keypoints)
+void OrbRelocalizer::OrbRelocalizerPImpl::addKeyframe(
+    std::shared_ptr<Keyframe<slam3d::SensorState>> keyframe,
+    const std::vector<KeypointDescriptor<std::uint8_t, 32>>& keypoints)
 {
     assert(keypoints.size() > 0);
 
-    cv::Mat features(static_cast<int>(keypoints.size()), 32, CV_32F, (void*)keypoints[0].descriptor.data(),
-                     static_cast<std::size_t>(sizeof(keypoints[0])));
+    // cv::Mat features(static_cast<int>(keypoints.size()), 32, CV_32F, (void*)keypoints[0].descriptor.data(),
+    //                  static_cast<std::size_t>(sizeof(keypoints[0])));
 
-    const auto entryId = database.add(features);
+    // const auto entryId = database.add(features);
 
-    keyframeIdToEntry.insert({keyframe->id, entryId});
+    // keyframeIdToEntry.insert({keyframe->id, entryId});
 }
 
 void OrbRelocalizer::OrbRelocalizerPImpl::removeKeyframe(std::shared_ptr<Keyframe<slam3d::SensorState>> keyframe)
@@ -60,13 +62,13 @@ OrbRelocalizer::OrbRelocalizer()
 }
 
 std::vector<std::shared_ptr<Keyframe<slam3d::SensorState>>>
-OrbRelocalizer::relocalize(const std::vector<KeypointDescriptor<float, 32>>& keypoints)
+OrbRelocalizer::relocalize(const std::vector<KeypointDescriptor<std::uint8_t, 32>>& keypoints)
 {
     return pimpl->relocalize(keypoints);
 }
 
 void OrbRelocalizer::addKeyframe(std::shared_ptr<Keyframe<slam3d::SensorState>> keyframe,
-                                 const std::vector<KeypointDescriptor<float, 32>>& keypoints)
+                                 const std::vector<KeypointDescriptor<std::uint8_t, 32>>& keypoints)
 {
     return pimpl->addKeyframe(keyframe, keypoints);
 }

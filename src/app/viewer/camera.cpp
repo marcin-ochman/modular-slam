@@ -91,7 +91,6 @@ void Camera::updateView()
 
 void Camera::resetView()
 {
-
     m_distance = 2.0f;
     m_pitch = 3.141592f;
     m_yaw = 0.f;
@@ -118,6 +117,15 @@ float Camera::zoomSpeed() const
     float speed = distance * distance;
 
     return std::min(speed, 100.0f);
+}
+
+void Camera::move_forward(float diff)
+{
+    constexpr auto forwardSpeed = 1.f;
+
+    m_focalPoint += forward() * diff * forwardSpeed;
+
+    updateView();
 }
 
 void Camera::pan(glm::vec2 diff)

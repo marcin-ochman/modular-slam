@@ -1,7 +1,7 @@
 #ifndef MSLAM_FEATURE_FRONTEND_HPP_
 #define MSLAM_FEATURE_FRONTEND_HPP_
 
-#include "modular_slam/frontend_interface.hpp"
+#include "modular_slam/frontend/frontend_interface.hpp"
 #include "modular_slam/slam_component.hpp"
 
 namespace mslam
