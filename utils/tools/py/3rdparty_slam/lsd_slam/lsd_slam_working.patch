@@ -1,0 +1,441 @@
+diff --git a/lsd_slam_core/CMakeLists.txt b/lsd_slam_core/CMakeLists.txt
+index 7b4f8f2..9706438 100644
+--- a/lsd_slam_core/CMakeLists.txt
++++ b/lsd_slam_core/CMakeLists.txt
+@@ -8,6 +8,8 @@ project(lsd_slam_core)
+ #  RelWithDebInfo : w/ debug symbols, w/ optimization
+ #  MinSizeRel : w/o debug symbols, w/ optimization, stripped binaries
+ set(CMAKE_BUILD_TYPE Release)
++set (CMAKE_CXX_STANDARD 17)
++
+ 
+ find_package(catkin REQUIRED COMPONENTS
+   cv_bridge
+@@ -18,8 +20,9 @@ find_package(catkin REQUIRED COMPONENTS
+   rosbag
+ )
+ 
+-find_package(Eigen REQUIRED)
++find_package(Eigen3 REQUIRED)
+ find_package(X11 REQUIRED)
++find_package( OpenCV REQUIRED )
+ include(cmake/FindG2O.cmake)
+ include(cmake/FindSuiteParse.cmake)
+ 
+@@ -41,17 +44,19 @@ generate_dynamic_reconfigure_options(
+ 
+ catkin_package(
+   LIBRARIES lsdslam
+-  DEPENDS Eigen SuiteSparse
++  DEPENDS SuiteSparse
+   CATKIN_DEPENDS libg2o 
+ )
+ 
++include_directories(${catkin_INCLUDE_DIRS})
++
+ # SSE flags
+ add_definitions("-DUSE_ROS")
+ add_definitions("-DENABLE_SSE")
+ 
+ # Also add some useful compiler flag
+ set(CMAKE_CXX_FLAGS
+-   "${CMAKE_CXX_FLAGS} -march=native -Wall -std=c++0x"
++   "${CMAKE_CXX_FLAGS} -Wall"
+ ) 
+ 
+ # Set source files
+@@ -92,23 +97,28 @@ include_directories(
+   ${PROJECT_SOURCE_DIR}/thirdparty/Sophus
+   ${CSPARSE_INCLUDE_DIR} #Has been set by SuiteParse
+   ${CHOLMOD_INCLUDE_DIR} #Has been set by SuiteParse
++  ${OpenCV_INCLUDE_DIRS}
+ )
+ 
+ 
+ # build shared library.
+ add_library(lsdslam SHARED ${SOURCE_FILES})
+-target_link_libraries(lsdslam ${FABMAP_LIB} ${G2O_LIBRARIES} ${catkin_LIBRARIES} csparse cxsparse )
++add_dependencies(lsdslam ${${PROJECT_NAME}_EXPORTED_TARGETS})
++
++message(WARN ${G2O_INCLUDE_DIR})
++# target_include_directories(lsdslam PUBLIC ${G2O_INCLUDE_DIR})
++target_link_libraries(lsdslam ${FABMAP_LIB} ${G2O_LIBRARIES} ${catkin_LIBRARIES}  Eigen3::Eigen )
+ #rosbuild_link_boost(lsdslam thread)
+ 
+ 
+ # build live ros node
+ add_executable(live_slam src/main_live_odometry.cpp)
+-target_link_libraries(live_slam lsdslam ${catkin_LIBRARIES} ${G2O_LIBRARIES})
++target_link_libraries(live_slam lsdslam ${catkin_LIBRARIES} ${X11_LIBRARIES})
+ 
+ 
+ # build image node
+ add_executable(dataset src/main_on_images.cpp)
+-target_link_libraries(dataset lsdslam ${catkin_LIBRARIES} ${G2O_LIBRARIES})
++target_link_libraries(dataset lsdslam ${catkin_LIBRARIES})
+ 
+ # TODO add INSTALL
+ 
+diff --git a/lsd_slam_core/src/DepthEstimation/DepthMap.cpp b/lsd_slam_core/src/DepthEstimation/DepthMap.cpp
+index 831b8aa..c2d9f52 100644
+--- a/lsd_slam_core/src/DepthEstimation/DepthMap.cpp
++++ b/lsd_slam_core/src/DepthEstimation/DepthMap.cpp
+@@ -1111,13 +1111,13 @@ void DepthMap::updateKeyframe(std::deque< std::shared_ptr<Frame> > referenceFram
+ 	{
+ 		cv::Mat keyFrameImage(activeKeyFrame->height(), activeKeyFrame->width(), CV_32F, const_cast<float*>(activeKeyFrameImageData));
+ 		keyFrameImage.convertTo(debugImageHypothesisHandling, CV_8UC1);
+-		cv::cvtColor(debugImageHypothesisHandling, debugImageHypothesisHandling, CV_GRAY2RGB);
++		cv::cvtColor(debugImageHypothesisHandling, debugImageHypothesisHandling, cv::COLOR_GRAY2RGB);
+ 
+ 		cv::Mat oldest_refImage(oldest_referenceFrame->height(), oldest_referenceFrame->width(), CV_32F, const_cast<float*>(oldest_referenceFrame->image(0)));
+ 		cv::Mat newest_refImage(newest_referenceFrame->height(), newest_referenceFrame->width(), CV_32F, const_cast<float*>(newest_referenceFrame->image(0)));
+ 		cv::Mat rfimg = 0.5f*oldest_refImage + 0.5f*newest_refImage;
+ 		rfimg.convertTo(debugImageStereoLines, CV_8UC1);
+-		cv::cvtColor(debugImageStereoLines, debugImageStereoLines, CV_GRAY2RGB);
++		cv::cvtColor(debugImageStereoLines, debugImageStereoLines, cv::COLOR_GRAY2RGB);
+ 	}
+ 
+ 	struct timeval tv_start, tv_end;
+@@ -1238,7 +1238,7 @@ void DepthMap::createKeyFrame(Frame* new_keyframe)
+ 	{
+ 		cv::Mat keyFrameImage(new_keyframe->height(), new_keyframe->width(), CV_32F, const_cast<float*>(new_keyframe->image(0)));
+ 		keyFrameImage.convertTo(debugImageHypothesisPropagation, CV_8UC1);
+-		cv::cvtColor(debugImageHypothesisPropagation, debugImageHypothesisPropagation, CV_GRAY2RGB);
++		cv::cvtColor(debugImageHypothesisPropagation, debugImageHypothesisPropagation, cv::COLOR_GRAY2RGB);
+ 	}
+ 
+ 
+@@ -1403,7 +1403,7 @@ int DepthMap::debugPlotDepthMap()
+ 
+ 	cv::Mat keyFrameImage(activeKeyFrame->height(), activeKeyFrame->width(), CV_32F, const_cast<float*>(activeKeyFrameImageData));
+ 	keyFrameImage.convertTo(debugImageDepth, CV_8UC1);
+-	cv::cvtColor(debugImageDepth, debugImageDepth, CV_GRAY2RGB);
++	cv::cvtColor(debugImageDepth, debugImageDepth, cv::COLOR_GRAY2RGB);
+ 
+ 	// debug plot & publish sparse version?
+ 	int refID = referenceFrameByID_offset;
+diff --git a/lsd_slam_core/src/GlobalMapping/FabMap.cpp b/lsd_slam_core/src/GlobalMapping/FabMap.cpp
+index 7e267f3..76f2eb6 100644
+--- a/lsd_slam_core/src/GlobalMapping/FabMap.cpp
++++ b/lsd_slam_core/src/GlobalMapping/FabMap.cpp
+@@ -129,7 +129,7 @@ void FabMap::compareAndAdd(Frame* keyframe, int* out_newID, int* out_loopID)
+ 	cv::Mat frame;
+ 	cv::Mat keyFrameImage(keyframe->height(), keyframe->width(), CV_32F, const_cast<float*>(keyframe->image()));
+ 	keyFrameImage.convertTo(frame, CV_8UC1);
+-	//cv::cvtColor(frame, frame, CV_GRAY2RGB);
++	//cv::cvtColor(frame, frame, cv::COLOR_GRAY2RGB);
+ 	
+ 	// Generate FabMap bag-of-words data (image descriptor)
+ 	cv::Mat bow;
+diff --git a/lsd_slam_core/src/GlobalMapping/KeyFrameGraph.cpp b/lsd_slam_core/src/GlobalMapping/KeyFrameGraph.cpp
+index 093d81a..042dfa3 100644
+--- a/lsd_slam_core/src/GlobalMapping/KeyFrameGraph.cpp
++++ b/lsd_slam_core/src/GlobalMapping/KeyFrameGraph.cpp
+@@ -68,14 +68,14 @@ KeyFrameGraph::KeyFrameGraph()
+ 	typedef g2o::BlockSolver_7_3 BlockSolver;
+ 	typedef g2o::LinearSolverCSparse<BlockSolver::PoseMatrixType> LinearSolver;
+ 	//typedef g2o::LinearSolverPCG<BlockSolver::PoseMatrixType> LinearSolver;
+-	LinearSolver* solver = new LinearSolver();
+-	BlockSolver* blockSolver = new BlockSolver(solver);
+-	g2o::OptimizationAlgorithmLevenberg* algorithm = new g2o::OptimizationAlgorithmLevenberg(blockSolver);
++	auto solver =std::make_unique<LinearSolver>(); // new LinearSolver();
++	solver->setWriteDebug(true);
++	auto blockSolver = std::make_unique<BlockSolver>(std::move(solver));
++	blockSolver->setWriteDebug(true);
++	g2o::OptimizationAlgorithmLevenberg* algorithm = new g2o::OptimizationAlgorithmLevenberg(std::move(blockSolver));
+ 	graph.setAlgorithm(algorithm);
+ 	
+     graph.setVerbose(false); // printOptimizationInfo
+-	solver->setWriteDebug(true);
+-	blockSolver->setWriteDebug(true);
+ 	algorithm->setWriteDebug(true);
+ 
+ 
+diff --git a/lsd_slam_core/src/GlobalMapping/g2oTypeSim3Sophus.h b/lsd_slam_core/src/GlobalMapping/g2oTypeSim3Sophus.h
+index af7690b..02a28f4 100644
+--- a/lsd_slam_core/src/GlobalMapping/g2oTypeSim3Sophus.h
++++ b/lsd_slam_core/src/GlobalMapping/g2oTypeSim3Sophus.h
+@@ -93,7 +93,7 @@ public:
+ 	
+ 	virtual bool setMeasurementData(const double* m)
+ 	{
+-		Eigen::Map<const g2o::Vector7d> v(m);
++		Eigen::Map<const Eigen::Matrix<double, 7 ,1> > v(m);
+ 		setMeasurement(Sophus::Sim3d::exp(v));
+ 		return true;
+ 	}
+diff --git a/lsd_slam_core/src/IOWrapper/ImageDisplay.h b/lsd_slam_core/src/IOWrapper/ImageDisplay.h
+index e844645..c6482bf 100644
+--- a/lsd_slam_core/src/IOWrapper/ImageDisplay.h
++++ b/lsd_slam_core/src/IOWrapper/ImageDisplay.h
+@@ -48,7 +48,7 @@ inline void displayImage(const char* windowName, const float* image, int width,
+ 	cv::Mat floatWrapper(height, width, CV_32F, const_cast<float*>(image));
+ 	cv::Mat tempImage(height, width, CV_8UC1);
+ 	floatWrapper.convertTo(tempImage, CV_8UC1);
+-	cv::cvtColor(tempImage, tempImage, CV_GRAY2RGB);
++	cv::cvtColor(tempImage, tempImage, cv::COLOR_GRAY2RGB);
+ 	displayImage(windowName, tempImage);
+ }
+ 
+diff --git a/lsd_slam_core/src/LiveSLAMWrapper.cpp b/lsd_slam_core/src/LiveSLAMWrapper.cpp
+index 45423d6..1f6b3c1 100644
+--- a/lsd_slam_core/src/LiveSLAMWrapper.cpp
++++ b/lsd_slam_core/src/LiveSLAMWrapper.cpp
+@@ -118,7 +118,7 @@ void LiveSLAMWrapper::newImageCallback(const cv::Mat& img, Timestamp imgTime)
+ 	if (img.channels() == 1)
+ 		grayImg = img;
+ 	else
+-		cvtColor(img, grayImg, CV_RGB2GRAY);
++		cvtColor(img, grayImg, cv::COLOR_RGB2GRAY);
+ 	
+ 
+ 	// Assert that we work with 8 bit images
+diff --git a/lsd_slam_core/src/main_on_images.cpp b/lsd_slam_core/src/main_on_images.cpp
+index 1aa0686..ee5b70d 100644
+--- a/lsd_slam_core/src/main_on_images.cpp
++++ b/lsd_slam_core/src/main_on_images.cpp
+@@ -221,7 +221,7 @@ int main( int argc, char** argv )
+ 
+ 	for(unsigned int i=0;i<files.size();i++)
+ 	{
+-		cv::Mat imageDist = cv::imread(files[i], CV_LOAD_IMAGE_GRAYSCALE);
++		cv::Mat imageDist = cv::imread(files[i], cv::IMREAD_GRAYSCALE);
+ 
+ 		if(imageDist.rows != h_inp || imageDist.cols != w_inp)
+ 		{
+diff --git a/lsd_slam_core/src/util/globalFuncs.cpp b/lsd_slam_core/src/util/globalFuncs.cpp
+index c02ca08..7acc906 100644
+--- a/lsd_slam_core/src/util/globalFuncs.cpp
++++ b/lsd_slam_core/src/util/globalFuncs.cpp
+@@ -49,11 +49,11 @@ void printMessageOnCVImage(cv::Mat &image, std::string line1,std::string line2)
+ 		for(int y=image.rows-30; y<image.rows;y++)
+ 			image.at<cv::Vec3b>(y,x) *= 0.5;
+ 
+-	cv::putText(image, line2, cvPoint(10,image.rows-5),
+-	    CV_FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(200,200,250), 1, 8);
++	cv::putText(image, line2, cv::Point(10,image.rows-5),
++	  cv::FONT_HERSHEY_SIMPLEX , 0.4, cv::Scalar(200,200,250), 1, 8);
+ 
+-	cv::putText(image, line1, cvPoint(10,image.rows-18),
+-	    CV_FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(200,200,250), 1, 8);
++	cv::putText(image, line1, cv::Point(10,image.rows-18),
++	  cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(200,200,250), 1, 8);
+ }
+ 
+ 
+@@ -71,7 +71,7 @@ cv::Mat getDepthRainbowPlot(const float* idepth, const float* idepthVar, const f
+ 		cv::Mat keyFrameImage(height, width, CV_32F, const_cast<float*>(gray));
+ 		cv::Mat keyFrameImage8u;
+ 		keyFrameImage.convertTo(keyFrameImage8u, CV_8UC1);
+-		cv::cvtColor(keyFrameImage8u, res, CV_GRAY2RGB);
++		cv::cvtColor(keyFrameImage8u, res,cv::COLOR_GRAY2RGB);
+ 	}
+ 	else
+ 		fillCvMat(&res,cv::Vec3b(255,170,168));
+@@ -136,7 +136,7 @@ cv::Mat getVarRedGreenPlot(const float* idepthVar, const float* gray, int width,
+ 		cv::Mat keyFrameImage(height, width, CV_32F, const_cast<float*>(gray));
+ 		cv::Mat keyFrameImage8u;
+ 		keyFrameImage.convertTo(keyFrameImage8u, CV_8UC1);
+-		cv::cvtColor(keyFrameImage8u, res, CV_GRAY2RGB);
++		cv::cvtColor(keyFrameImage8u, res, cv::COLOR_GRAY2RGB);
+ 	}
+ 	else
+ 		fillCvMat(&res,cv::Vec3b(255,170,168));
+diff --git a/lsd_slam_core/thirdparty/openFabMap/samples/openFABMAPcli.cpp b/lsd_slam_core/thirdparty/openFabMap/samples/openFABMAPcli.cpp
+index 1b31e9c..2e979b1 100644
+--- a/lsd_slam_core/thirdparty/openFabMap/samples/openFABMAPcli.cpp
++++ b/lsd_slam_core/thirdparty/openFabMap/samples/openFABMAPcli.cpp
+@@ -883,8 +883,8 @@ draws keypoints to scale with coloring proportional to feature strength
+ void drawRichKeypoints(const cv::Mat& src, std::vector<cv::KeyPoint>& kpts, cv::Mat& dst) {
+ 	
+ 	cv::Mat grayFrame;
+-	cvtColor(src, grayFrame, CV_RGB2GRAY);
+-	cvtColor(grayFrame, dst, CV_GRAY2RGB);
++	cvtColor(src, grayFrame, cv::COLOR_RGB2GRAY);
++	cvtColor(grayFrame, dst, cv::COLOR_GRAY2RGB);
+ 	
+ 	if (kpts.size() == 0) {
+ 		return;
+@@ -1020,4 +1020,4 @@ void sortKeypoints(std::vector<cv::KeyPoint>& keypoints) {
+ 
+     keypoints.swap(sortedKeypoints);
+ 	
+-}
+\ No newline at end of file
++}
+diff --git a/lsd_slam_viewer/CMakeLists.txt b/lsd_slam_viewer/CMakeLists.txt
+index f0c2512..cc3a963 100644
+--- a/lsd_slam_viewer/CMakeLists.txt
++++ b/lsd_slam_viewer/CMakeLists.txt
+@@ -8,6 +8,7 @@ project(lsd_slam_viewer)
+ #  RelWithDebInfo : w/ debug symbols, w/ optimization
+ #  MinSizeRel : w/o debug symbols, w/ optimization, stripped binaries
+ set(CMAKE_BUILD_TYPE Release)
++set (CMAKE_CXX_STANDARD 17)
+ 
+ ADD_SUBDIRECTORY(${PROJECT_SOURCE_DIR}/thirdparty/Sophus)
+ 
+@@ -27,7 +28,7 @@ find_package(OpenGL REQUIRED)
+ set(QT_USE_QTOPENGL TRUE)
+ set(QT_USE_QTXML TRUE)
+ find_package(QGLViewer REQUIRED)
+-find_package(Eigen REQUIRED)
++find_package(Eigen3 REQUIRED)
+ find_package(OpenCV REQUIRED)
+ find_package(Boost REQUIRED COMPONENTS thread)
+ 
+@@ -38,7 +39,7 @@ include_directories(${QGLVIEWER_INCLUDE_DIR}
+ 
+ # SSE flags
+ set(CMAKE_CXX_FLAGS
+-   "${CMAKE_CXX_FLAGS} -march=native -Wall -std=c++0x"
++   "${CMAKE_CXX_FLAGS} -march=native -Wall"
+ )
+ 
+ add_message_files(DIRECTORY msg FILES keyframeMsg.msg keyframeGraphMsg.msg)
+@@ -66,15 +67,24 @@ set(HEADER_FILES
+ 
+ include_directories(
+   ${PROJECT_SOURCE_DIR}/thirdparty/Sophus
++  ${EIGEN3_INCLUDE_DIR}
+ )  
+ 
++message(WARN "${QGLVIEWER_LIBRARY}")
++
+ add_executable(viewer src/main_viewer.cpp ${SOURCE_FILES} ${HEADER_FILES})
++add_dependencies(viewer ${${PROJECT_NAME}_EXPORTED_TARGETS})
++
+ target_link_libraries(viewer ${QGLViewer_LIBRARIES}
+ 			     ${QGLVIEWER_LIBRARY} 
+ 			     ${catkin_LIBRARIES}
+ 			     ${Boost_LIBRARIES}
+ 			     ${QT_LIBRARIES}
+ 			     GL glut GLU
++			     Qt5::Core
++			     Qt5::Gui
++			     Qt5::Xml
++			     Qt5::OpenGL
+ 		     )
+ 
+ #add_executable(videoStitch src/main_stitchVideos.cpp)
+diff --git a/lsd_slam_viewer/cmake/FindQGLViewer.cmake b/lsd_slam_viewer/cmake/FindQGLViewer.cmake
+index e1ab43c..1165e00 100644
+--- a/lsd_slam_viewer/cmake/FindQGLViewer.cmake
++++ b/lsd_slam_viewer/cmake/FindQGLViewer.cmake
+@@ -1,6 +1,6 @@
+ # Need to find both Qt4 and QGLViewer if the QQL support is to be built
+-FIND_PACKAGE(Qt4 COMPONENTS QtCore QtXml QtOpenGL QtGui)
+-include(${QT_USE_FILE})
++FIND_PACKAGE(Qt5 COMPONENTS Core Xml OpenGL Gui)
++# include(${QT_USE_FILE})
+ 
+ FIND_PATH(QGLVIEWER_INCLUDE_DIR qglviewer.h
+     /usr/include/QGLViewer
+@@ -8,13 +8,14 @@ FIND_PATH(QGLVIEWER_INCLUDE_DIR qglviewer.h
+     /usr/local/include/QGLViewer
+     /sw/include/QGLViewer
+     ENV QGLVIEWERROOT
+-  )
++ )
+ 
+ find_library(QGLVIEWER_LIBRARY_RELEASE
+-  NAMES qglviewer-qt4 qglviewer QGLViewer QGLViewer2
++  NAMES qglviewer-qt5 qglviewer QGLViewer QGLViewer-qt5 QGLViewer2
+   PATHS /usr/lib
+         /usr/local/lib
+         /opt/local/lib
++	/usr/lib/x86_64-linux-gnu/
+         /sw/lib
+         ENV QGLVIEWERROOT
+         ENV LD_LIBRARY_PATH
+@@ -26,6 +27,7 @@ find_library(QGLVIEWER_LIBRARY_DEBUG
+   PATHS /usr/lib
+         /usr/local/lib
+         /opt/local/lib
++	/usr/lib/x86_64-linux-gnu/
+         /sw/lib
+         ENV QGLVIEWERROOT
+         ENV LD_LIBRARY_PATH
+diff --git a/lsd_slam_viewer/src/KeyFrameDisplay.cpp b/lsd_slam_viewer/src/KeyFrameDisplay.cpp
+index 0ba66a2..7380943 100644
+--- a/lsd_slam_viewer/src/KeyFrameDisplay.cpp
++++ b/lsd_slam_viewer/src/KeyFrameDisplay.cpp
+@@ -22,13 +22,13 @@
+ 
+ #include "KeyFrameDisplay.h"
+ #include <stdio.h>
++#include "opencv2/opencv.hpp"
+ #include "settings.h"
+ 
+ #include <GL/glx.h>
+ #include <GL/gl.h>
+ #include <GL/glu.h>
+ 
+-#include "opencv2/opencv.hpp"
+ 
+ #include "ros/package.h"
+ 
+diff --git a/lsd_slam_viewer/src/PointCloudViewer.cpp b/lsd_slam_viewer/src/PointCloudViewer.cpp
+index bfa6ab3..f8a306c 100644
+--- a/lsd_slam_viewer/src/PointCloudViewer.cpp
++++ b/lsd_slam_viewer/src/PointCloudViewer.cpp
+@@ -323,7 +323,7 @@ void PointCloudViewer::keyPressEvent(QKeyEvent *e)
+     	  meddleMutex.lock();
+ 
+ 
+-    	  float x,y,z;
++    	  qreal x,y,z;
+     	  camera()->frame()->getPosition(x,y,z);
+     	  animationList.push_back(AnimationObject(false, lastAnimTime, 2, qglviewer::Frame(qglviewer::Vec(0,0,0), camera()->frame()->orientation())));
+     	  animationList.back().frame.setPosition(x,y,z);
+diff --git a/lsd_slam_viewer/src/PointCloudViewer.h b/lsd_slam_viewer/src/PointCloudViewer.h
+index ddb943f..8b7ebea 100644
+--- a/lsd_slam_viewer/src/PointCloudViewer.h
++++ b/lsd_slam_viewer/src/PointCloudViewer.h
+@@ -122,27 +122,29 @@ public:
+         return (time < other.time);
+     }
+ 
+-    std::string toString()
+-    {
+-    	char buf[1000];
++std::string toString()
++{
++    int isSettings_i = isSettings;
++    int showLoopClosures_i = showLoopClosures;
++    int showKeyframes_i = showKeyframes;
++    int showCurrentCam_i = showCurrentCam;
++    int isFix_i = isFix;
+ 
+-		int isSettings_i = isSettings;
+-		int showLoopClosures_i = showLoopClosures;
+-		int showKeyframes_i = showKeyframes;
+-		int showCurrentCam_i = showCurrentCam;
+-		int isFix_i = isFix;
++    qreal x, y, z;
++    frame.getPosition(x, y, z);
+ 
+-		float x,y,z;
+-		frame.getPosition(x,y,z);
++    std::ostringstream oss;
++    oss << "Animation: " << isSettings_i << " at " << time << " (dur " << duration
++        << ") S: " << scaledTH << " " << absTH << " " << showLoopClosures_i << " "
++        << showKeyframes_i << " " << showCurrentCam_i << " " << sparsity << " " << neighb
++        << " Frame: " << frame.orientation()[0] << " " << frame.orientation()[1] << " "
++        << frame.orientation()[2] << " " << frame.orientation()[3] << " " << x << " " << y << " "
++        << z << " " << isFix_i;
++
++    return oss.str();
++}
+ 
+-    	snprintf(buf, 1000, "Animation: %d at %lf (dur %lf) S: %f %f %d %d %d %d %d Frame: %lf %lf %lf %lf %f %f %f %d",
+-				isSettings_i, time, duration,
+-				scaledTH, absTH, showLoopClosures_i, showKeyframes_i, showCurrentCam_i, sparsity, neighb,
+-				frame.orientation()[0],frame.orientation()[1],frame.orientation()[2],frame.orientation()[3],
+-				x,y,z, isFix_i);
+ 
+-    	return buf;
+-    }
+ };
+ 
+ 
