@@ -51,7 +51,7 @@ target_link_libraries(
           opencv_features2d
           opencv_highgui
           Ceres::ceres
-  PUBLIC realsense2::realsense2 Boost::filesystem Eigen3::Eigen spdlog::spdlog
+  PUBLIC realsense2::realsense2 Boost::boost Eigen3::Eigen spdlog::spdlog
          dbow3::dbow3)
 
 install(

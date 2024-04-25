@@ -3,12 +3,12 @@
 
 #include <GL/gl.h>
 #include <QMouseEvent>
+#include <QSurfaceFormat>
 #include <QTimer>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/transform.hpp>
 #include <glm/vec3.hpp>
 #include <optional>
-
 // clang-format off
 static const GLfloat textureBoxVertices[] = {
      1.0f, -1.0f,  0.0f, 1.0f, 1.0f,
@@ -76,6 +76,13 @@ void PointcloudViewer::addKeyframe(const KeyframeViewData& keyframe)
 
 void PointcloudViewer::initializeGL()
 {
+    QSurfaceFormat format;
+    format.setDepthBufferSize(24);
+    format.setStencilBufferSize(8);
+    format.setVersion(3, 2);
+    format.setProfile(QSurfaceFormat::CoreProfile);
+    this->setFormat(format);
+
     initializeOpenGLFunctions();
     glEnable(GL_PROGRAM_POINT_SIZE);
     glEnable(GL_BLEND);
@@ -141,6 +148,7 @@ void PointcloudViewer::wheelEvent(QWheelEvent* event)
 
 void PointcloudViewer::keyPressEvent(QKeyEvent* event)
 {
+    qDebug() << "Received ";
     switch(event->key())
     {
         case Qt::Key_A:
@@ -153,7 +161,7 @@ void PointcloudViewer::keyPressEvent(QKeyEvent* event)
             camera.move_forward(0.2f);
             break;
         case Qt::Key_S:
-            camera.move_forward(-0.2f);
+            camera.move_forward(0.2f);
             break;
     }
 }

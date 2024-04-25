@@ -6,7 +6,6 @@
 #include "modular_slam/slam_component.hpp"
 #include "modular_slam/types/frontend_output.hpp"
 #include <any>
-#include <ceres/types.h>
 #include <limits>
 #include <type_traits>
 

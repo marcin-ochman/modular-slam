@@ -20,12 +20,17 @@ class ModularSlamRecipe(ConanFile):
         self.requires("nlohmann_json/3.11.3")
         self.requires("trompeloeil/47")
         self.requires("dbow3/c5ae539abddcef43ef64fa130555e2d521098369")
+        self.requires("eigen/3.4.0")
+        self.requires("ceres-solver/2.2.0")
+        self.requires("spdlog/1.13.0")
+        self.requires("glm/cci.20230113")
         self.requires("opencv/4.8.1", force=True)
         self.requires("qt/6.6.2", force=True)
         self.requires("libpng/1.6.43", override=True)
         self.requires("ffmpeg/6.1", override=True)
         self.requires("xkbcommon/1.6.0", override=True)
         self.requires("librealsense/2.53.1")
+        #  TODO  add eigen
 
     def config_options(self):
         if self.settings.os == "Windows":

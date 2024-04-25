@@ -53,7 +53,7 @@ target_link_libraries(
           Qt6::Core
           ModularSlam::ModularSlam
           OpenGL::GLU
-          glm
+          glm::glm
           ${OpenCV_LIBS})
 
 add_executable(RgbdSlam slam/rgbd_slam.cpp)
@@ -67,7 +67,7 @@ target_link_libraries(
           Qt6::Core
           ModularSlam::ModularSlam
           OpenGL::GLU
-          glm
+          glm::glm
           ${OpenCV_LIBS})
 
 get_target_property(QT_CORE_INCLUDE_DIRS Qt6::Core

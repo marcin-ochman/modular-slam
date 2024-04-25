@@ -6,9 +6,6 @@
 #include <Eigen/src/Geometry/AngleAxis.h>
 #include <cstdint>
 
-#include <eigen3/Eigen/src/Core/Matrix.h>
-#include <eigen3/Eigen/src/Geometry/Quaternion.h>
-
 namespace mslam
 {
 
