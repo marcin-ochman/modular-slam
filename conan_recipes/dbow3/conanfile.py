@@ -20,7 +20,7 @@ class Dbow3Recipe(ConanFile):
         patch(self, patch_file=patch_file)
 
     def requirements(self):
-        self.requires("opencv/4.8.1")
+        self.requires("opencv/[>=4.8.1]")
 
     def config_options(self):
         if self.settings.os == "Windows":

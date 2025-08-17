@@ -1,5 +1,6 @@
 #include "modular_slam/backend/backend_interface.hpp"
 #include "modular_slam/frontend/frontend_interface.hpp"
+#include "modular_slam/parameters/parameters_handler.hpp"
 #include "modular_slam/slam_builder.hpp"
 #include "modular_slam/types/rgbd_slam_types.hpp"
 #include "modular_slam/types/rgbdi_frame.hpp"
@@ -15,8 +16,16 @@ class ParameterHandlerMock : public mslam::ParametersHandlerInterface
     MAKE_MOCK2(registerParameter,
                bool(const mslam::ParameterDefinition& /*paramDefinition*/, const mslam::ParameterValue& /*value*/),
                override);
-    // bool setParameter(const std::string& /*name*/, const ParameterValue& /*newValue*/) { return true; }
-    // std::optional<ParameterValue> getParameter(const std::string& /*name*/) const { return 0; }
+    bool setParameter(const std::string& /*name*/, const mslam::ParameterValue& /*newValue*/) { return true; }
+    std::optional<mslam::ParameterValue> getParameter(const std::string& /*name*/) const { return 0; }
+    mslam::ParametersMap allParameters() const { return {}; }
+
+    mslam::ParameterSubscription subscribe() override { return mslam::ParameterSubscription(); }
+
+    mslam::Subscription subscribeOnNewParameter(mslam::NewParameterCallback observer) override
+    {
+        return mslam::Subscription();
+    }
 };
 
 class RgbdiDataProviderMock : public mslam::DataProviderInterface<mslam::RgbdiFrame>

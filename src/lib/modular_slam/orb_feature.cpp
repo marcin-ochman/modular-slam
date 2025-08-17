@@ -5,7 +5,6 @@
 #include <cstdint>
 #include <iterator>
 
-#include <opencv2/core/hal/interface.h>
 #include <opencv2/core/types.hpp>
 #include <opencv2/features2d.hpp>
 #include <opencv2/highgui.hpp>
@@ -102,7 +101,6 @@ std::vector<DescriptorMatch> OrbOpenCvMatcher::Pimpl::match(const std::vector<Or
         if(match[0].distance < 0.7 * match[1].distance)
         {
             goodMatches.push_back(match[0]);
-            // spdlog::info("Distance {}", match[0].distance);
         }
     }
 

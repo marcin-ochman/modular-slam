@@ -1,6 +1,7 @@
 #include "slam_thread.hpp"
 #include "image_viewer.hpp"
 #include "modular_slam/frontend/frontend_interface.hpp"
+#include "modular_slam/parameters/parameters_handler.hpp"
 #include "modular_slam/projection.hpp"
 #include "modular_slam/slam.hpp"
 #include "modular_slam/types/rgbd_frame.hpp"
@@ -161,6 +162,26 @@ void pointCloudFromRgbd(const mslam::RgbdFrame& rgbd, const mslam::rgbd::SensorS
 
 void SlamThread::run()
 {
+    slam->parameterHandler->subscribeOnNewParameter(
+        [this](const mslam::ParameterDefinition& parameterDefinition)
+        {
+            // handleNewParameter();
+            if(parameterDefinition.type == mslam::ParameterType::Choice)
+            {
+                QVector<int> choices;
+
+                emit newChoiceParameterRegistered(
+                    QString::fromStdString(parameterDefinition.name),
+                    std::get<int>(slam->parameterHandler->getParameter(parameterDefinition.name).value()), {});
+            }
+
+            if(parameterDefinition.type == mslam::ParameterType::Number)
+                emit newRangeParameterRegistered(
+                    QString::fromStdString(parameterDefinition.name),
+                    std::get<float>(slam->parameterHandler->getParameter(parameterDefinition.name).value()),
+                    {parameterDefinition.range.min, parameterDefinition.range.max, parameterDefinition.range.step});
+        });
+
     isRunning = true;
 
     slam->init();

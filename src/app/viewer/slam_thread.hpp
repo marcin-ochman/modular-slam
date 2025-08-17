@@ -16,6 +16,8 @@
 #include <glm/fwd.hpp>
 #include <glm/vec3.hpp>
 
+#include "range.hpp"
+
 class SlamThread : public QThread
 {
     Q_OBJECT
@@ -53,6 +55,9 @@ class SlamThread : public QThread
     void slamStatisticsChanged(const SlamStatistics& stats);
     void keyframeAdded(const KeyframeViewData& keyframe);
     void currentFrameChanged(const KeyframeViewData& keyframe);
+
+    void newRangeParameterRegistered(const QString& name, float value, const Range& range);
+    void newChoiceParameterRegistered(const QString& name, const int, const QVector<int>& choices);
 
   private:
     std::atomic<bool> isRunning;

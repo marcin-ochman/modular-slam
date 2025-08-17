@@ -1,4 +1,7 @@
 #include "modular_slam/parameters/basic_parameters_handler.hpp"
+#include "include/modular_slam/parameters/basic_parameters_handler.hpp"
+#include "include/modular_slam/parameters/parameters_handler.hpp"
+#include <algorithm>
 #include <optional>
 
 namespace mslam
@@ -6,12 +9,22 @@ namespace mslam
 
 bool BasicParameterHandler::registerParameter(const ParameterDefinition& paramDefinition, const ParameterValue& value)
 {
+    bool result = false;
+
     switch(paramDefinition.type)
     {
         case ParameterType::Number:
-            return registerNumberParameter(paramDefinition, std::get<float>(value));
+            result = registerNumberParameter(paramDefinition, std::get<float>(value));
+            break;
         case ParameterType::Choice:
-            return registerChoiceParameter(paramDefinition, std::get<int>(value));
+            result = registerChoiceParameter(paramDefinition, std::get<int>(value));
+            break;
+    }
+
+    if(result)
+    {
+        std::for_each(std::begin(newParameterCallbacks), std::end(newParameterCallbacks),
+                      [&paramDefinition](auto& f) { f(paramDefinition); });
     }
 
     return false;
@@ -64,6 +77,19 @@ std::optional<ParameterValue> BasicParameterHandler::getParameter(const std::str
     auto found = it != std::end(parameters);
 
     return found ? std::make_optional(it->second.currentValue) : std::nullopt;
+}
+
+ParameterSubscription BasicParameterHandler::subscribe()
+{
+    return ParameterSubscription();
+}
+
+Subscription BasicParameterHandler::subscribeOnNewParameter(NewParameterCallback observer)
+{
+    // TODO: use boost::signal
+    newParameterCallbacks.emplace_back(std::move(observer));
+
+    return Subscription();
 }
 
 bool BasicParameterHandler::registerNumberParameter(const ParameterDefinition& paramDefinition, float value)

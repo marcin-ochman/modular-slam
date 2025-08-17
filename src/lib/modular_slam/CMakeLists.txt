@@ -32,6 +32,7 @@ add_library(
   orb_feature.cpp
   orb_relocalizer.cpp
   projection.cpp
+  # reliable_ransac_pnp.cpp
   frame.cpp)
 
 add_library(ModularSlam::ModularSlam ALIAS ModularSlam)

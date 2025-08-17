@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1072</width>
-    <height>608</height>
+    <height>592</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -139,6 +139,15 @@
    </attribute>
    <addaction name="pauseResumeAction"/>
    <addaction name="actionResetCamera"/>
+  </widget>
+  <widget class="QDockWidget" name="parametersHandlerDockWidget">
+   <property name="windowTitle">
+    <string>Parameters</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>1</number>
+   </attribute>
+   <widget class="ParametersViewer" name="parametersHandler"/>
   </widget>
   <action name="actionExit">
    <property name="text">
@@ -296,6 +305,12 @@
    <class>SlamStatisticsWidget</class>
    <extends>QWidget</extends>
    <header>slam_statistics_widget.hpp</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>ParametersViewer</class>
+   <extends>QWidget</extends>
+   <header>parameters_viewer.hpp</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

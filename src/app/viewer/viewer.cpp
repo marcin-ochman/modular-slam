@@ -190,7 +190,8 @@ auto buildSlam(const ViewerArgs& args, SlamThread* slamThread)
         typename mslam::FrontendInterface<mslam::RgbdFrame, mslam::slam3d::SensorState, mslam::Vector3,
                                           mslam::rgbd::RgbdOrbKeypointDescriptor>::FrontendOutputType;
 
-    slamBuilder.addParameterHandler(std::make_shared<mslam::BasicParameterHandler>())
+    auto parameterHandler = std::make_shared<mslam::BasicParameterHandler>();
+    slamBuilder.addParameterHandler(parameterHandler)
         .addDataProvider(dataProvider)
         .addFrontend(frontend)
         .addBackend(backend)
@@ -245,7 +246,6 @@ int main(int argc, char* argv[])
 
     auto slam = buildSlam(args, slamThread);
     slamThread->setSlam(std::move(slam));
-    slamThread->start();
 
     QObject::connect(slamThread, &SlamThread::rgbImageChanged, &mainWindow,
                      &mslam::ViewerMainWindow::setImageWithObservations);
@@ -259,10 +259,16 @@ int main(int argc, char* argv[])
                      &mslam::ViewerMainWindow::setCurrentFrame);
     QObject::connect(slamThread, &SlamThread::landmarkPointsChanged, &mainWindow,
                      &mslam::ViewerMainWindow::setLandmarkPoints);
+    QObject::connect(slamThread, &SlamThread::newChoiceParameterRegistered, &mainWindow,
+                     &mslam::ViewerMainWindow::addChoiceParameter);
+    QObject::connect(slamThread, &SlamThread::newRangeParameterRegistered, &mainWindow,
+                     &mslam::ViewerMainWindow::addValueParameter);
+
     QObject::connect(&mainWindow, &mslam::ViewerMainWindow::paused, slamThread, &SlamThread::pause);
     QObject::connect(&mainWindow, &mslam::ViewerMainWindow::resumed, slamThread, &SlamThread::resume);
     QObject::connect(&mainWindow, &mslam::ViewerMainWindow::isClosing, slamThread, &SlamThread::requestInterruption);
 
+    slamThread->start();
     mainWindow.show();
 
     int result = app.exec();

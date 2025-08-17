@@ -55,6 +55,10 @@ class IFeatureDetector
     virtual ~IFeatureDetector() {}
 };
 
+struct DescriptorTraits
+{
+};
+
 template <typename DescriptorType, int Length>
 class IFeatureMatcher
 {

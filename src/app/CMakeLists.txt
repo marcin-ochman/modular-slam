@@ -16,9 +16,13 @@ qt_wrap_ui(
   viewer/ui/depth_image_viewer.ui viewer/ui/slam_statistics.ui)
 
 qt_wrap_cpp(
-  MSLAM_VIEWER_HEADERS viewer/image_viewer.hpp viewer/depth_image_viewer.hpp
-  viewer/slam_thread.hpp viewer/pointcloud_viewer.hpp
-  viewer/viewer_main_window.hpp)
+  MSLAM_VIEWER_HEADERS
+  viewer/image_viewer.hpp
+  viewer/depth_image_viewer.hpp
+  viewer/slam_thread.hpp
+  viewer/pointcloud_viewer.hpp
+  viewer/viewer_main_window.hpp
+  viewer/parameters_viewer.hpp)
 
 qt_add_resources(MSLAM_VIEWER_QRC viewer/qrc/viewer.qrc)
 
@@ -36,7 +40,8 @@ qt_add_executable(
   viewer/viewer_main_window.cpp
   viewer/slam_statistics_widget.cpp
   viewer/slam_thread.cpp
-  viewer/camera.cpp)
+  viewer/camera.cpp
+  viewer/parameters_viewer.cpp)
 
 add_executable(ModularSlam::Viewer ALIAS Viewer)
 target_include_directories(Viewer PRIVATE ${CMAKE_CURRENT_BINARY_DIR}

@@ -15,6 +15,7 @@ class ModularSlamRecipe(ConanFile):
     # exports_sources = "CMakeLists.txt", "src/*", "include/*", "config/*", "tests/*", "benchmarks/*", "apps/*"
 
     def requirements(self):
+        self.tool_requires("cmake/3.29.7")
         self.requires("boost/1.84.0")
         self.requires("catch2/3.5.4")
         self.requires("nlohmann_json/3.11.3")
@@ -25,12 +26,13 @@ class ModularSlamRecipe(ConanFile):
         self.requires("spdlog/1.13.0")
         self.requires("glm/cci.20230113")
         self.requires("opencv/4.8.1", force=True)
-        self.requires("qt/6.6.2", force=True)
-        self.requires("libpng/1.6.43", override=True)
-        self.requires("ffmpeg/6.1", override=True)
-        self.requires("xkbcommon/1.6.0", override=True)
-        self.requires("librealsense/2.53.1")
-        #  TODO  add eigen
+        self.requires("qt/6.6.3", force=True)
+        # self.requires("qt/6.7.3", force=True)
+        # self.requires("libpng/1.6.43", override=True)
+        # self.requires("ffmpeg/6.1", override=True)
+        # self.requires("xkbcommon/1.6.0", override=True)
+        # self.requires("librealsense/2.53.1")
+        # self.requires("libxpm/3.5.17", override=True)
 
     def config_options(self):
         if self.settings.os == "Windows":

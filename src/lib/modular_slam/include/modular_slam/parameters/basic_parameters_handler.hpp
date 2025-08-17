@@ -2,7 +2,7 @@
 #define MODULAR_SLAM_BASIC_PARAMETERS_HANDLER_HPP_
 
 #include "modular_slam/parameters/parameters_handler.hpp"
-#include <unordered_map>
+#include "parameters_handler.hpp"
 
 namespace mslam
 {
@@ -13,14 +13,12 @@ class BasicParameterHandler : public ParametersHandlerInterface
     bool registerParameter(const ParameterDefinition& paramDefinition, const ParameterValue& value) override;
     bool setParameter(const std::string& name, const ParameterValue& value) override;
     std::optional<ParameterValue> getParameter(const std::string& name) const override;
+    ParametersMap allParameters() const override { return parameters; }
+    ParameterSubscription subscribe() override;
+
+    Subscription subscribeOnNewParameter(NewParameterCallback observer) override;
 
   protected:
-    struct Parameter
-    {
-        ParameterValue currentValue;
-        ParameterDefinition definition;
-    };
-
     bool registerNumberParameter(const ParameterDefinition& paramDefinition, float value);
     bool registerChoiceParameter(const ParameterDefinition& paramDefinition, int value);
 
@@ -28,7 +26,9 @@ class BasicParameterHandler : public ParametersHandlerInterface
     bool setChoiceParameter(Parameter& param, int value);
 
   private:
-    std::unordered_map<std::string, Parameter> parameters;
+    ParametersMap parameters;
+
+    std::vector<NewParameterCallback> newParameterCallbacks;
 };
 
 } // namespace mslam

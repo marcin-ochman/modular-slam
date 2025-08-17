@@ -1,11 +1,13 @@
 #ifndef VIEWER_MAIN_WINDOW_HPP_
 #define VIEWER_MAIN_WINDOW_HPP_
 
+#include "modular_slam/parameters/parameters_handler.hpp"
 #include "modular_slam/types/depth_frame.hpp"
 #include "pointcloud_viewer.hpp"
 #include "slam_statistics.hpp"
 #include "ui_viewer_main_window.h"
 #include <QMainWindow>
+#include <qlogging.h>
 
 namespace Ui
 {
@@ -41,6 +43,18 @@ class ViewerMainWindow : public QMainWindow
     void setSlamStatistics(const SlamStatistics& newSlamStats) { ui->slamStatsViewer->setSlamStatistics(newSlamStats); }
     void addKeyframe(const KeyframeViewData& keyframe) { ui->pointcloudViewer->addKeyframe(keyframe); }
     void setCurrentFrame(const KeyframeViewData& keyframe) { ui->pointcloudViewer->setCurrentFrame(keyframe); }
+
+    void addValueParameter(const QString& name, float value, const Range& range)
+    {
+        qDebug() << "Value";
+        ui->parametersHandler->addValueParameter(name, value, range);
+    }
+
+    void addChoiceParameter(const QString& name, const int value, const QVector<int>& choices)
+    {
+        qDebug() << "Choice";
+        ui->parametersHandler->addChoiceParameter(name, value, choices);
+    }
 
   protected:
     void closeEvent(QCloseEvent* event) override;
