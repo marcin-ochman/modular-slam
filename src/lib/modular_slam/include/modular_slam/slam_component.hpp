@@ -1,7 +1,7 @@
 #ifndef MODULAR_SLAM_SLAM_COMPONENT_HPP_
 #define MODULAR_SLAM_SLAM_COMPONENT_HPP_
 
-#include "modular_slam/parameters_handler.hpp"
+#include "modular_slam/parameters/parameters_handler.hpp"
 #include <memory>
 
 namespace mslam

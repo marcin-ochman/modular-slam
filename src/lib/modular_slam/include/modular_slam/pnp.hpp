@@ -1,9 +1,8 @@
 #ifndef MSLAM_PNP_HPP_
 #define MSLAM_PNP_HPP_
 
-#include "modular_slam/basic_types.hpp"
-#include "modular_slam/camera_parameters.hpp"
-#include "modular_slam/landmark.hpp"
+#include "modular_slam/sensors/camera_parameters.hpp"
+#include "modular_slam/types/landmark.hpp"
 
 #include <boost/dynamic_bitset.hpp>
 #include <memory>

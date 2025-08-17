@@ -1,5 +1,4 @@
-#include "modular_slam/basic_feature_map_components_factory.hpp"
-#include "modular_slam/slam3d_types.hpp"
+#include "modular_slam/map/basic_feature_map_components_factory.hpp"
 
 namespace mslam
 {

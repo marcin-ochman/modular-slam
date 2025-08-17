@@ -3,12 +3,12 @@
 
 #include <GL/gl.h>
 #include <QMouseEvent>
+#include <QSurfaceFormat>
 #include <QTimer>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/transform.hpp>
 #include <glm/vec3.hpp>
 #include <optional>
-
 // clang-format off
 static const GLfloat textureBoxVertices[] = {
      1.0f, -1.0f,  0.0f, 1.0f, 1.0f,
@@ -35,6 +35,7 @@ PointcloudViewer::PointcloudViewer(QWidget* parent)
     : QOpenGLWidget(parent), camera(65.f, static_cast<float>(width()) / static_cast<float>(height()), 0.01f, 1000.f)
 {
     setMouseTracking(true);
+    setFocusPolicy(Qt::StrongFocus);
 }
 
 PointcloudViewer::~PointcloudViewer()
@@ -75,6 +76,13 @@ void PointcloudViewer::addKeyframe(const KeyframeViewData& keyframe)
 
 void PointcloudViewer::initializeGL()
 {
+    QSurfaceFormat format;
+    format.setDepthBufferSize(24);
+    format.setStencilBufferSize(8);
+    format.setVersion(3, 2);
+    format.setProfile(QSurfaceFormat::CoreProfile);
+    this->setFormat(format);
+
     initializeOpenGLFunctions();
     glEnable(GL_PROGRAM_POINT_SIZE);
     glEnable(GL_BLEND);
@@ -136,6 +144,26 @@ void PointcloudViewer::wheelEvent(QWheelEvent* event)
 {
     const auto scroll = static_cast<float>(event->angleDelta().y()) / 500.0f;
     camera.zoom(scroll);
+}
+
+void PointcloudViewer::keyPressEvent(QKeyEvent* event)
+{
+    qDebug() << "Received ";
+    switch(event->key())
+    {
+        case Qt::Key_A:
+            camera.pan(glm::vec2(0.2f, 0.0f));
+            break;
+        case Qt::Key_D:
+            camera.pan(glm::vec2(-0.2f, 0.0f));
+            break;
+        case Qt::Key_W:
+            camera.move_forward(0.2f);
+            break;
+        case Qt::Key_S:
+            camera.move_forward(0.2f);
+            break;
+    }
 }
 
 void PointcloudViewer::handleCameraRotation(QMouseEvent* event)

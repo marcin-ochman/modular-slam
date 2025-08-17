@@ -1,10 +1,10 @@
 #ifndef MSLAM_SLAM_HPP_
 #define MSLAM_SLAM_HPP_
 
-#include "modular_slam/backend_interface.hpp"
-#include "modular_slam/data_provider.hpp"
-#include "modular_slam/frontend_interface.hpp"
-#include "modular_slam/map_interface.hpp"
+#include "modular_slam/backend/backend_interface.hpp"
+#include "modular_slam/frontend/frontend_interface.hpp"
+#include "modular_slam/map/map_interface.hpp"
+#include "modular_slam/sensors/data_provider.hpp"
 
 #include <spdlog/spdlog.h>
 
@@ -20,20 +20,21 @@ enum class SlamProcessResult
 };
 
 template <typename SensorDataType, typename SensorStateType, typename LandmarkStateType, typename ObservationType>
-class Slam
+class KeypointSlam
 {
   public:
     using DataProviderInterfaceType = DataProviderInterface<SensorDataType>;
     using FrontendInterfaceType =
         FrontendInterface<SensorDataType, SensorStateType, LandmarkStateType, ObservationType>;
     using BackendInterfaceType = BackendInterface<SensorStateType, LandmarkStateType, ObservationType>;
-    using SlamType = Slam<SensorDataType, SensorStateType, LandmarkStateType, ObservationType>;
+    using SlamType = KeypointSlam<SensorDataType, SensorStateType, LandmarkStateType, ObservationType>;
     using MapType = IMap<SensorStateType, LandmarkStateType, ObservationType>;
 
-    Slam(std::shared_ptr<ParametersHandlerInterface> parameterHandler,
-         std::shared_ptr<DataProviderInterfaceType> dataProviderInterface,
-         std::shared_ptr<FrontendInterfaceType> frontendInterface,
-         std::shared_ptr<BackendInterfaceType> backendInterface, std::shared_ptr<MapType> mapInterface)
+    KeypointSlam(std::shared_ptr<ParametersHandlerInterface> parameterHandler,
+                 std::shared_ptr<DataProviderInterfaceType> dataProviderInterface,
+                 std::shared_ptr<FrontendInterfaceType> frontendInterface,
+                 std::shared_ptr<BackendInterfaceType> backendInterface, std::shared_ptr<MapType> mapInterface)
+        : m_sensorState{}
     {
         this->parameterHandler = std::move(parameterHandler);
         this->dataProvider = std::move(dataProviderInterface);
@@ -46,7 +47,7 @@ class Slam
     virtual SlamProcessResult process();
     [[nodiscard]] const SensorStateType& sensorState() const { return m_sensorState; }
     [[nodiscard]] const SlamState& slamState() const { return m_slamState; }
-    virtual ~Slam() = default;
+    virtual ~KeypointSlam() = default;
 
     std::shared_ptr<FrontendInterfaceType> frontend;
     std::shared_ptr<DataProviderInterface<SensorDataType>> dataProvider;
@@ -61,7 +62,7 @@ class Slam
 };
 
 template <typename SensorDataType, typename SensorStateType, typename LandmarkStateType, typename ObservationType>
-bool Slam<SensorDataType, SensorStateType, LandmarkStateType, ObservationType>::init()
+bool KeypointSlam<SensorDataType, SensorStateType, LandmarkStateType, ObservationType>::init()
 {
     auto result =
         parameterHandler->init() && dataProvider->init() && frontend->init() && backend->init() && map->init();
@@ -70,7 +71,7 @@ bool Slam<SensorDataType, SensorStateType, LandmarkStateType, ObservationType>::
 }
 
 template <typename SensorDataType, typename SensorStateType, typename LandmarkStateType, typename ObservationType>
-SlamProcessResult Slam<SensorDataType, SensorStateType, LandmarkStateType, ObservationType>::process()
+SlamProcessResult KeypointSlam<SensorDataType, SensorStateType, LandmarkStateType, ObservationType>::process()
 {
     auto isNewDataAvailable = dataProvider->fetch();
 
@@ -90,8 +91,8 @@ SlamProcessResult Slam<SensorDataType, SensorStateType, LandmarkStateType, Obser
 
     map->update(frontendOutput);
 
+    // TODO: run as std::async
     auto backendOutput = backend->process(frontendOutput);
-
     frontend->update(backendOutput);
 
     return SlamProcessResult::Success;

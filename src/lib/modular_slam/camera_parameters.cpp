@@ -1,4 +1,4 @@
-#include "modular_slam/camera_parameters.hpp"
+#include "modular_slam/sensors/camera_parameters.hpp"
 
 namespace mslam
 {

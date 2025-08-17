@@ -1,9 +1,8 @@
 #ifndef MODULAR_SLAM_CV_PNP_RANSAC_HPP_
 #define MODULAR_SLAM_CV_PNP_RANSAC_HPP_
 
-#include "modular_slam/basic_types.hpp"
 #include "modular_slam/pnp.hpp"
-#include "modular_slam/slam3d_types.hpp"
+#include "modular_slam/types/slam3d_types.hpp"
 
 namespace mslam
 {

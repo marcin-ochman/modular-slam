@@ -1,8 +1,6 @@
-#include "modular_slam/ceres_reprojection_error_pnp.hpp"
-#include "modular_slam/basic_types.hpp"
-#include "modular_slam/camera_parameters.hpp"
+#include "modular_slam/backend/ceres_reprojection_error_pnp.hpp"
 #include "modular_slam/cv_ransac_pnp.hpp"
-#include "modular_slam/slam3d_types.hpp"
+#include "modular_slam/sensors/camera_parameters.hpp"
 
 #include <Eigen/src/Core/Matrix.h>
 #include <Eigen/src/Geometry/AngleAxis.h>

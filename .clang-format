@@ -12,7 +12,6 @@ SpaceBeforeParens: Never
 AllowShortFunctionsOnASingleLine: Inline
 BreakConstructorInitializers: BeforeColon
 IndentWidth: 4
-NamespaceIndentation: None
 PointerAlignment: Left
 SpaceInEmptyParentheses: 'false'
 SpacesBeforeTrailingComments: 1

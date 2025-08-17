@@ -10,23 +10,19 @@
 #include <iostream>
 #include <limits>
 
-#include "modular_slam/basic_feature_map_components_factory.hpp"
-#include "modular_slam/basic_map.hpp"
-#include "modular_slam/basic_parameters_handler.hpp"
-#include "modular_slam/basic_types.hpp"
-#include "modular_slam/ceres_backend.hpp"
-#include "modular_slam/ceres_reprojection_error_pnp.hpp"
+#include "modular_slam/backend/ceres_backend.hpp"
+#include "modular_slam/backend/ceres_reprojection_error_pnp.hpp"
 #include "modular_slam/cv_ransac_pnp.hpp"
-#include "modular_slam/data_provider.hpp"
+#include "modular_slam/distributed_cv_feature.hpp"
 #include "modular_slam/frontend/rgbd_feature_frontend.hpp"
-#include "modular_slam/frontend_output.hpp"
+#include "modular_slam/map/basic_feature_map_components_factory.hpp"
+#include "modular_slam/map/basic_map.hpp"
 #include "modular_slam/orb_feature.hpp"
-#include "modular_slam/realsense_camera.hpp"
-#include "modular_slam/rgbd_file_provider.hpp"
-#include "modular_slam/rgbd_frame.hpp"
-#include "modular_slam/rgbd_slam_types.hpp"
-#include "modular_slam/slam3d_types.hpp"
+#include "modular_slam/parameters/basic_parameters_handler.hpp"
+#include "modular_slam/sensors/realsense_camera.hpp"
+#include "modular_slam/sensors/rgbd_file_provider.hpp"
 #include "modular_slam/slam_builder.hpp"
+#include "modular_slam/types/frontend_output.hpp"
 
 #include "viewer_main_window.hpp"
 
@@ -57,6 +53,7 @@ struct ViewerArgs
     std::optional<std::string> tumFile;
     std::optional<TrajectoryFileArgs> output;
     bool useRealSense;
+    bool autoClose;
 };
 
 std::optional<TrajectoryFileArgs> makeTrajectoryFileArgs(const std::string type, const std::string& path)
@@ -84,6 +81,7 @@ ViewerArgs parseArgs(QApplication& app)
 
     parser.addOption({{"t", "tum_file"}, "Provides data from TUM output of associate.py script", "file"});
     parser.addOption({{"r", "realsense"}, "Provides data from RealSense device"});
+    parser.addOption({{"c", "autoclose"}, "Close program after "});
     parser.addOption({{"o", "trajectory_output"}, "Path to output trajectory", "output"});
     parser.addOption({{"f", "trajectory_format"}, "Trajectory format [KITTI, TUM]", "format"});
 
@@ -92,6 +90,8 @@ ViewerArgs parseArgs(QApplication& app)
     parser.process(app);
 
     args.useRealSense = parser.isSet("realsense");
+
+    args.autoClose = parser.isSet("realsense");
     args.tumFile = parser.isSet("tum_file") ? std::make_optional(parser.value("tum_file").toStdString()) : std::nullopt;
     args.output = makeTrajectoryFileArgs(
         parser.isSet("trajectory_format") ? parser.value("trajectory_format").toLower().toStdString() : "",
@@ -163,9 +163,10 @@ void TumLocalizationDumper::operator()(
     output << "\n";
 }
 
-auto buildSlam(const ViewerArgs& args)
+auto buildSlam(const ViewerArgs& args, SlamThread* slamThread)
 {
-    mslam::SlamBuilder<mslam::RgbdFrame, mslam::slam3d::SensorState, mslam::Vector3, mslam::rgbd::RgbdKeypoint>
+    mslam::SlamBuilder<mslam::RgbdFrame, mslam::slam3d::SensorState, mslam::Vector3,
+                       mslam::rgbd::RgbdOrbKeypointDescriptor>
         slamBuilder;
 
     std::shared_ptr<mslam::DataProviderInterface<mslam::RgbdFrame>> dataProvider =
@@ -179,19 +180,28 @@ auto buildSlam(const ViewerArgs& args)
 
     auto map = std::make_shared<mslam::BasicMap>();
     auto frontend = std::make_shared<mslam::RgbdFeatureFrontend>(
-        std::make_shared<mslam::OpenCvRansacPnp>(), std::make_shared<mslam::OrbOpenCvDetector>(),
+        std::make_shared<mslam::OpenCvRansacPnp>(), std::make_shared<mslam::DistributedOrbOpenCvDetector>(),
         std::make_shared<mslam::OrbOpenCvMatcher>(), std::make_shared<mslam::BasicFeatureMapComponentsFactory>(), map);
     auto backend = std::make_shared<mslam::CeresBackend>();
 
     backend->setMap(map);
 
-    slamBuilder.addParameterHandler(std::make_shared<mslam::BasicParameterHandler>())
+    using FrontendOutputType =
+        typename mslam::FrontendInterface<mslam::RgbdFrame, mslam::slam3d::SensorState, mslam::Vector3,
+                                          mslam::rgbd::RgbdOrbKeypointDescriptor>::FrontendOutputType;
+
+    auto parameterHandler = std::make_shared<mslam::BasicParameterHandler>();
+    slamBuilder.addParameterHandler(parameterHandler)
         .addDataProvider(dataProvider)
         .addFrontend(frontend)
         .addBackend(backend)
         .addMap(map)
         .registerDataFetchedAction([backend](std::shared_ptr<mslam::RgbdFrame> frame)
-                                   { backend->setCameraParameters(frame->depth.cameraParameters); });
+                                   { backend->setCameraParameters(frame->depth.cameraParameters); })
+        .registerDataFetchedAction([slamThread](std::shared_ptr<mslam::RgbdFrame> frame)
+                                   { slamThread->setRecentFrame(frame); })
+        .registerFrontendFinishedAction([slamThread](const FrontendOutputType& output) -> void
+                                        { slamThread->setRecentObservations(output.landmarkObservations); });
 
     if(args.output.has_value())
     {
@@ -231,14 +241,14 @@ int main(int argc, char* argv[])
     auto args = parseArgs(app);
     handleArgs(args);
 
-    auto slam = buildSlam(args);
-
     mslam::ViewerMainWindow mainWindow;
     SlamThread* slamThread = new SlamThread(&mainWindow);
-    slamThread->setSlam(std::move(slam));
-    slamThread->start();
 
-    QObject::connect(slamThread, &SlamThread::rgbImageChanged, &mainWindow, &mslam::ViewerMainWindow::setImage);
+    auto slam = buildSlam(args, slamThread);
+    slamThread->setSlam(std::move(slam));
+
+    QObject::connect(slamThread, &SlamThread::rgbImageChanged, &mainWindow,
+                     &mslam::ViewerMainWindow::setImageWithObservations);
     QObject::connect(slamThread, &SlamThread::depthImageChanged, &mainWindow, &mslam::ViewerMainWindow::setDepthImage);
     QObject::connect(slamThread, &SlamThread::cameraPointsChanged, &mainWindow,
                      &mslam::ViewerMainWindow::setCurrentCameraPoints);
@@ -249,10 +259,16 @@ int main(int argc, char* argv[])
                      &mslam::ViewerMainWindow::setCurrentFrame);
     QObject::connect(slamThread, &SlamThread::landmarkPointsChanged, &mainWindow,
                      &mslam::ViewerMainWindow::setLandmarkPoints);
+    QObject::connect(slamThread, &SlamThread::newChoiceParameterRegistered, &mainWindow,
+                     &mslam::ViewerMainWindow::addChoiceParameter);
+    QObject::connect(slamThread, &SlamThread::newRangeParameterRegistered, &mainWindow,
+                     &mslam::ViewerMainWindow::addValueParameter);
+
     QObject::connect(&mainWindow, &mslam::ViewerMainWindow::paused, slamThread, &SlamThread::pause);
     QObject::connect(&mainWindow, &mslam::ViewerMainWindow::resumed, slamThread, &SlamThread::resume);
     QObject::connect(&mainWindow, &mslam::ViewerMainWindow::isClosing, slamThread, &SlamThread::requestInterruption);
 
+    slamThread->start();
     mainWindow.show();
 
     int result = app.exec();

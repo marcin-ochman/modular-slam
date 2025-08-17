@@ -1,14 +1,7 @@
-#include "modular_slam/ceres_backend.hpp"
-#include "modular_slam/basic_types.hpp"
-#include "modular_slam/camera_parameters.hpp"
-#include "modular_slam/frontend_interface.hpp"
-#include "modular_slam/map_interface.hpp"
-#include "modular_slam/rgbd_slam_types.hpp"
-#include "modular_slam/slam3d_types.hpp"
+#include "modular_slam/backend/ceres_backend.hpp"
 
 #include <Eigen/src/Core/Matrix.h>
 #include <Eigen/src/Geometry/Quaternion.h>
-#include <boost/polymorphic_cast.hpp>
 #include <ceres/ceres.h>
 #include <ceres/cost_function.h>
 #include <ceres/problem.h>
@@ -25,14 +18,14 @@ namespace mslam
 
 struct ReprojectionError
 {
-    ReprojectionError(const rgbd::RgbdKeypoint& keypoint, const mslam::CameraParameters& cameraParameters)
+    ReprojectionError(const rgbd::RgbdOrbKeypointDescriptor& keypoint, const mslam::CameraParameters& cameraParameters)
         : cameraParams(cameraParameters)
     {
-        observation.x() = (keypoint.keypoint.coordinates.x() - cameraParams.principalPoint.x()) * keypoint.depth /
-                          cameraParams.focal.x();
-        observation.y() = (keypoint.keypoint.coordinates.y() - cameraParams.principalPoint.y()) * keypoint.depth /
-                          cameraParams.focal.y();
-        observation.z() = keypoint.depth;
+        observation.x() = (keypoint.keypoint.keypoint.coordinates.x() - cameraParams.principalPoint.x()) *
+                          keypoint.keypoint.depth / cameraParams.focal.x();
+        observation.y() = (keypoint.keypoint.keypoint.coordinates.y() - cameraParams.principalPoint.y()) *
+                          keypoint.keypoint.depth / cameraParams.focal.y();
+        observation.z() = keypoint.keypoint.depth;
     }
 
     template <typename T>
@@ -53,7 +46,8 @@ struct ReprojectionError
         return true;
     }
 
-    static ceres::CostFunction* Create(const rgbd::RgbdKeypoint& keypoint, const CameraParameters& cameraParameters)
+    static ceres::CostFunction* Create(const rgbd::RgbdOrbKeypointDescriptor& keypoint,
+                                       const CameraParameters& cameraParameters)
     {
         return (new ceres::AutoDiffCostFunction<ReprojectionError, 3, 4, 3, 3>(
             new ReprojectionError(keypoint, cameraParameters)));
@@ -67,15 +61,15 @@ struct ReprojectionError
 
 struct ObservationWithCostFunction
 {
-    LandmarkKeyframeObservation<slam3d::SensorState, Vector3, rgbd::RgbdKeypoint> observation;
+    LandmarkKeyframeObservation<slam3d::SensorState, Vector3, rgbd::RgbdOrbKeypointDescriptor> observation;
     ceres::CostFunction* costFunction;
 };
 
-class CeresVisitor : public IMapVisitor<slam3d::SensorState, Vector3, rgbd::RgbdKeypoint>
+class CeresVisitor : public IMapVisitor<slam3d::SensorState, Vector3, rgbd::RgbdOrbKeypointDescriptor>
 {
   public:
     explicit CeresVisitor(CameraParameters& newCameraParams) : cameraParams(newCameraParams) {}
-    void visit(const LandmarkKeyframeObservation<slam3d::SensorState, Vector3, rgbd::RgbdKeypoint>&
+    void visit(const LandmarkKeyframeObservation<slam3d::SensorState, Vector3, rgbd::RgbdOrbKeypointDescriptor>&
                    landmarkKeyframeObservation) override;
 
     ceres::Problem& getProblem() { return problem; }
@@ -95,10 +89,10 @@ class CeresVisitor : public IMapVisitor<slam3d::SensorState, Vector3, rgbd::Rgbd
     std::vector<ObservationWithCostFunction> observationsWithCosts;
 };
 
-CeresBackend::BackendOutputType
-CeresBackend::process(FrontendOutput<mslam::slam3d::SensorState, mslam::Vector3, rgbd::RgbdKeypoint>& frontendOutput)
+CeresBackend::BackendOutputType CeresBackend::process(
+    FrontendOutput<mslam::slam3d::SensorState, mslam::Vector3, rgbd::RgbdOrbKeypointDescriptor>& frontendOutput)
 {
-
+    return BackendOutputType();
     if(needsGlobalBundleAdjustment(frontendOutput))
     {
         return globalBundleAdjustment(frontendOutput);
@@ -144,7 +138,7 @@ bool CeresBackend::needsLocalBundleAdjustment(const FrontendOutputType& frontend
 }
 
 void CeresVisitor::visit(
-    const LandmarkKeyframeObservation<slam3d::SensorState, Vector3, rgbd::RgbdKeypoint>& observation)
+    const LandmarkKeyframeObservation<slam3d::SensorState, Vector3, rgbd::RgbdOrbKeypointDescriptor>& observation)
 {
     ceres::LossFunction* lossFunction = nullptr;
     ceres::CostFunction* costFunction = ReprojectionError::Create(observation.observation, cameraParams);
@@ -169,9 +163,9 @@ CeresBackend::BackendOutputType CeresBackend::localBundleAdjustment(const Fronte
 {
     MapVisitingParams visitingParams;
     visitingParams.elementsToVisit = MapElementsToVisit::LandmarkKeyframeObservation;
-    visitingParams.landmarkKeyframeObservationParams.graphParams = std::make_optional<GraphBasedParams>();
-    visitingParams.landmarkKeyframeObservationParams.graphParams->refKeyframeId = frontendOutput.newKeyframe->id;
-    visitingParams.landmarkKeyframeObservationParams.graphParams->deepLevel = 1;
+    visitingParams.observationParams.graphParams = std::make_optional<GraphBasedParams>();
+    visitingParams.observationParams.graphParams->refKeyframeId = frontendOutput.newKeyframe->id;
+    visitingParams.observationParams.graphParams->deepLevel = 1;
 
     return bundleAdjustment(visitingParams);
 }
@@ -181,9 +175,9 @@ CeresBackend::BackendOutputType CeresBackend::globalBundleAdjustment(const Front
     MapVisitingParams visitingParams;
 
     visitingParams.elementsToVisit = MapElementsToVisit::LandmarkKeyframeObservation;
-    visitingParams.landmarkKeyframeObservationParams.graphParams = std::make_optional<GraphBasedParams>();
-    visitingParams.landmarkKeyframeObservationParams.graphParams->refKeyframeId = frontendOutput.newKeyframe->id;
-    visitingParams.landmarkKeyframeObservationParams.graphParams->deepLevel = std::numeric_limits<Id>::max();
+    visitingParams.observationParams.graphParams = std::make_optional<GraphBasedParams>();
+    visitingParams.observationParams.graphParams->refKeyframeId = frontendOutput.newKeyframe->id;
+    visitingParams.observationParams.graphParams->deepLevel = std::numeric_limits<Id>::max();
 
     return bundleAdjustment(visitingParams);
 }

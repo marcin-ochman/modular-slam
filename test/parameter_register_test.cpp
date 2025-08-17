@@ -1,8 +1,6 @@
-#include "modular_slam/basic_parameters_handler.hpp"
 #include "modular_slam/modular_slam.hpp"
-#include "modular_slam/parameters_handler.hpp"
-#include "modular_slam/rgbd_file_provider.hpp"
-#include <catch2/catch.hpp>
+#include "modular_slam/parameters/basic_parameters_handler.hpp"
+#include <catch2/catch_test_macros.hpp>
 #include <catch2/trompeloeil.hpp>
 
 using namespace std::string_literals;

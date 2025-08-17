@@ -1,4 +1,4 @@
-#include "modular_slam/realsense_camera.hpp"
+#include "modular_slam/sensors/realsense_camera.hpp"
 #include "modular_slam/modular_slam.hpp"
 #include "opencv2/core.hpp"
 #include "opencv2/imgproc.hpp"

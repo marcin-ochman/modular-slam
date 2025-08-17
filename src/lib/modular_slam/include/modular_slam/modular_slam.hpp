@@ -3,9 +3,9 @@
 
 // Here put only public headers
 
-#include "modular_slam/keyframe.hpp"
 #include "modular_slam/slam_builder.hpp"
-#include "modular_slam/state.hpp"
+#include "modular_slam/types/keyframe.hpp"
+#include "modular_slam/types/state.hpp"
 
 namespace mslam
 {

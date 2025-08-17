@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: modular-slam-ci
     container:
-      image: ghcr.io/marcin-ochman/modular-slam:v0.0.8-arch
+      image: ghcr.io/marcin-ochman/modular-slam:v0.0.10-conan
       credentials:
         username: marcin-ochman
         password: ${{ secrets.container_registry_token }}
@@ -22,15 +22,16 @@ jobs:
 
     - name: Configure CMake
       shell: bash
-      run: mkdir build; cd build;  cmake -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_CXX_FLAGS="-Wall -pedantic -Wextra" ..; cd -
+      run:  mkdir build; cd build;  cmake -DCMAKE_TOOLCHAIN_FILE=/conan_install/build/Release/generators/conan_toolchain.cmake  -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_CXX_FLAGS="-Wall -pedantic -Wextra" ..; cd -
 
     - name: Build
       shell: bash
-      run: cd build; make -j; cd -
+      run: cd build; source  /conan_install/build/Release/generators/conanrun.sh; make -j; cd -
 
     - name: Test
+      shell: bash
       working-directory: ${{github.workspace}}/build
-      run: ctest -C ${{env.BUILD_TYPE}} --output-on-failure
+      run: source  /conan_install/build/Release/generators/conanrun.sh; ctest -C ${{env.BUILD_TYPE}} --output-on-failure
 
     - name: Generate Docs
       run: cd build; make doc; cd -;
