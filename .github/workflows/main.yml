@@ -38,6 +38,11 @@ jobs:
       # if: endsWith(github.ref, 'master')
       run: cmake --build build --target doc -j
 
+
+    - name: Debug
+      working-directory: ${{github.workspace}}/build
+      run: ls -l build; ls -l build/doc; ls -l build/doc/doxygen; ls -l build/doc/doxygen/html
+
     - name: Deploy
       uses: JamesIves/github-pages-deploy-action@4.1.4
       # if: endsWith(github.ref, 'master')
