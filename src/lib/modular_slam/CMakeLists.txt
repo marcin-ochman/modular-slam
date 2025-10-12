@@ -1,0 +1,2 @@
+add_library(modular_slam modular_slam.cpp)
+target_include_directories(modular_slam PUBLIC include)

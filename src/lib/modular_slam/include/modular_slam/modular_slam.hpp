@@ -1,0 +1,4 @@
+#ifndef MODULAR_SLAM_HPP
+#define MODULAR_SLAM_HPP
+
+#endif /* MODULAR_SLAM_HPP */
