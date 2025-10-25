@@ -31,7 +31,7 @@ jobs:
         shell: bash
         run: |
           source conan_build/build/Release/generators/conanbuild.sh
-          cmake -B --preset=conan-release
+          cmake --preset=conan-release
 
       - name: Build
         shell: bash
