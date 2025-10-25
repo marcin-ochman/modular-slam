@@ -1,4 +1,8 @@
-cmake_minimum_required(VERSION 3.21)
+cmake_minimum_required(VERSION 3.30)
+
+include(CPack)
+include(CMakePackageConfigHelpers)
+include(GNUInstallDirs)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -12,3 +16,8 @@ project(
 
 add_subdirectory(src/app/cpp)
 add_subdirectory(src/lib/modular_slam)
+
+include(CTest)
+if(BUILD_TESTING)
+  add_subdirectory(test)
+endif()
