@@ -29,13 +29,19 @@ jobs:
 
       - name: Configure CMake
         shell: bash
-        run: cmake -B build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+        run: |
+          source conan_build/build/Release/generators/conanbuild.sh
+          cmake -B --preset=conan-release
 
       - name: Build
         shell: bash
-        run: cmake --build build -j
+        run: |
+          source conan_build/build/Release/generators/conanbuild.sh
+          cmake --build --preset=conan-release -j
 
       - name: Test
         shell: bash
         working-directory: ${{github.workspace}}/build
-        run: echo "Testing needs to be implemented"
+        run: |
+          source conan_build/build/Release/generators/conanbuild.sh
+          ctest --preset=conan-release
