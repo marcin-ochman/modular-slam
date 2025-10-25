@@ -22,7 +22,9 @@ jobs:
 
       - name: Install dependencies with conan
         shell: bash
-        run: conan install . --build=missing  -of conan_build
+        run: |
+          conan profile detect
+          conan install . --build=missing  -of conan_build
 
       - name: Configure CMake
         shell: bash
