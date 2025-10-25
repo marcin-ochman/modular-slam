@@ -41,7 +41,6 @@ jobs:
 
       - name: Test
         shell: bash
-        working-directory: ${{github.workspace}}/build
         run: |
           source conan_build/build/Release/generators/conanbuild.sh
           ctest --preset=conan-release
