@@ -25,6 +25,7 @@ jobs:
         run: |
           conan profile detect
           conan install . --build=missing  -of conan_build
+          source conan_build/build/Release/generators/conanbuild.sh
 
       - name: Configure CMake
         shell: bash
