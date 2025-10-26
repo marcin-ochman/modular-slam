@@ -44,3 +44,12 @@ jobs:
         run: |
           source conan_build/build/Release/generators/conanbuild.sh
           ctest --preset=conan-release
+
+  code-analysis:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Run clang-format
+        uses: jidicula/clang-format-action@v4.15.0
+        with:
+          clang-format-version: "20"
