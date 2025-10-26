@@ -1,4 +1,3 @@
-#include "modular_slam/modular_slam.hpp"
 #include <iostream>
 
 int main(int /*argc*/, char* /*argv*/[])
