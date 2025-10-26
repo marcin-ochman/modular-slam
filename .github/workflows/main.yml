@@ -24,26 +24,27 @@ jobs:
         shell: bash
         run: |
           conan profile detect
-          conan install . --build=missing  -of conan_build
-          source conan_build/build/Release/generators/conanbuild.sh
+          conan install . --build=missing -of conan_build -s build_type=RelWithDebInfo
+          source conan_build/build/RelWithDebInfo/generators/conanbuild.sh
 
       - name: Configure CMake
         shell: bash
         run: |
-          source conan_build/build/Release/generators/conanbuild.sh
+          source conan_build/build/RelWithDebInfo/generators/conanbuild.sh
           cmake --preset=conan-release -DWARNINGS_AS_ERRORS=ON
 
       - name: Build
         shell: bash
         run: |
-          source conan_build/build/Release/generators/conanbuild.sh
+          source conan_build/build/RelWithDebInfo/generators/conanbuild.sh
           cmake --build --preset=conan-release -j
 
-      - name: Test
+      - name: Test and Coverage
         shell: bash
         run: |
-          source conan_build/build/Release/generators/conanbuild.sh
-          ctest --preset=conan-release
+          source conan_build/build/RelWithDebInfo/generators/conanbuild.sh
+          ctest --preset=coverage
+          gcovr -j ${{env.nproc}} --exclude 'tests/.*' --print-summary --html --html-details -o coverage_report/index.html --build-directory conan_build/build/RelWithDebInfo
 
   code-analysis:
     runs-on: ubuntu-latest
