@@ -31,7 +31,7 @@ jobs:
         shell: bash
         run: |
           source conan_build/build/Release/generators/conanbuild.sh
-          cmake --preset=conan-release
+          cmake --preset=conan-release -DWARNINGS_AS_ERRORS=ON
 
       - name: Build
         shell: bash

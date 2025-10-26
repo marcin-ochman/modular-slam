@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.30)
+cmake_minimum_required(VERSION 3.28)
 
 include(CPack)
 include(CMakePackageConfigHelpers)
@@ -13,6 +13,12 @@ project(
   DESCRIPTION "Algorithms and tools for building VSLAM systems"
   HOMEPAGE_URL "%%myurl%%"
   LANGUAGES CXX C)
+
+option(WARNINGS_AS_ERRORS "Warnings are treated as errors. Useful in development." OFF)
+
+include("cmake/static_analyzers.cmake")
+
+modular_slam_enable_clang_tidy(${WARNINGS_AS_ERRORS})
 
 add_subdirectory(src/app/cpp)
 add_subdirectory(src/lib/modular_slam)
