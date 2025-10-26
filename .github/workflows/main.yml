@@ -44,6 +44,7 @@ jobs:
         run: |
           source conan_build/build/RelWithDebInfo/generators/conanbuild.sh
           ctest --preset=coverage
+          mkdir coverage_report
           gcovr -j ${{env.nproc}} --exclude 'tests/.*' --print-summary --html --html-details -o coverage_report/index.html --build-directory conan_build/build/RelWithDebInfo
 
   code-analysis:
