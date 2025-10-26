@@ -31,13 +31,13 @@ jobs:
         shell: bash
         run: |
           source conan_build/build/RelWithDebInfo/generators/conanbuild.sh
-          cmake --preset=conan-release -DWARNINGS_AS_ERRORS=ON
+          cmake --preset=coverage -DWARNINGS_AS_ERRORS=ON
 
       - name: Build
         shell: bash
         run: |
           source conan_build/build/RelWithDebInfo/generators/conanbuild.sh
-          cmake --build --preset=conan-release -j
+          cmake --build --preset=coverage -j
 
       - name: Test and Coverage
         shell: bash
