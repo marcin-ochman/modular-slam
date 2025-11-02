@@ -11,7 +11,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest]
-        compiler: [llvm-20, llvm-19, gcc-14, gcc-15]
+        compiler: [llvm-20, llvm-19, gcc-14]
         generator: [Ninja]
         build_type: [Release, RelWithDebInfo, Debug]
         include:
