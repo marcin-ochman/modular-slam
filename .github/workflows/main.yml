@@ -10,10 +10,11 @@ jobs:
   build-and-test:
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest, windows-latest, macos-latest]
         compiler: [llvm-20, llvm-19, gcc-14]
         generator: [Ninja]
         build_type: [Release, RelWithDebInfo, Debug]
+        sanitizer: [none, asan, ubsan, tsan]
         include:
           - build_type: Release
             preset: conan-release
@@ -24,6 +25,10 @@ jobs:
         exclude:
           - os: windows-latest
             compiler: gcc-14
+          - os: windows-latest
+            sanitizer: tsan
+          - os: windows-latest
+            sanitizer: ubsan
 
     runs-on: ${{ matrix.os }}
     environment: modular-slam-ci
@@ -54,7 +59,19 @@ jobs:
       - name: Configure CMake
         shell: bash
         run: |
-          echo "Using ${{ matrix.preset }}"
+          case "${{ matrix.sanitizer }}" in
+            asan) asan=ON;  ubsan=OFF; tsan=OFF ;;
+            ubsan) asan=OFF; ubsan=ON;  tsan=OFF ;;
+            tsan) asan=OFF; ubsan=OFF; tsan=ON  ;;
+            *)    asan=OFF; ubsan=OFF; tsan=OFF ;;
+          esac
+
+          cmake --preset ${{ matrix.preset }} \
+            -DMODULAR_SLAM_ENABLE_SANITIZER_ADDRESS=${asan} \
+            -DMODULAR_SLAM_ENABLE_SANITIZER_UNDEFINED=${ubsan} \
+            -DMODULAR_SLAM_ENABLE_SANITIZER_THREAD=${tsan} \
+            -DMODULAR_SLAM_WARNINGS_AS_ERRORS=OFF
+
           cmake --preset=${{ matrix.preset }}  -DWARNINGS_AS_ERRORS=ON
 
       - name: Build
@@ -64,8 +81,13 @@ jobs:
 
       - name: Test
         shell: bash
+        env:
+          ASAN_OPTIONS: detect_leaks=1:strict_string_checks=1:abort_on_error=1:fast_unwind_on_malloc=0
+          UBSAN_OPTIONS: print_stacktrace=1:halt_on_error=1
+          TSAN_OPTIONS: halt_on_error=1:history_size=7
+          LLVM_SYMBOLIZER_PATH: ${{ runner.tool_cache }}/LLVM/*/x64/bin/llvm-symbolizer.exe
         run: |
-          ctest --preset=${{ matrix.preset }} -j
+          ctest --preset=${{ matrix.preset }} -j --output-on-failure
 
       - name: Coverage
         shell: bash
