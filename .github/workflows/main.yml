@@ -21,6 +21,9 @@ jobs:
             preset: conan-relwithdebinfo
           - build_type: Debug
             preset: conan-debug
+        exclude:
+          - os: windows-latest
+            compiler: gcc-14
 
     runs-on: ${{ matrix.os }}
     environment: modular-slam-ci
