@@ -32,6 +32,7 @@ jobs:
           - os: windows-latest
             build_type: Debug
             sanitizer: asan
+            # no need for sanitizers for Release mode
           - build_type: Release
             sanitizer: asan
           - build_type: Release

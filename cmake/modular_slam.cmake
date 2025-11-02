@@ -27,10 +27,8 @@ macro(init_modular_slam_project)
   modular_slam_enable_sanitizers(
     modular_slam_options
     ${MODULAR_SLAM_ENABLE_SANITIZER_ADDRESS}
-    ${MODULAR_SLAM_ENABLE_SANITIZER_LEAK}
     ${MODULAR_SLAM_ENABLE_SANITIZER_UNDEFINED}
-    ${MODULAR_SLAM_ENABLE_SANITIZER_THREAD}
-    ${MODULAR_SLAM_ENABLE_SANITIZER_MEMORY})
+    ${MODULAR_SLAM_ENABLE_SANITIZER_THREAD})
 endmacro()
 
 function(modular_slam_add_library target)
