@@ -1,51 +1,77 @@
 name: CMake
 
-on: [push, pull_request]
-
-env:
-  BUILD_TYPE: Release
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
+  build-and-test:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        compiler: [llvm-20, llvm-19, gcc-14, gcc-15]
+        generator: [Ninja]
+        build_type: [Release, RelWithDebInfo, Debug]
+        include:
+          - build_type: Release
+            preset: conan-release
+          - build_type: RelWithDebInfo
+            preset: conan-relwithdebinfo
+          - build_type: Debug
+            preset: conan-debug
+
+    runs-on: ${{ matrix.os }}
     environment: modular-slam-ci
-    container:
-      image: ghcr.io/marcin-ochman/modular_slam:1.0.0-24102025-dev
-      credentials:
-        username: marcin-ochman
-        password: ${{ secrets.container_registry_token }}
 
     steps:
       - uses: actions/checkout@v5
         with:
           submodules: recursive
 
+      - name: Setup Cpp
+        uses: aminya/setup-cpp@v1
+        with:
+          compiler: ${{ matrix.compiler }}
+          vcvarsall: ${{ contains(matrix.os, 'windows' )}}
+          cmake: true
+          conan: true
+          ninja: true
+          vcpkg: false
+          clangtidy: ${{ env.CLANG_TIDY_VERSION }}
+          gcovr: true
+
       - name: Install dependencies with conan
         shell: bash
         run: |
           conan profile detect
-          conan install . --build=missing -of conan_build -s build_type=RelWithDebInfo
-          source conan_build/build/RelWithDebInfo/generators/conanbuild.sh
+          conan install . --build=missing -of conan_build -s build_type=${{ matrix.build_type }}
 
       - name: Configure CMake
         shell: bash
         run: |
-          source conan_build/build/RelWithDebInfo/generators/conanbuild.sh
-          cmake --preset=coverage -DWARNINGS_AS_ERRORS=ON
+          echo "Using ${{ matrix.preset }}"
+          cmake --preset=${{ matrix.preset }}  -DWARNINGS_AS_ERRORS=ON
 
       - name: Build
         shell: bash
         run: |
-          source conan_build/build/RelWithDebInfo/generators/conanbuild.sh
-          cmake --build --preset=coverage -j
+          cmake --build --preset=${{ matrix.preset }} -j
 
-      - name: Test and Coverage
+      - name: Test
+        shell: bash
+        run: |
+          ctest --preset=${{ matrix.preset }} -j
+
+      - name: Coverage
         shell: bash
         run: |
           source conan_build/build/RelWithDebInfo/generators/conanbuild.sh
           ctest --preset=coverage
           mkdir coverage_report
-          gcovr -j ${{env.nproc}} --exclude 'tests/.*' --print-summary --html --html-details -o coverage_report/index.html
+          gcovr -j ${{env.nproc}} --exclude 'tests/.*' --print-summary --html
+          --html-details -o coverage_report/index.html
 
   code-analysis:
     runs-on: ubuntu-latest
