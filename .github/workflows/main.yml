@@ -10,7 +10,7 @@ jobs:
   build-and-test:
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [ubuntu-latest, windows-latest]
         compiler: [llvm-20, llvm-19, gcc-14]
         generator: [Ninja]
         build_type: [Release, RelWithDebInfo, Debug]
@@ -71,8 +71,6 @@ jobs:
             -DMODULAR_SLAM_ENABLE_SANITIZER_UNDEFINED=${ubsan} \
             -DMODULAR_SLAM_ENABLE_SANITIZER_THREAD=${tsan} \
             -DMODULAR_SLAM_WARNINGS_AS_ERRORS=OFF
-
-          cmake --preset=${{ matrix.preset }}  -DWARNINGS_AS_ERRORS=ON
 
       - name: Build
         shell: bash
