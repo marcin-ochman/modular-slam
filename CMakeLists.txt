@@ -7,21 +7,30 @@ project(
   HOMEPAGE_URL "%%myurl%%"
   LANGUAGES CXX C)
 
-include(CPack)
-include(CMakePackageConfigHelpers)
-include(GNUInstallDirs)
+include(cmake/modular_slam.cmake)
 
-set(CMAKE_CXX_STANDARD 23)
-set(CMAKE_CXX_EXTENSIONS OFF)
+option(MODULAR_SLAM_WARNINGS_AS_ERRORS "Warnings are treated as errors. Useful in development." OFF)
+option(MODULAR_SLAM_ENABLE_CLANG_TIDY "Enables static analysis with clang-tidy during build" ON)
+option(MODULAR_SLAM_COVERAGE_ENABLED "Builds library and tests with coverage enabled." OFF)
+cmake_dependent_option(
+  MODULAR_SLAM_BUILD_APPS
+  "Builds applications"
+  ON
+  "NOT MODULAR_SLAM_COVERAGE_ENABLED"
+  OFF)
+option(MODULAR_SLAM_ENABLE_SANITIZER_ADDRESS "Enable address sanitizer" OFF)
+option(MODULAR_SLAM_ENABLE_SANITIZER_LEAK "Enable leak sanitizer" OFF)
+option(MODULAR_SLAM_ENABLE_SANITIZER_UNDEFINED "Enable undefined sanitizer" OFF)
+option(MODULAR_SLAM_ENABLE_SANITIZER_THREAD "Enable thread sanitizer" OFF)
+option(MODULAR_SLAM_ENABLE_SANITIZER_MEMORY "Enable memory sanitizer" OFF)
 
-option(WARNINGS_AS_ERRORS "Warnings are treated as errors. Useful in development." OFF)
+init_modular_slam_project()
 
-include("cmake/static_analyzers.cmake")
-
-modular_slam_enable_clang_tidy(${WARNINGS_AS_ERRORS})
-
-add_subdirectory(src/app/cpp)
 add_subdirectory(src/lib/modular_slam)
+
+if(MODULAR_SLAM_BUILD_APPS)
+  add_subdirectory(src/app/cpp)
+endif()
 
 include(CTest)
 if(BUILD_TESTING)

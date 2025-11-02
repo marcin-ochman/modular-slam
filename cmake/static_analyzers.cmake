@@ -1,6 +1,4 @@
-macro(modular_slam_enable_clang_tidy WARNINGS_AS_ERRORS)
-
-  find_program(CLANGTIDY clang-tidy)
+function(modular_slam_enable_clang_tidy TARGET WARNINGS_AS_ERRORS)
   if(CLANGTIDY)
     set(CLANG_TIDY_OPTIONS
         ${CLANGTIDY}
@@ -23,9 +21,7 @@ macro(modular_slam_enable_clang_tidy WARNINGS_AS_ERRORS)
       list(APPEND CLANG_TIDY_OPTIONS -warnings-as-errors=*)
     endif()
 
-    message("Setting clang-tidy globally")
-    set(CMAKE_CXX_CLANG_TIDY ${CLANG_TIDY_OPTIONS})
-  else()
-    message(AUTHOR_WARNING "clang-tidy requested but executable not found")
+    message("Setting clang-tidy for target ${TARGET}: ${CLANG_TIDY_COMMAND}")
+    set_target_properties(${TARGET} PROPERTIES CXX_CLANG_TIDY "${CLANG_TIDY_OPTIONS}")
   endif()
-endmacro()
+endfunction()

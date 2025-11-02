@@ -1,4 +1,4 @@
-add_library(modular_slam modular_slam.cpp)
+modular_slam_add_library(modular_slam SOURCES modular_slam.cpp)
 target_include_directories(modular_slam PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
                                                "$<INSTALL_INTERFACE:include>")
 
