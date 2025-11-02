@@ -29,6 +29,15 @@ jobs:
             sanitizer: tsan
           - os: windows-latest
             sanitizer: ubsan
+          - os: windows-latest
+            build_type: Debug
+            sanitizer: asan
+          - build_type: Release
+            sanitizer: asan
+          - build_type: Release
+            sanitizer: ubsan
+          - build_type: Release
+            sanitizer: tsan
 
     runs-on: ${{ matrix.os }}
     environment: modular-slam-ci
