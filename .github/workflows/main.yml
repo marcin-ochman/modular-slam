@@ -67,10 +67,16 @@ jobs:
             *)    asan=OFF; ubsan=OFF; tsan=OFF ;;
           esac
 
-          if [ "$SANITIZER" = "none" ] && [ "$BUILD_TYPE" = "Debug" ]; then
+          if [ "${{ matrix.sanitizer }}" = "none" ] && [ "${{ matrix.build_type }}" = "Debug" ]; then
             COVERAGE="ON"
           else
             COVERAGE="OFF"
+          fi
+
+          if [[ "${{ matrix.compiler }}" == llvm-* ]]; then
+            ENABLE_CLANG_TIDY="ON"
+          else
+            ENABLE_CLANG_TIDY="OFF"
           fi
 
           cmake \
@@ -82,6 +88,7 @@ jobs:
             -DMODULAR_SLAM_ENABLE_SANITIZER_THREAD=${tsan} \
             -DMODULAR_SLAM_WARNINGS_AS_ERRORS=OFF \
             -DMODULAR_SLAM_ENABLE_COVERAGE=${COVERAGE} \
+            -DMODULAR_SLAM_ENABLE_CLANG_TIDY=${ENABLE_CLANG_TIDY} \
             -B build .
 
       - name: Build
