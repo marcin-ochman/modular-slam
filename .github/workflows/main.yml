@@ -22,13 +22,13 @@ jobs:
           - os: windows-latest
             sanitizer: ubsan
           - os: windows-latest
-            preset: Debug
+            build_type: Debug
             sanitizer: asan
-          - preset: Release
+          - build_type: Release
             sanitizer: asan
-          - preset: Release
+          - build_type: Release
             sanitizer: ubsan
-          - preset: Release
+          - build_type: Release
             sanitizer: tsan
 
     runs-on: ${{ matrix.os }}
@@ -100,7 +100,7 @@ jobs:
 
       - name: Coverage
         shell: bash
-        if: matrix.preset == 'coverage' && contains(matrix.os, 'ubuntu')
+        if: matrix.build_type == 'Debug' && matrix.sanitizer == 'none' && contains(matrix.os, 'ubuntu')
         run: |
           mkdir coverage_report
           gcovr -j ${{env.nproc}} --exclude 'tests/.*' --print-summary --html --html-details -o coverage_report/index.html
