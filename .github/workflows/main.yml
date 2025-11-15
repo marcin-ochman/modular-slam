@@ -80,7 +80,7 @@ jobs:
             -DMODULAR_SLAM_ENABLE_SANITIZER_UNDEFINED=${ubsan} \
             -DMODULAR_SLAM_ENABLE_SANITIZER_THREAD=${tsan} \
             -DMODULAR_SLAM_WARNINGS_AS_ERRORS=OFF \
-            -DMODULAR_SLAM_ENABLE_COVERAGE=${COVERAGE}
+            -DMODULAR_SLAM_ENABLE_COVERAGE=${COVERAGE} \
             -B build .
 
       - name: Build
