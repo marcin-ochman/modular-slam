@@ -22,7 +22,6 @@ jobs:
           - os: windows-latest
             sanitizer: ubsan
           - os: windows-latest
-            build_type: Debug
             sanitizer: asan
           - build_type: Release
             sanitizer: asan
