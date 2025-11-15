@@ -11,18 +11,16 @@ include(cmake/modular_slam.cmake)
 
 option(MODULAR_SLAM_WARNINGS_AS_ERRORS "Warnings are treated as errors. Useful in development." OFF)
 option(MODULAR_SLAM_ENABLE_CLANG_TIDY "Enables static analysis with clang-tidy during build" ON)
-option(MODULAR_SLAM_COVERAGE_ENABLED "Builds library and tests with coverage enabled." OFF)
+option(MODULAR_SLAM_ENABLE_COVERAGE "Builds library and tests with coverage enabled." OFF)
 cmake_dependent_option(
   MODULAR_SLAM_BUILD_APPS
   "Builds applications"
   ON
-  "NOT MODULAR_SLAM_COVERAGE_ENABLED"
+  "NOT MODULAR_SLAM_ENABLE_COVERAGE"
   OFF)
 option(MODULAR_SLAM_ENABLE_SANITIZER_ADDRESS "Enable address sanitizer" OFF)
-option(MODULAR_SLAM_ENABLE_SANITIZER_LEAK "Enable leak sanitizer" OFF)
 option(MODULAR_SLAM_ENABLE_SANITIZER_UNDEFINED "Enable undefined sanitizer" OFF)
 option(MODULAR_SLAM_ENABLE_SANITIZER_THREAD "Enable thread sanitizer" OFF)
-option(MODULAR_SLAM_ENABLE_SANITIZER_MEMORY "Enable memory sanitizer" OFF)
 
 init_modular_slam_project()
 

@@ -12,16 +12,8 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest]
         compiler: [llvm-20, llvm-19, gcc-14]
-        generator: [Ninja]
         build_type: [Release, RelWithDebInfo, Debug]
         sanitizer: [none, asan, ubsan, tsan]
-        include:
-          - build_type: Release
-            preset: conan-release
-          - build_type: RelWithDebInfo
-            preset: conan-relwithdebinfo
-          - build_type: Debug
-            preset: conan-debug
         exclude:
           - os: windows-latest
             compiler: gcc-14
@@ -30,14 +22,13 @@ jobs:
           - os: windows-latest
             sanitizer: ubsan
           - os: windows-latest
-            build_type: Debug
+            preset: Debug
             sanitizer: asan
-            # no need for sanitizers for Release mode
-          - build_type: Release
+          - preset: Release
             sanitizer: asan
-          - build_type: Release
+          - preset: Release
             sanitizer: ubsan
-          - build_type: Release
+          - preset: Release
             sanitizer: tsan
 
     runs-on: ${{ matrix.os }}
@@ -76,16 +67,26 @@ jobs:
             *)    asan=OFF; ubsan=OFF; tsan=OFF ;;
           esac
 
-          cmake --preset ${{ matrix.preset }} \
+          if [ "$SANITIZER" = "none" ] && [ "$BUILD_TYPE" = "Debug" ]; then
+            COVERAGE="ON"
+          else
+            COVERAGE="OFF"
+          fi
+
+          cmake \
+            -DCMAKE_TOOLCHAIN_FILE=./conan_build/build/${{matrix.build_type }}/generators/conan_toolchain.cmake \
+            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
             -DMODULAR_SLAM_ENABLE_SANITIZER_ADDRESS=${asan} \
             -DMODULAR_SLAM_ENABLE_SANITIZER_UNDEFINED=${ubsan} \
             -DMODULAR_SLAM_ENABLE_SANITIZER_THREAD=${tsan} \
-            -DMODULAR_SLAM_WARNINGS_AS_ERRORS=OFF
+            -DMODULAR_SLAM_WARNINGS_AS_ERRORS=OFF \
+            -DMODULAR_SLAM_ENABLE_COVERAGE=${COVERAGE}
+            -B build .
 
       - name: Build
         shell: bash
         run: |
-          cmake --build --preset=${{ matrix.preset }} -j
+          cmake --build build -j
 
       - name: Test
         shell: bash
@@ -95,11 +96,11 @@ jobs:
           TSAN_OPTIONS: halt_on_error=1:history_size=7
           LLVM_SYMBOLIZER_PATH: ${{ runner.tool_cache }}/LLVM/*/x64/bin/llvm-symbolizer.exe
         run: |
-          ctest --preset=${{ matrix.preset }} -j --output-on-failure
+          ctest --test-dir build -j --output-on-failure
 
       - name: Coverage
         shell: bash
-        if: matrix.build_type == 'Debug' && contains(matrix.os, 'ubuntu')
+        if: matrix.preset == 'coverage' && contains(matrix.os, 'ubuntu')
         run: |
           mkdir coverage_report
           gcovr -j ${{env.nproc}} --exclude 'tests/.*' --print-summary --html --html-details -o coverage_report/index.html

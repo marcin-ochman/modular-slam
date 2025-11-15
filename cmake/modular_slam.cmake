@@ -7,6 +7,7 @@ include(CMakeDependentOption)
 
 include(${CMAKE_CURRENT_LIST_DIR}/static_analyzers.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/sanitizers.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/coverage.cmake)
 
 macro(init_modular_slam_project)
 
@@ -29,6 +30,8 @@ macro(init_modular_slam_project)
     ${MODULAR_SLAM_ENABLE_SANITIZER_ADDRESS}
     ${MODULAR_SLAM_ENABLE_SANITIZER_UNDEFINED}
     ${MODULAR_SLAM_ENABLE_SANITIZER_THREAD})
+
+  modular_slam_enable_coverage(modular_slam_options ${MODULAR_SLAM_ENABLE_COVERAGE})
 endmacro()
 
 function(modular_slam_add_library target)
@@ -68,12 +71,9 @@ function(modular_slam_add_library target)
     add_library(${target} ${_type} ${MSAL_SOURCES})
   endif()
 
-  if(NOT MSAL_INTERFACE)
-    target_link_libraries(
-      ${target}
-      PUBLIC ${MSAL_PUBLIC_LIBS}
-      PRIVATE ${MSAL_PRIVATE_LIBS})
+  target_link_libraries(${target} PUBLIC $<BUILD_INTERFACE:modular_slam_options>)
 
+  if(NOT MSAL_INTERFACE)
     if(MODULAR_SLAM_ENABLE_CLANG_TIDY AND NOT MSAL_NO_TIDY)
       modular_slam_enable_clang_tidy(${target} ${MODULAR_SLAM_WARNINGS_AS_ERRORS})
     endif()
@@ -83,7 +83,7 @@ endfunction()
 function(modular_slam_add_executable target)
   set(options EXCLUDE_FROM_ALL NO_TIDY)
   set(oneValueArgs "")
-  set(multiValueArgs SOURCES PUBLIC_LIBS PRIVATE_LIBS)
+  set(multiValueArgs SOURCES)
   cmake_parse_arguments(
     MSAE
     "${options}"
@@ -97,7 +97,7 @@ function(modular_slam_add_executable target)
     add_executable(${target} ${MSAE_SOURCES})
   endif()
 
-  target_link_libraries(${target} PUBLIC modular_slam::modular_slam_options)
+  target_link_libraries(${target} PUBLIC $<BUILD_INTERFACE:modular_slam_options>)
 
   if(MODULAR_SLAM_ENABLE_CLANG_TIDY AND NOT MSAE_NO_TIDY)
     modular_slam_enable_clang_tidy(${target} ${MODULAR_SLAM_WARNINGS_AS_ERRORS})
