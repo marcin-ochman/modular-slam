@@ -1,34 +1,122 @@
 name: CMake
 
-on: [push, pull_request]
-
-env:
-  BUILD_TYPE: Release
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
+  build-and-test:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        compiler: [llvm-20, llvm-19, gcc-14]
+        build_type: [Release, RelWithDebInfo, Debug]
+        sanitizer: [none, asan, ubsan, tsan]
+        exclude:
+          - os: windows-latest
+            compiler: gcc-14
+          - os: windows-latest
+            sanitizer: tsan
+          - os: windows-latest
+            sanitizer: ubsan
+          - os: windows-latest
+            sanitizer: asan
+          - build_type: Release
+            sanitizer: asan
+          - build_type: Release
+            sanitizer: ubsan
+          - build_type: Release
+            sanitizer: tsan
+
+    runs-on: ${{ matrix.os }}
     environment: modular-slam-ci
-    container:
-      image: ghcr.io/marcin-ochman/modular-slam:v0.0.8-arch
-      credentials:
-        username: marcin-ochman
-        password: ${{ secrets.container_registry_token }}
 
     steps:
-    - uses: actions/checkout@v3
-      with:
-        submodules: recursive
+      - uses: actions/checkout@v5
+        with:
+          submodules: recursive
 
-    - name: Configure CMake
-      shell: bash
-      run: cmake -B build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} 
+      - name: Setup Cpp
+        uses: aminya/setup-cpp@v1
+        with:
+          compiler: ${{ matrix.compiler }}
+          vcvarsall: ${{ contains(matrix.os, 'windows' )}}
+          cmake: true
+          conan: true
+          ninja: true
+          vcpkg: false
+          clangtidy: ${{ env.CLANG_TIDY_VERSION }}
+          gcovr: true
 
-    - name: Build
-      shell: bash
-      run: cmake --build build -j
+      - name: Install dependencies with conan
+        shell: bash
+        run: |
+          conan profile detect
+          conan install . --build=missing -of conan_build -s build_type=${{ matrix.build_type }}
 
-    - name: Test
-      shell: bash
-      working-directory: ${{github.workspace}}/build
-      run: echo "Testing needs to be implemented"
+      - name: Configure CMake
+        shell: bash
+        run: |
+          case "${{ matrix.sanitizer }}" in
+            asan) asan=ON;  ubsan=OFF; tsan=OFF ;;
+            ubsan) asan=OFF; ubsan=ON;  tsan=OFF ;;
+            tsan) asan=OFF; ubsan=OFF; tsan=ON  ;;
+            *)    asan=OFF; ubsan=OFF; tsan=OFF ;;
+          esac
+
+          if [ "${{ matrix.sanitizer }}" = "none" ] && [ "${{ matrix.build_type }}" = "Debug" ]; then
+            COVERAGE="ON"
+          else
+            COVERAGE="OFF"
+          fi
+
+          if [[ "${{ matrix.compiler }}" == llvm-* ]]; then
+            ENABLE_CLANG_TIDY="ON"
+          else
+            ENABLE_CLANG_TIDY="OFF"
+          fi
+
+          cmake \
+            -G Ninja \
+            -DCMAKE_TOOLCHAIN_FILE=./conan_build/build/${{matrix.build_type }}/generators/conan_toolchain.cmake \
+            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+            -DMODULAR_SLAM_ENABLE_SANITIZER_ADDRESS=${asan} \
+            -DMODULAR_SLAM_ENABLE_SANITIZER_UNDEFINED=${ubsan} \
+            -DMODULAR_SLAM_ENABLE_SANITIZER_THREAD=${tsan} \
+            -DMODULAR_SLAM_WARNINGS_AS_ERRORS=OFF \
+            -DMODULAR_SLAM_ENABLE_COVERAGE=${COVERAGE} \
+            -DMODULAR_SLAM_ENABLE_CLANG_TIDY=${ENABLE_CLANG_TIDY} \
+            -B build .
+
+      - name: Build
+        shell: bash
+        run: |
+          cmake --build build -j
+
+      - name: Test
+        shell: bash
+        env:
+          ASAN_OPTIONS: detect_leaks=1:strict_string_checks=1:abort_on_error=1:fast_unwind_on_malloc=0
+          UBSAN_OPTIONS: print_stacktrace=1:halt_on_error=1
+          TSAN_OPTIONS: halt_on_error=1:history_size=7
+          LLVM_SYMBOLIZER_PATH: ${{ runner.tool_cache }}/LLVM/*/x64/bin/llvm-symbolizer.exe
+        run: |
+          ctest --test-dir build -j --output-on-failure
+
+      - name: Coverage
+        shell: bash
+        if: matrix.build_type == 'Debug' && matrix.sanitizer == 'none' && contains(matrix.os, 'ubuntu')
+        run: |
+          mkdir coverage_report
+          gcovr -j ${{env.nproc}} --exclude 'tests/.*' --print-summary --html --html-details -o coverage_report/index.html
+
+  code-analysis:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Run clang-format
+        uses: jidicula/clang-format-action@v4.15.0
+        with:
+          clang-format-version: "20"

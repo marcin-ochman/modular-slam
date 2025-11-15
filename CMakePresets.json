@@ -1,0 +1,32 @@
+{
+    "version": 4,
+    "include": ["ConanPresets.json"],
+    "configurePresets": [
+        {
+            "name": "coverage",
+            "displayName": "Code Coverage",
+            "description": "Build with coverage flags",
+            "inherits": "conan-relwithdebinfo",
+            "cacheVariables": {
+                "CMAKE_CXX_FLAGS_RELWITHDEBINFO": "$env{CMAKE_CXX_FLAGS_RELWITHDEBINFO} --coverage -O0",
+                "CMAKE_C_FLAGS_RELWITHDEBINFO": "$env{CMAKE_C_FLAGS_RELWITHDEBINFO} --coverage -O0",
+                "CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO": "$env{CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO} --coverage",
+                "CMAKE_SHARED_LINKER_FLAGS_RELWITHDEBINFO": "$env{CMAKE_SHARED_LINKER_FLAGS_RELWITHDEBINFO} --coverage",
+                "MODULAR_SLAM_COVERAGE_ENABLED": "ON"
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "coverage",
+            "configurePreset": "coverage"
+        }
+    ],
+    "testPresets": [
+        {
+            "name": "coverage",
+            "configurePreset": "coverage",
+            "output": { "outputOnFailure": true }
+        }
+    ]
+}

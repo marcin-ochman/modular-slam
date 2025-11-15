@@ -1,0 +1,25 @@
+function(modular_slam_enable_coverage target ENABLE_COVERAGE)
+
+  if(NOT ENABLE_COVERAGE)
+    return()
+  endif()
+
+  if(MSVC)
+    message(WARNING "Coverage for '${target}': MSVC/clang-cl doesn't support gcov format. "
+                    "Enable coverage only on Linux or switch to llvm-cov/OpenCppCoverage on Windows.")
+    target_compile_options(${target} PRIVATE /Zi)
+    target_link_options(${target} PRIVATE /DEBUG)
+    return()
+  endif()
+
+  if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    target_compile_options(${target} INTERFACE --coverage)
+    target_link_options(${target} INTERFACE --coverage)
+  elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    message(STATUS "Setting coverage for ${target}")
+    target_compile_options(${target} INTERFACE --coverage)
+    target_link_options(${target} INTERFACE --coverage)
+  else()
+    message(WARNING "Coverage for '${target}': unrecognized compiler '${CMAKE_CXX_COMPILER_ID}'.")
+  endif()
+endfunction()
