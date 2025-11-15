@@ -74,6 +74,7 @@ jobs:
           fi
 
           cmake \
+            -G Ninja \
             -DCMAKE_TOOLCHAIN_FILE=./conan_build/build/${{matrix.build_type }}/generators/conan_toolchain.cmake \
             -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
             -DMODULAR_SLAM_ENABLE_SANITIZER_ADDRESS=${asan} \
