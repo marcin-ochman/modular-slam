@@ -4,6 +4,13 @@ target_include_directories(modular_slam PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURREN
 
 add_library(modular_slam::modular_slam ALIAS modular_slam)
 
+if(MODULAR_SLAM_BUILD_PYTHON_BINDINGS)
+  find_package(pybind11 CONFIG REQUIRED)
+  pybind11_add_module(_modular_slam python_bindings/py_modular_slam.cpp)
+  target_link_libraries(_modular_slam PRIVATE modular_slam::modular_slam)
+  install(TARGETS _modular_slam DESTINATION modular_slam)
+endif()
+
 install(
   TARGETS modular_slam
   EXPORT modular_slam-targets

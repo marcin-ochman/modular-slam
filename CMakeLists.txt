@@ -10,8 +10,9 @@ project(
 include(cmake/modular_slam.cmake)
 
 option(MODULAR_SLAM_WARNINGS_AS_ERRORS "Warnings are treated as errors. Useful in development." OFF)
-option(MODULAR_SLAM_ENABLE_CLANG_TIDY "Enables static analysis with clang-tidy during build" ON)
+option(MODULAR_SLAM_ENABLE_CLANG_TIDY "Enables static analysis with clang-tidy during build" OFF)
 option(MODULAR_SLAM_ENABLE_COVERAGE "Builds library and tests with coverage enabled." OFF)
+option(MODULAR_SLAM_BUILD_PYTHON_BINDINGS "" OFF)
 cmake_dependent_option(
   MODULAR_SLAM_BUILD_APPS
   "Builds applications"
@@ -24,10 +25,10 @@ option(MODULAR_SLAM_ENABLE_SANITIZER_THREAD "Enable thread sanitizer" OFF)
 
 init_modular_slam_project()
 
-add_subdirectory(src/lib/modular_slam)
+add_subdirectory(src/cpp/lib/modular_slam)
 
 if(MODULAR_SLAM_BUILD_APPS)
-  add_subdirectory(src/app/cpp)
+  add_subdirectory(src/cpp/app/cpp)
 endif()
 
 include(CTest)
