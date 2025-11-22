@@ -23,5 +23,5 @@ runs:
         conan: true
         ninja: true
         vcpkg: false
-        clangtidy: "20.1.8"
+        clangtidy: true
         gcovr: true

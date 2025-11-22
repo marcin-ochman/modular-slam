@@ -39,7 +39,7 @@ jobs:
           submodules: recursive
 
       - name: Setup Cpp
-        uses: .github/actions/setup-cpp
+        uses: ./.github/actions/setup-cpp
         with:
           compiler: ${{ matrix.compiler }}
           os: ${{ matrix.os }}
