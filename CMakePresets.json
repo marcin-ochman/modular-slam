@@ -113,7 +113,7 @@
         {
             "name": "coverage-conan",
             "displayName": "Debug with coverage | conan package manager",
-            "inherits": ["debug", "conan", "coverage"]
+            "inherits": ["debug", "test-conan", "coverage"]
         }
     ],
     "buildPresets": [
