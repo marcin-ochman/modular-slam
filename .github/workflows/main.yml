@@ -39,16 +39,10 @@ jobs:
           submodules: recursive
 
       - name: Setup Cpp
-        uses: aminya/setup-cpp@v1
+        uses: .github/actions/setup-cpp
         with:
           compiler: ${{ matrix.compiler }}
-          vcvarsall: ${{ contains(matrix.os, 'windows' )}}
-          cmake: true
-          conan: true
-          ninja: true
-          vcpkg: false
-          clangtidy: ${{ env.CLANG_TIDY_VERSION }}
-          gcovr: true
+          os: ${{ matrix.os }}
 
       - name: Configure CMake
         shell: bash

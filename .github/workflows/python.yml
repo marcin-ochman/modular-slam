@@ -21,6 +21,12 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Setup Cpp
+        uses: .github/actions/setup-cpp
+        with:
+          compiler: llvm-20
+          os: ${{ matrix.os }}
+
       - name: Install uv
         uses: astral-sh/setup-uv@v7
         with:
