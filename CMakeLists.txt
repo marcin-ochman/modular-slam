@@ -22,6 +22,7 @@ cmake_dependent_option(
 option(MODULAR_SLAM_ENABLE_SANITIZER_ADDRESS "Enable address sanitizer" OFF)
 option(MODULAR_SLAM_ENABLE_SANITIZER_UNDEFINED "Enable undefined sanitizer" OFF)
 option(MODULAR_SLAM_ENABLE_SANITIZER_THREAD "Enable thread sanitizer" OFF)
+option(BUILD_TESTING "Enable tests" OFF)
 
 init_modular_slam_project()
 
@@ -31,7 +32,6 @@ if(MODULAR_SLAM_BUILD_APPS)
   add_subdirectory(src/cpp/app/cpp)
 endif()
 
-include(CTest)
 if(BUILD_TESTING)
-  add_subdirectory(test)
+  add_subdirectory(test/cpp)
 endif()

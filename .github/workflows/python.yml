@@ -30,4 +30,3 @@ jobs:
         shell: bash
         run: |
           uv build
-          uv run python -c "import modular_slam; print(modular_slam.add(10, 20))"

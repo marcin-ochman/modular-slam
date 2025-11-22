@@ -10,9 +10,12 @@ dependencies = []
 requires = ["scikit-build-core>=0.10", "pybind11>=2.12"]
 build-backend = "scikit_build_core.build"
 
+[tool.scikit-build]
+cmake.args = ["--preset", "release-python-conan"]
+
 [tool.scikit-build.wheel.packages]
 modular_slam = "src/python/modular_slam"
 
 [tool.scikit-build.cmake.define]
-MODULAR_SLAM_BUILD_PYTHON_BINDINGS = true
-BUILD_TESTING=false
+MODULAR_SLAM_BUILD_PYTHON_BINDINGS = "ON"
+BUILD_TESTNG = "OFF"
