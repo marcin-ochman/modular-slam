@@ -22,7 +22,7 @@ jobs:
           submodules: recursive
 
       - name: Setup Cpp
-        uses: .github/actions/setup-cpp
+        uses: ./.github/actions/setup-cpp
         with:
           compiler: llvm-20
           os: ${{ matrix.os }}
