@@ -36,7 +36,7 @@
             "hidden": true,
             "inherits": ["debug", "test"],
             "cacheVariables": {
-                "MODULAR_SLAM_COVERAGE_ENABLED": "ON"
+                "MODULAR_SLAM_ENABLE_COVERAGE": "ON"
             }
         },
         {
@@ -44,7 +44,7 @@
             "hidden": true,
             "inherits": ["test", "conan"],
             "cacheVariables": {
-                "CONAN_INSTALL_ARGS": "-o testing=True"
+                "CONAN_INSTALL_ARGS": "--build=missing;-o testing=True"
             }
         },
         {
