@@ -79,7 +79,7 @@ jobs:
       - name: Build
         shell: bash
         run: |
-          cmake --build build -j
+          cmake --build --preset=${{ matrix.preset }} -j
 
       - name: Test
         shell: bash
