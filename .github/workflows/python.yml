@@ -36,3 +36,8 @@ jobs:
         shell: bash
         run: |
           uv build
+
+      - name: Test
+        shell: bash
+        run: |
+          uv run -m pytest test/python
