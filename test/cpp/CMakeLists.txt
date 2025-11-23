@@ -4,6 +4,8 @@ project(ModularSlamTests LANGUAGES CXX)
 
 enable_testing()
 
+include(CTest)
+
 if(NOT TARGET modular_slam::modular_slam)
   find_package(modular_slam CONFIG REQUIRED)
 endif()

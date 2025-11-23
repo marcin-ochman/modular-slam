@@ -1,0 +1,55 @@
+name: Python
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python_version: ["3.10", "3.11", "3.12", "3.13"]
+        compiler: [llvm-20, llvm-19, gcc-14]
+        exclude:
+          - os: windows-latest
+            compiler: gcc-14
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          submodules: recursive
+
+      - name: Setup Cpp
+        uses: ./.github/actions/setup-cpp
+        with:
+          compiler: ${{ matrix.compiler }}
+          os: ${{ matrix.os }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          python-version: ${{ matrix.python_version }}
+
+      - name: Set envs
+        shell: bash
+        run: |
+          echo "CMAKE_GENERATOR=Ninja" >> "$GITHUB_ENV"
+          if [[ "${{ runner.os }}" == "Windows" ]] && [[ "${{ matrix.compiler }}" == "llvm"* ]]; then
+            echo "CC=clang-cl" >> "$GITHUB_ENV"
+            echo "CXX=clang-cl" >> "$GITHUB_ENV"
+          fi
+
+      - name: Build
+        shell: bash
+        run: |
+          uv build
+
+      - name: Test
+        shell: bash
+        run: |
+          uv run -m pytest test/python

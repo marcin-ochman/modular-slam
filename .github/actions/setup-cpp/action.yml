@@ -1,0 +1,27 @@
+
+name: 'Setup Cpp'
+description: 'Setup C++ environment with specified tools
+version'
+inputs:
+  compiler:
+    description: 'The compiler to use'
+    required: true
+    type: string
+  os:
+    description: 'The OS to target'
+    required: true
+    type: string
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup Cpp
+      uses: aminya/setup-cpp@v1
+      with:
+        compiler: ${{ inputs.compiler }}
+        vcvarsall: ${{ contains(inputs.os, 'windows') }}
+        cmake: true
+        conan: true
+        ninja: true
+        vcpkg: false
+        clangtidy: true
+        gcovr: true

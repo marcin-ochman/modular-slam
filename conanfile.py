@@ -8,12 +8,13 @@ class ModularSlamRecipe(ConanFile):
     version = "0.0.1"
 
     settings = "os", "compiler", "build_type", "arch"
-    options = {"shared": [True, False], "fPIC": [True, False]}
-    default_options = {"shared": True, "fPIC": True}
+    options = {"shared": [True, False], "fPIC": [True, False], "testing": [True, False]}
+    default_options = {"shared": True, "fPIC": True, "testing": False}
 
     def requirements(self):
         self.tool_requires("cmake/3.30.0")
-        self.requires("catch2/3.11.0")
+        if self.options.testing:
+            self.requires("catch2/3.11.0")
        
     def config_options(self):
         if self.settings.os == "Windows":

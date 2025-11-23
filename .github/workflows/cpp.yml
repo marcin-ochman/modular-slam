@@ -1,4 +1,4 @@
-name: CMake
+name: C++
 
 on:
   push:
@@ -12,7 +12,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest]
         compiler: [llvm-20, llvm-19, gcc-14]
-        build_type: [Release, RelWithDebInfo, Debug]
+        preset: [release-test-conan, relwithdebinfo-test-conan, coverage-conan]
         sanitizer: [none, asan, ubsan, tsan]
         exclude:
           - os: windows-latest
@@ -23,15 +23,14 @@ jobs:
             sanitizer: ubsan
           - os: windows-latest
             sanitizer: asan
-          - build_type: Release
+          - preset: Release
             sanitizer: asan
-          - build_type: Release
+          - preset: Release
             sanitizer: ubsan
-          - build_type: Release
+          - preset: Release
             sanitizer: tsan
 
     runs-on: ${{ matrix.os }}
-    environment: modular-slam-ci
 
     steps:
       - uses: actions/checkout@v5
@@ -39,22 +38,10 @@ jobs:
           submodules: recursive
 
       - name: Setup Cpp
-        uses: aminya/setup-cpp@v1
+        uses: ./.github/actions/setup-cpp
         with:
           compiler: ${{ matrix.compiler }}
-          vcvarsall: ${{ contains(matrix.os, 'windows' )}}
-          cmake: true
-          conan: true
-          ninja: true
-          vcpkg: false
-          clangtidy: ${{ env.CLANG_TIDY_VERSION }}
-          gcovr: true
-
-      - name: Install dependencies with conan
-        shell: bash
-        run: |
-          conan profile detect
-          conan install . --build=missing -of conan_build -s build_type=${{ matrix.build_type }}
+          os: ${{ matrix.os }}
 
       - name: Configure CMake
         shell: bash
@@ -66,7 +53,7 @@ jobs:
             *)    asan=OFF; ubsan=OFF; tsan=OFF ;;
           esac
 
-          if [ "${{ matrix.sanitizer }}" = "none" ] && [ "${{ matrix.build_type }}" = "Debug" ]; then
+          if [ "${{ matrix.sanitizer }}" = "none" ] && [ "${{ matrix.preset }}" = "Debug" ]; then
             COVERAGE="ON"
           else
             COVERAGE="OFF"
@@ -80,20 +67,18 @@ jobs:
 
           cmake \
             -G Ninja \
-            -DCMAKE_TOOLCHAIN_FILE=./conan_build/build/${{matrix.build_type }}/generators/conan_toolchain.cmake \
-            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+            --preset=${{ matrix.preset }} \
             -DMODULAR_SLAM_ENABLE_SANITIZER_ADDRESS=${asan} \
             -DMODULAR_SLAM_ENABLE_SANITIZER_UNDEFINED=${ubsan} \
             -DMODULAR_SLAM_ENABLE_SANITIZER_THREAD=${tsan} \
             -DMODULAR_SLAM_WARNINGS_AS_ERRORS=OFF \
             -DMODULAR_SLAM_ENABLE_COVERAGE=${COVERAGE} \
-            -DMODULAR_SLAM_ENABLE_CLANG_TIDY=${ENABLE_CLANG_TIDY} \
-            -B build .
+            -DMODULAR_SLAM_ENABLE_CLANG_TIDY=${ENABLE_CLANG_TIDY}
 
       - name: Build
         shell: bash
         run: |
-          cmake --build build -j
+          cmake --build --preset=${{ matrix.preset }} -j
 
       - name: Test
         shell: bash
@@ -107,7 +92,7 @@ jobs:
 
       - name: Coverage
         shell: bash
-        if: matrix.build_type == 'Debug' && matrix.sanitizer == 'none' && contains(matrix.os, 'ubuntu')
+        if: matrix.preset == 'coverage-conan' && matrix.sanitizer == 'none' && contains(matrix.os, 'ubuntu')
         run: |
           mkdir coverage_report
           gcovr -j ${{env.nproc}} --exclude 'tests/.*' --print-summary --html --html-details -o coverage_report/index.html

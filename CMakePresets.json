@@ -1,32 +1,179 @@
 {
     "version": 4,
-    "include": ["ConanPresets.json"],
     "configurePresets": [
         {
-            "name": "coverage",
-            "displayName": "Code Coverage",
-            "description": "Build with coverage flags",
-            "inherits": "conan-relwithdebinfo",
+            "name": "default",
+            "hidden": true,
+            "binaryDir": "${sourceDir}/build/${presetName}",
             "cacheVariables": {
-                "CMAKE_CXX_FLAGS_RELWITHDEBINFO": "$env{CMAKE_CXX_FLAGS_RELWITHDEBINFO} --coverage -O0",
-                "CMAKE_C_FLAGS_RELWITHDEBINFO": "$env{CMAKE_C_FLAGS_RELWITHDEBINFO} --coverage -O0",
-                "CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO": "$env{CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO} --coverage",
-                "CMAKE_SHARED_LINKER_FLAGS_RELWITHDEBINFO": "$env{CMAKE_SHARED_LINKER_FLAGS_RELWITHDEBINFO} --coverage",
-                "MODULAR_SLAM_COVERAGE_ENABLED": "ON"
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "TRUE"
             }
+        },
+        {
+            "name": "conan",
+            "hidden": true,
+            "cacheVariables": {
+                "CMAKE_PROJECT_TOP_LEVEL_INCLUDES": "${sourceDir}/cmake/conan_provider.cmake",
+                "CMAKE_FIND_PACKAGE_PREFER_CONFIG": "TRUE"
+            }
+        },
+        {
+            "name": "test",
+            "hidden": true,
+            "cacheVariables": {
+                "BUILD_TESTING": "ON"
+            }
+        },
+        {
+            "name": "python",
+            "hidden": true,
+            "cacheVariables": {
+                "MODULAR_SLAM_BUILD_PYTHON_BINDINGS": "ON"
+            }
+        },
+        {
+            "name": "coverage",
+            "hidden": true,
+            "inherits": ["debug", "test"],
+            "cacheVariables": {
+                "MODULAR_SLAM_ENABLE_COVERAGE": "ON"
+            }
+        },
+        {
+            "name": "test-conan",
+            "hidden": true,
+            "inherits": ["test", "conan"],
+            "cacheVariables": {
+                "CONAN_INSTALL_ARGS": "--build=missing;-o testing=True"
+            }
+        },
+        {
+            "name": "release",
+            "inherits": ["default"],
+            "displayName": "Release",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "CMAKE_INTERPROCEDURAL_OPTIMIZATION": "TRUE"
+            }
+        },
+        {
+            "name": "release-conan",
+            "displayName": "Release | conan package manager",
+            "inherits": ["release", "conan"]
+        },
+        {
+            "name": "release-test-conan",
+            "displayName": "Release | Tests Enabled | conan package manager",
+            "inherits": ["release", "test-conan"]
+        },
+        {
+            "name": "release-python-conan",
+            "displayName": "Release | | conan package manager",
+            "inherits": ["release", "python", "conan"]
+        },
+        {
+            "name": "relwithdebinfo",
+            "displayName": "RelWithDebInfo",
+            "inherits": ["default"],
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+            }
+        },
+        {
+            "name": "relwithdebinfo-conan",
+            "displayName": "RelWithDebInfo | conan package manager",
+            "inherits": ["relwithdebinfo", "conan"]
+        },
+        {
+            "name": "relwithdebinfo-test-conan",
+            "displayName": "RelWithDebInfo | Tests Enabled | conan package manager",
+            "inherits": ["relwithdebinfo", "test-conan"]
+        },
+
+        {
+            "name": "debug",
+            "displayName": "Debug",
+            "inherits": ["default"],
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug"
+            }
+        },
+
+        {
+            "name": "debug-conan",
+            "displayName": "Debug | conan package manager",
+            "inherits": ["debug", "conan"]
+        },
+        {
+            "name": "debug-test-conan",
+            "displayName": "Debug | Tests Enabled | conan package manager",
+            "inherits": ["debug", "test-conan"]
+        },
+
+        {
+            "name": "coverage-conan",
+            "displayName": "Debug with coverage | conan package manager",
+            "inherits": ["debug", "test-conan", "coverage"]
         }
     ],
     "buildPresets": [
         {
-            "name": "coverage",
-            "configurePreset": "coverage"
+            "name": "release",
+            "configurePreset": "release"
+        },
+        {
+            "name": "relwithdebinfo",
+            "configurePreset": "relwithdebinfo"
+        },
+        {
+            "name": "debug",
+            "configurePreset": "debug"
+        },
+        {
+            "name": "release-conan",
+            "configurePreset": "release-conan"
+        },
+        {
+            "name": "relwithdebinfo-conan",
+            "configurePreset": "relwithdebinfo-conan"
+        },
+        {
+            "name": "debug-conan",
+            "configurePreset": "debug-conan"
+        },
+        {
+            "name": "release-test-conan",
+            "configurePreset": "release-test-conan"
+        },
+        {
+            "name": "relwithdebinfo-test-conan",
+            "configurePreset": "relwithdebinfo-test-conan"
+        },
+        {
+            "name": "debug-test-conan",
+            "configurePreset": "debug-test-conan"
+        },
+        {
+            "name": "coverage-conan",
+            "configurePreset": "coverage-conan"
         }
     ],
     "testPresets": [
         {
-            "name": "coverage",
-            "configurePreset": "coverage",
-            "output": { "outputOnFailure": true }
+            "name": "release-test-conan",
+            "configurePreset": "release-test-conan"
+        },
+        {
+            "name": "relwithdebinfo-test-conan",
+            "configurePreset": "relwithdebinfo-test-conan"
+        },
+        {
+            "name": "debug-test-conan",
+            "configurePreset": "debug-test-conan"
+        },
+        {
+            "name": "coverage-conan",
+            "configurePreset": "coverage-conan"
         }
     ]
 }
