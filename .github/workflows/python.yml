@@ -47,6 +47,8 @@ jobs:
           if [[ "${{ runner.os }}" == "Windows" ]]; then
             echo "CC=clang-cl" >> "$GITHUB_ENV"
             echo "CXX=clang-cl" >> "$GITHUB_ENV"
+
+            echo "CMAKE_GENERATOR=Ninja" >> "$GITHUB_ENV"
           fi
 
       - name: Test

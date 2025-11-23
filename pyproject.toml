@@ -17,7 +17,6 @@ cmake.args = ["--preset", "release-python-conan"]
 modular_slam = "src/python/modular_slam"
 
 [tool.scikit-build.cmake.define]
-CMAKE_GENERATOR = "Ninja"
 MODULAR_SLAM_BUILD_PYTHON_BINDINGS = "ON"
 BUILD_TESTNG = "OFF"
 
