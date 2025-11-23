@@ -41,6 +41,14 @@ jobs:
         run: |
           uv build
 
+     - name: Set CC/CXX for Windows
+        shell: bash
+        run: |
+          if [[ "${{ runner.os }}" == "Windows" ]]; then
+            echo "CC=clang-cl" >> "$GITHUB_ENV"
+            echo "CXX=clang-cl" >> "$GITHUB_ENV"
+          fi
+
       - name: Test
         shell: bash
         run: |
