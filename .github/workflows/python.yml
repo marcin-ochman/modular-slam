@@ -41,7 +41,7 @@ jobs:
         run: |
           uv build
 
-     - name: Set CC/CXX for Windows
+      - name: Set envs for Windows
         shell: bash
         run: |
           if [[ "${{ runner.os }}" == "Windows" ]]; then
