@@ -31,7 +31,6 @@ jobs:
             sanitizer: tsan
 
     runs-on: ${{ matrix.os }}
-    environment: modular-slam-ci
 
     steps:
       - uses: actions/checkout@v5

@@ -18,7 +18,6 @@ jobs:
             compiler: gcc-14
 
     runs-on: ${{ matrix.os }}
-    environment: modular-slam-ci
 
     steps:
       - uses: actions/checkout@v5
