@@ -22,5 +22,11 @@ BUILD_TESTNG = "OFF"
 
 [dependency-groups]
 dev = [
+    "mkdocs>=1.6.1",
+    "mkdocs-autorefs>=1.4.3",
+    "mkdocs-material>=9.7.0",
+    "mkdocstrings>=0.30.1",
+    "mkdocstrings-python>=1.19.0",
+    "mkdoxy>=1.2.8",
     "pytest>=9.0.1",
 ]
