@@ -25,9 +25,6 @@ jobs:
         with:
           python-version: "3.14"
 
-      - name: Sync dependencies
-        run: uv sync --group docs
-
       - name: Configure git user
         run: |
           git config user.name "github-actions-bot"
