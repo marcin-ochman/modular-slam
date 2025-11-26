@@ -13,7 +13,7 @@ hide:
 
 `modular-slam` is a flexible, high-performance library for building and experimenting with Simultaneous Localization and Mapping (SLAM) systems in both Python and C++.
 
-It’s designed to make SLAM prototyping fast and enjoyable: you can mix and match components—sensor models, optimization backends, data association strategies, and more—without fighting a large, monolithic codebase.
+It’s designed to make SLAM prototyping fast and enjoyable: you can mix and match components - data acquisition blocks, optimization backends, data association strategies, and more—without fighting a large, monolithic codebase.
 
 Use `modular-slam` when you want to:
 

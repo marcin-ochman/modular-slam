@@ -10,6 +10,7 @@ theme:
     - navigation.top
     - content.code.annotate
     - content.code.copy
+    - version
   palette:
     - media: "(prefers-color-scheme: light)"
       scheme: slate
@@ -52,6 +53,7 @@ docs_dir: docs
 
 plugins:
   - search
+  - mike
   - autorefs
   - mkdocstrings:
       handlers:

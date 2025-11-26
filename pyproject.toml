@@ -22,6 +22,7 @@ BUILD_TESTNG = "OFF"
 
 [dependency-groups]
 dev = [
+    "mike>=2.1.3",
     "mkdocs>=1.6.1",
     "mkdocs-autorefs>=1.4.3",
     "mkdocs-material>=9.7.0",
