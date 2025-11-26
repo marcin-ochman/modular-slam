@@ -1,18 +1,19 @@
-
-name: 'Setup Cpp'
-description: 'Setup C++ environment with specified tools
-version'
+name: "Setup Cpp"
+description: "Setup C++ environment with specified tools version"
 inputs:
   compiler:
-    description: 'The compiler to use'
+    description: "The compiler to use"
     required: true
     type: string
   os:
-    description: 'The OS to target'
+    description: "The OS to target"
     required: true
     type: string
+  conan:
+    description: "Specifies if conan package manager will be installed"
+    default: true
 runs:
-  using: 'composite'
+  using: "composite"
   steps:
     - name: Setup Cpp
       uses: aminya/setup-cpp@v1
@@ -20,7 +21,7 @@ runs:
         compiler: ${{ inputs.compiler }}
         vcvarsall: ${{ contains(inputs.os, 'windows') }}
         cmake: true
-        conan: true
+        conan: ${{ inputs.conan }}
         ninja: true
         vcpkg: false
         clangtidy: true
