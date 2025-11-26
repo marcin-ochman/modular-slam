@@ -7,6 +7,7 @@ hide:
 
 <figure markdown="span">
   ![Image title](img/modular_slam_main_img.png){ width="300" }
+  <figcaption>This logo is AI Generated. The modular-slam logo will be introduced later.</figcaption>
 </figure>
 
 ## Description
