@@ -84,3 +84,7 @@ nav:
               - Slam: cpp_core/classSlam.md
   - Python:
       - Overview: python/py_api.md
+
+extra:
+  version:
+    provider: mike
