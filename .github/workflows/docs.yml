@@ -14,6 +14,16 @@ jobs:
 
     steps:
       - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Fetch existing gh-pages branch (if any)
+        run: |
+          if git ls-remote --exit-code origin gh-pages; then
+            git fetch origin gh-pages:gh-pages
+          else
+            echo "No remote gh-pages branch yet"
+          fi
 
       - name: Install uv
         uses: astral-sh/setup-uv@v7
