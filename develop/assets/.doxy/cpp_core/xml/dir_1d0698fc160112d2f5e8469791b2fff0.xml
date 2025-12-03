@@ -1,0 +1,12 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.8" xml:lang="en-US">
+  <compounddef id="dir_1d0698fc160112d2f5e8469791b2fff0" kind="dir">
+    <compoundname>src/cpp/app</compoundname>
+    <innerdir refid="dir_befb6e350137172de200e5ca77fb21b7">src/cpp/app/cpp</innerdir>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="src/cpp/app/"/>
+  </compounddef>
+</doxygen>

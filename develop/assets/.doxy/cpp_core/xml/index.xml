@@ -1,0 +1,35 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygenindex xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="index.xsd" version="1.9.8" xml:lang="en-US">
+  <compound refid="classSlam" kind="class"><name>Slam</name>
+    <member refid="classSlam_1a6497ac408c7100a74b0e9c9a227ea358" kind="function"><name>run</name></member>
+  </compound>
+  <compound refid="run__slam_8cpp" kind="file"><name>run_slam.cpp</name>
+    <member refid="run__slam_8cpp_1a81ce304348a420752ee080480d2b3095" kind="function"><name>main</name></member>
+  </compound>
+  <compound refid="modular__slam_8hpp" kind="file"><name>modular_slam.hpp</name>
+  </compound>
+  <compound refid="modular__slam_8cpp" kind="file"><name>modular_slam.cpp</name>
+  </compound>
+  <compound refid="py__modular__slam_8cpp" kind="file"><name>py_modular_slam.cpp</name>
+    <member refid="py__modular__slam_8cpp_1a857dc3eb39c8fb110ae3ec9643d3a153" kind="function"><name>add</name></member>
+    <member refid="py__modular__slam_8cpp_1ae93a16de71aaca2766facb391a70dc88" kind="function"><name>PYBIND11_MODULE</name></member>
+  </compound>
+  <compound refid="dir_1d0698fc160112d2f5e8469791b2fff0" kind="dir"><name>src/cpp/app</name>
+  </compound>
+  <compound refid="dir_dfdbda394c3f7a3aa55229f33a559c41" kind="dir"><name>src/cpp</name>
+  </compound>
+  <compound refid="dir_befb6e350137172de200e5ca77fb21b7" kind="dir"><name>src/cpp/app/cpp</name>
+  </compound>
+  <compound refid="dir_c1140b4f059bdf2a1b067050e3dd6c38" kind="dir"><name>src/cpp/lib/modular_slam/include</name>
+  </compound>
+  <compound refid="dir_dad8a9c0c98047bf60bfc83527d74517" kind="dir"><name>src/cpp/lib</name>
+  </compound>
+  <compound refid="dir_462d9d1e7dff16c7e45b1d3ebe1d409a" kind="dir"><name>src/cpp/lib/modular_slam</name>
+  </compound>
+  <compound refid="dir_822e77ed30a0deecce2a54f1512518fe" kind="dir"><name>src/cpp/lib/modular_slam/include/modular_slam</name>
+  </compound>
+  <compound refid="dir_2561bd41b00cb16bde1ad400968620f7" kind="dir"><name>src/cpp/lib/modular_slam/python_bindings</name>
+  </compound>
+  <compound refid="dir_68267d1309a1af8e8297ef4c3efbcdba" kind="dir"><name>src</name>
+  </compound>
+</doxygenindex>

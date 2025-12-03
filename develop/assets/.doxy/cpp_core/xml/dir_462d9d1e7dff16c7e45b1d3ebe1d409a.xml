@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.8" xml:lang="en-US">
+  <compounddef id="dir_462d9d1e7dff16c7e45b1d3ebe1d409a" kind="dir">
+    <compoundname>src/cpp/lib/modular_slam</compoundname>
+    <innerdir refid="dir_c1140b4f059bdf2a1b067050e3dd6c38">src/cpp/lib/modular_slam/include</innerdir>
+    <innerdir refid="dir_2561bd41b00cb16bde1ad400968620f7">src/cpp/lib/modular_slam/python_bindings</innerdir>
+    <innerfile refid="modular__slam_8cpp">modular_slam.cpp</innerfile>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="src/cpp/lib/modular_slam/"/>
+  </compounddef>
+</doxygen>

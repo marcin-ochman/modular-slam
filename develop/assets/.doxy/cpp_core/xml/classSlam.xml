@@ -1,0 +1,33 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.8" xml:lang="en-US">
+  <compounddef id="classSlam" kind="class" language="C++" prot="public">
+    <compoundname>Slam</compoundname>
+    <includes refid="modular__slam_8hpp" local="no">modular_slam.hpp</includes>
+    <sectiondef kind="public-func">
+      <memberdef kind="function" id="classSlam_1a6497ac408c7100a74b0e9c9a227ea358" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void Slam::run</definition>
+        <argsstring>()</argsstring>
+        <name>run</name>
+        <qualifiedname>Slam::run</qualifiedname>
+        <briefdescription>
+<para>Runs SLAM system. </para>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="src/cpp/lib/modular_slam/include/modular_slam/modular_slam.hpp" line="13" column="10"/>
+      </memberdef>
+    </sectiondef>
+    <briefdescription>
+<para>The main class representing SLAM system. </para>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="src/cpp/lib/modular_slam/include/modular_slam/modular_slam.hpp" line="7" column="1" bodyfile="src/cpp/lib/modular_slam/include/modular_slam/modular_slam.hpp" bodystart="8" bodyend="14"/>
+    <listofallmembers>
+      <member refid="classSlam_1a6497ac408c7100a74b0e9c9a227ea358" prot="public" virt="non-virtual"><scope>Slam</scope><name>run</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>

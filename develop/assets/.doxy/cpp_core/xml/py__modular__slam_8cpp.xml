@@ -1,0 +1,80 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.8" xml:lang="en-US">
+  <compounddef id="py__modular__slam_8cpp" kind="file" language="C++">
+    <compoundname>py_modular_slam.cpp</compoundname>
+    <includes local="no">pybind11/pybind11.h</includes>
+    <incdepgraph>
+      <node id="1">
+        <label>src/cpp/lib/modular_slam/python_bindings/py_modular_slam.cpp</label>
+        <link refid="py__modular__slam_8cpp"/>
+        <childnode refid="2" relation="include">
+        </childnode>
+      </node>
+      <node id="2">
+        <label>pybind11/pybind11.h</label>
+      </node>
+    </incdepgraph>
+    <sectiondef kind="func">
+      <memberdef kind="function" id="py__modular__slam_8cpp_1a857dc3eb39c8fb110ae3ec9643d3a153" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>int</type>
+        <definition>int add</definition>
+        <argsstring>(int x, int y)</argsstring>
+        <name>add</name>
+        <param>
+          <type>int</type>
+          <declname>x</declname>
+        </param>
+        <param>
+          <type>int</type>
+          <declname>y</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="src/cpp/lib/modular_slam/python_bindings/py_modular_slam.cpp" line="3" column="5" bodyfile="src/cpp/lib/modular_slam/python_bindings/py_modular_slam.cpp" bodystart="3" bodyend="6"/>
+      </memberdef>
+      <memberdef kind="function" id="py__modular__slam_8cpp_1ae93a16de71aaca2766facb391a70dc88" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type></type>
+        <definition>PYBIND11_MODULE</definition>
+        <argsstring>(_modular_slam, m)</argsstring>
+        <name>PYBIND11_MODULE</name>
+        <param>
+          <type>_modular_slam</type>
+        </param>
+        <param>
+          <type>m</type>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="src/cpp/lib/modular_slam/python_bindings/py_modular_slam.cpp" line="8" column="1" bodyfile="src/cpp/lib/modular_slam/python_bindings/py_modular_slam.cpp" bodystart="8" bodyend="13"/>
+      </memberdef>
+    </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <programlisting>
+<codeline lineno="1"><highlight class="preprocessor">#include<sp/>&lt;pybind11/pybind11.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="2"><highlight class="normal"></highlight></codeline>
+<codeline lineno="3"><highlight class="normal"></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>add(</highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>x,<sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>y)</highlight></codeline>
+<codeline lineno="4"><highlight class="normal">{</highlight></codeline>
+<codeline lineno="5"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>x<sp/>+<sp/>y;</highlight></codeline>
+<codeline lineno="6"><highlight class="normal">}</highlight></codeline>
+<codeline lineno="7"><highlight class="normal"></highlight></codeline>
+<codeline lineno="8"><highlight class="normal">PYBIND11_MODULE(_modular_slam,<sp/>m)</highlight></codeline>
+<codeline lineno="9"><highlight class="normal">{</highlight></codeline>
+<codeline lineno="10"><highlight class="normal"><sp/><sp/><sp/><sp/>m.doc()<sp/>=<sp/></highlight><highlight class="stringliteral">&quot;C++<sp/>core<sp/>bindings<sp/>for<sp/>your_project&quot;</highlight><highlight class="normal">;</highlight></codeline>
+<codeline lineno="11"><highlight class="normal"></highlight></codeline>
+<codeline lineno="12"><highlight class="normal"><sp/><sp/><sp/><sp/>m.def(</highlight><highlight class="stringliteral">&quot;add&quot;</highlight><highlight class="normal">,<sp/>&amp;add,<sp/></highlight><highlight class="stringliteral">&quot;Add<sp/>two<sp/>integers&quot;</highlight><highlight class="normal">);</highlight></codeline>
+<codeline lineno="13"><highlight class="normal">}</highlight></codeline>
+    </programlisting>
+    <location file="src/cpp/lib/modular_slam/python_bindings/py_modular_slam.cpp"/>
+  </compounddef>
+</doxygen>

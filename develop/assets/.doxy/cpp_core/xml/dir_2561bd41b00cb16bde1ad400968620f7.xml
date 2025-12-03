@@ -1,0 +1,12 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.8" xml:lang="en-US">
+  <compounddef id="dir_2561bd41b00cb16bde1ad400968620f7" kind="dir">
+    <compoundname>src/cpp/lib/modular_slam/python_bindings</compoundname>
+    <innerfile refid="py__modular__slam_8cpp">py_modular_slam.cpp</innerfile>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="src/cpp/lib/modular_slam/python_bindings/"/>
+  </compounddef>
+</doxygen>
