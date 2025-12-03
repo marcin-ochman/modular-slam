@@ -4,6 +4,11 @@ on:
     branches: [develop, main]
     tags: "*"
   workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version of the docs (e.g., "1.0.0")'
+        required: false
+        type: string
 
 concurrency:
   group: "pages"
@@ -43,12 +48,12 @@ jobs:
 
       - name: Deploy docs with mike
         env:
-          VERSION: ${{ github.ref_name }}
+          VERSION: ${{ inputs.version || github.ref_name }}
         run: |
-          DOCS_VERSION="${{ github.ref_name }}
+          DOCS_VERSION="$VERSION"
 
           if [[ "$VERSION" == v* ]]; then
-            DOCS_VERSION="${VERSION#v}"  
+            DOCS_VERSION="${VERSION#v}"
           fi
 
           uv run mike deploy \
