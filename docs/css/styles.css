@@ -1,0 +1,8 @@
+figure + p {
+    text-align: center;
+}
+
+figure + p > .annotate {
+    display: inline-block;
+    text-align: center;
+}
