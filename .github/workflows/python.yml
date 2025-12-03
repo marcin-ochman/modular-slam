@@ -29,6 +29,7 @@ jobs:
         with:
           compiler: ${{ matrix.compiler }}
           os: ${{ matrix.os }}
+          conan: false
 
       - name: Install uv
         uses: astral-sh/setup-uv@v7
