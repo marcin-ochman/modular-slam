@@ -1,8 +1,10 @@
-#include <iostream>
+#include "modular_slam/modular_slam.hpp"
+
+namespace msl = modular_slam::log;
 
 int main(int /*argc*/, char* /*argv*/[])
 {
-    std::cout << "Welcome to modular-slam!";
+    msl::info("Welcome to modular slam!");
 
     return 0;
 }

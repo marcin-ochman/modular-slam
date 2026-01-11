@@ -1,11 +1,19 @@
-modular_slam_add_library(modular_slam SOURCES modular_slam.cpp)
+find_package(spdlog REQUIRED)
+
+modular_slam_add_library(
+  modular_slam
+  SOURCES
+  modular_slam.cpp
+  log.cpp)
 target_include_directories(modular_slam PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
                                                "$<INSTALL_INTERFACE:include>")
 
 add_library(modular_slam::modular_slam ALIAS modular_slam)
 
+target_link_libraries(modular_slam PUBLIC spdlog::spdlog)
+
 if(MODULAR_SLAM_BUILD_PYTHON_BINDINGS)
-  find_package(pybind11 CONFIG REQUIRED)
+  find_package(pybind11 REQUIRED)
   pybind11_add_module(_modular_slam python_bindings/py_modular_slam.cpp)
   target_link_libraries(_modular_slam PRIVATE modular_slam::modular_slam)
   install(TARGETS _modular_slam DESTINATION modular_slam)
