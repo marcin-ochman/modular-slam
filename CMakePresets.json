@@ -68,7 +68,7 @@
         },
         {
             "name": "release-python-conan",
-            "displayName": "Release | | conan package manager",
+            "displayName": "Release | conan package manager",
             "inherits": ["release", "python", "conan"]
         },
         {
