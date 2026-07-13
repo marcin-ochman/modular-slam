@@ -8,7 +8,7 @@ TEST_CASE("TimeStamp initialization", "[time]")
     const auto start =
         std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock ::now().time_since_epoch())
             .count();
-    modular_slam::Timestamp now = modular_slam::Timestamp::now();
+    mslam::Timestamp now = mslam::Timestamp::now();
     const auto end =
         std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock ::now().time_since_epoch())
             .count();

@@ -4,8 +4,8 @@
 #include <cstddef>
 #include <tuple>
 
-namespace modular_slam
+namespace mslam
 {
-} // namespace modular_slam
+} // namespace mslam
 
 #endif // MODULAR_SLAM_FEATURE_SLAM_HPP

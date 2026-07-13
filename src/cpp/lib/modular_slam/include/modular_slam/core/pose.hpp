@@ -5,7 +5,7 @@
 #include <Eigen/Geometry>
 #include <utility>
 
-namespace modular_slam
+namespace mslam
 {
 
 class Pose
@@ -47,6 +47,6 @@ class Pose
     [[nodiscard]] Eigen::Quaterniond quaternion() const { return mRotation; }
 };
 
-} // namespace modular_slam
+} // namespace mslam
 
 #endif // MODULAR_SLAM_POSE_HPP_

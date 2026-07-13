@@ -5,7 +5,10 @@ modular_slam_add_library(
   modular_slam
   SOURCES
   modular_slam.cpp
-  log.cpp)
+  log.cpp
+  src/core/error.cpp
+  src/slam/slam_builder.cpp
+)
 target_include_directories(modular_slam PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
                                                "$<INSTALL_INTERFACE:include>")
 

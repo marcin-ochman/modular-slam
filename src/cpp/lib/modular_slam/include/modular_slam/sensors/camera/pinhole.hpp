@@ -4,14 +4,14 @@
 #include "modular_slam/core/vectors.hpp"
 #include "modular_slam/sensors/camera/camera_concepts.hpp"
 
-namespace modular_slam
+namespace mslam
 {
 template <typename T = float>
 struct PinholeCamera
 {
     using Scalar = T;
 
-    float fx, fy, cx, cy;
+    T fx, fy, cx, cy;
 
     [[nodiscard]] Vec2<T> project(const Vec3<T>& p) const;
     [[nodiscard]] Vec3<T> unproject(const Vec2<T>& uv, double depth) const;
@@ -26,11 +26,11 @@ template <typename T>
 template <typename T>
 [[nodiscard]] Vec3<T> PinholeCamera<T>::unproject(const Vec2<T>& uv, double depth) const
 {
-    return {(uv.u - cx) * depth / fx, (uv.v - cy) * depth / fy, depth};
+    return {(uv.x - cx) * depth / fx, (uv.y - cy) * depth / fy, static_cast<T>(depth)};
 }
 
 static_assert(IsCamera<PinholeCamera<float>>, "PinholeCamera needs to be compatible with Camera");
 
-} // namespace modular_slam
+} // namespace mslam
 
 #endif // MODULAR_SLAM_PINHOLE_CAMERA_HPP_

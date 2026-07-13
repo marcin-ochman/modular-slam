@@ -4,7 +4,7 @@
 #include "modular_slam/core/vectors.hpp"
 #include <concepts>
 
-namespace modular_slam
+namespace mslam
 {
 template <typename C>
 concept IsCamera = requires { typename C::Scalar; } &&
@@ -12,6 +12,6 @@ concept IsCamera = requires { typename C::Scalar; } &&
                        { camera.project(p3) } -> std::same_as<Vec2<typename C::Scalar>>;
                        { camera.unproject(p2, d) } -> std::same_as<Vec3<typename C::Scalar>>;
                    };
-} // namespace modular_slam
+} // namespace mslam
 
 #endif // MODULAR_SLAM_CAMERA_CONCEPTS_HPP_

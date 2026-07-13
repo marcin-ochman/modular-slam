@@ -1,70 +1,85 @@
-#ifndef MODULAR_SLAM_SLAM_HPP_
-#define MODULAR_SLAM_SLAM_HPP_
+#ifndef MODULAR_SLAM_SLAM_HPP
+#define MODULAR_SLAM_SLAM_HPP
 
-#include "modular_slam/core/pose.hpp"
-#include "modular_slam/frontend/visual_frontend.hpp"
+#include <cstdint>
+#include <expected>
+#include <memory>
+#include <utility>
+#include <vector>
 
-#include <optional>
+#include "modular_slam/core/slot_store.hpp"
+#include "modular_slam/slam/executor.hpp"
+#include "modular_slam/slam/module.hpp"
+#include "modular_slam/slam/pipeline_graph.hpp"
+#include "modular_slam/slam/step_result.hpp"
 
-namespace modular_slam
+namespace mslam
 {
 
-template <typename Propagator, typename Backend, typename Map, typename... Frontends>
 class Slam
 {
   public:
-    Slam(Propagator propagator, Backend backend, Map map, Frontends... frontends)
-        : mPropagator(propagator), mBackend(backend), mMap(map), mFrontends(frontends...)
+    Slam(std::vector<std::unique_ptr<Module>> modules, PipelineGraph graph, std::unique_ptr<Executor> executor,
+         SlotStore initialState)
+        : mModules(std::move(modules)), mGraph(std::move(graph)), mExecutor(std::move(executor)),
+          mState(std::move(initialState))
     {
     }
 
-    template <typename SensorData>
-    void feed([[maybe_unused]] const SensorData& data) noexcept
+    Slam(const Slam&) = delete;
+    Slam& operator=(const Slam&) = delete;
+
+    Slam(Slam&&) noexcept = default;
+    Slam& operator=(Slam&&) noexcept = default;
+
+    Expected<StepResult> processStep(SlotStore inputs, TimestampNs timestamp)
     {
-        static constexpr auto frontendIndex = frontendIndexFor<SensorData>();
+        if(!mExecutor)
+        {
+            return std::unexpected(Error{
+                .code = ErrorCode::ExecutorFailed, .message = "Slam has no executor", .slotName = {}, .moduleName = {}});
+        }
 
-        static_assert(frontendIndex.has_value(), "No frontend supporting input data found");
+        StepInfo info{.index = mStepIndex++, .timestamp = timestamp};
 
-        auto& frontend = std::get<frontendIndex.value()>(mFrontends);
+        ExecutorStepInput executorInput{.info = info, .stepInputs = std::move(inputs), .state = &mState};
 
-        const auto prediction = mPropagator.predict(data.acquisition.timestamp);
-        const auto result = frontend.process(data, prediction);
+        auto executorResult = mExecutor->runStep(mGraph, mModules, std::move(executorInput));
 
-        // if(result.has_value())
-        // {
-        //     mBackend.addFactor(*result);
+        if(!executorResult)
+        {
+            return std::unexpected(executorResult.error());
+        }
 
-        //     flushDependentSensors(data.timestamp);
+        auto stateStatus = mState.mergeFrom(std::move(executorResult->stateUpdates));
 
-        //     if(mBackend.shouldOptimize())
-        //     {
-        //         mBackend.optimize();
-        //         mProp.correct(mBackend.get_state());
-        //     }
-        // }
+        if(!stateStatus)
+        {
+            return std::unexpected(stateStatus.error());
+        }
+
+        return StepResult{.info = executorResult->info, .data = std::move(executorResult->stepData)};
     }
 
-    Pose currentPose() { return Pose{}; }
-    const Map& map() const { return mMap; }
+    const SlotStore& state() const { return mState; }
+
+    SlotStore& mutableState() { return mState; }
+
+    const PipelineGraph& graph() const { return mGraph; }
+
+    const std::vector<std::unique_ptr<Module>>& modules() const { return mModules; }
+
+    std::uint64_t stepIndex() const { return mStepIndex; }
 
   private:
-    Propagator mPropagator;
-    Backend mBackend;
-    Map mMap;
-    std::tuple<Frontends...> mFrontends;
+    std::vector<std::unique_ptr<Module>> mModules;
+    PipelineGraph mGraph;
+    std::unique_ptr<Executor> mExecutor;
+    SlotStore mState;
 
-    template <typename T>
-    static constexpr std::optional<std::size_t> frontendIndexFor()
-    {
-        std::size_t index = 0;
-        std::optional<std::size_t> foundIndex;
-
-        ((std::is_same_v<T, typename Frontends::InputData> ? (foundIndex = index, false) : (++index, true)) && ...);
-
-        return foundIndex;
-    }
+    std::uint64_t mStepIndex = 0;
 };
 
-} // namespace modular_slam
+} // namespace mslam
 
-#endif // MODULAR_SLAM_SLAM_HPP_
+#endif // MODULAR_SLAM_SLAM_HPP

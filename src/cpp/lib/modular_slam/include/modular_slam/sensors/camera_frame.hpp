@@ -3,7 +3,10 @@
 
 #include "modular_slam/core/time_stamp.hpp"
 #include "modular_slam/sensors/camera/camera_concepts.hpp"
-namespace modular_slam
+
+#include <cstdint>
+
+namespace mslam
 {
 
 struct Image
@@ -28,6 +31,6 @@ struct CameraFrame
     auto project(const Vec3<Scalar>& point3d) const { return sensor.project(point3d); }
     auto unproject(const Vec2<Scalar>& uv, Scalar depth) const { return sensor.unproject(uv, depth); }
 };
-} // namespace modular_slam
+} // namespace mslam
 
 #endif // MODULAR_SLAM_CAMERA_FRAME_HPP_

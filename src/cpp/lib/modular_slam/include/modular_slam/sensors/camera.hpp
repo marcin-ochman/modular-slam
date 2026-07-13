@@ -1,9 +1,9 @@
-#ifndef MODULAR_SLAM_CAMERA_FRAME_HPP_
-#define MODULAR_SLAM_CAMERA_FRAME_HPP_
+#ifndef MODULAR_SLAM_SENSORS_CAMERA_HPP
+#define MODULAR_SLAM_SENSORS_CAMERA_HPP
 
-namespace modular_slam
+namespace mslam
 {
 
-} // namespace modular_slam
+} // namespace mslam
 
-#endif // MODULAR_SLAM_CAMERA_FRAME_HPP_
+#endif // MODULAR_SLAM_SENSORS_CAMERA_HPP

@@ -4,7 +4,7 @@
 #include <chrono>
 #include <compare>
 
-namespace modular_slam
+namespace mslam
 {
 class Timestamp
 {
@@ -43,6 +43,6 @@ class Timestamp
   private:
     int64_t mNanoseconds{0};
 };
-} // namespace modular_slam
+} // namespace mslam
 
 #endif // MODULAR_SLAM_TIME_STAMP_HPP_

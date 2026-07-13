@@ -1,99 +1,113 @@
-#ifndef MODULAR_SLAM_FEATURE_SLAM_BUILDER_HPP
-#define MODULAR_SLAM_FEATURE_SLAM_BUILDER_HPP
+#ifndef MODULAR_SLAM_SLAM_BUILDER_HPP
+#define MODULAR_SLAM_SLAM_BUILDER_HPP
 
+#include <memory>
+#include <optional>
+#include <utility>
+#include <vector>
+
+#include "modular_slam/slam/sequential_executor.hpp"
 #include "modular_slam/slam/slam.hpp"
 
-namespace modular_slam
+namespace mslam
 {
-
-struct NoPropagator
+namespace detail
 {
-};
+Expected<PipelineGraph> buildPipelineGraph(const std::vector<std::unique_ptr<Module>>& modules,
+                                           const std::vector<OutputSpec>& externalInputs,
+                                           const std::vector<OutputSpec>& initialStateSlots);
+}
 
-struct NoBackend
-{
-};
-
-struct NoMap
-{
-};
-
-template <typename Propagator = NoPropagator, typename Backend = NoBackend, typename Map = NoMap, typename... Frontends>
 class SlamBuilder
 {
-    template <typename, typename, typename, typename...>
-    friend class SlamBuilder;
-
   public:
-    static auto create() { return SlamBuilder<NoPropagator, NoBackend, NoMap>{{}, {}, {}, std::tuple<>{}}; }
+    SlamBuilder() = default;
 
-    template <typename NewProp, typename... Args>
-    auto withPropagator(Args&&... args)
+    SlamBuilder(const SlamBuilder&) = delete;
+    SlamBuilder& operator=(const SlamBuilder&) = delete;
+
+    SlamBuilder(SlamBuilder&&) noexcept = default;
+    SlamBuilder& operator=(SlamBuilder&&) noexcept = default;
+
+    template <typename T>
+    SlamBuilder& input(Slot<T> slot)
     {
-        auto propagator = NewProp(std::forward<Args>(args)...);
-
-        return SlamBuilder<NewProp, Backend, Map, Frontends...>(std::move(propagator), std::move(backend),
-                                                                std::move(mMap), std::move(mFrontends));
+        mExternalInputs.push_back(produces(slot));
+        return *this;
     }
 
-    template <typename NewBackend, typename... Args>
-    auto withBackend(Args&&... args)
+    template <typename T>
+    SlamBuilder& setInitialState(Slot<T> slot, T value)
     {
-        auto backend = NewBackend(std::forward<Args>(args)...);
-        return SlamBuilder<Propagator, NewBackend, Map, Frontends...>(std::move(mPropagator), std::move(backend),
-                                                                      std::move(mMap), std::move(mFrontends));
-    }
+        auto status = mInitialState.set(slot, std::move(value));
 
-    template <typename NewMap, typename... Args>
-    auto withMap(Args&&... args)
-    {
-        auto map = NewMap(std::forward<Args>(args)...);
-        return SlamBuilder<Propagator, Backend, NewMap, Frontends...>(std::move(mPropagator), std::move(backend),
-                                                                      std::move(map), std::move(mFrontends));
-    }
-
-    template <typename NewFrontend, typename... Args>
-    auto withFrontend(Args&&... args)
-    {
-        auto frontend = NewFrontend(std::forward<Args>(args)...);
-
-        auto appendedFrontends = std::tuple_cat(std::move(mFrontends), std::make_tuple(std::move(frontend)));
-
-        return SlamBuilder<Propagator, Backend, Map, Frontends..., NewFrontend>(
-            std::move(mPropagator), std::move(backend), std::move(mMap), std::move(appendedFrontends));
-    }
-
-    auto build() { return build<Slam>(); }
-
-    template <template <typename...> typename SlamType>
-    auto build()
-    {
-        static_assert(!std::is_same_v<Propagator, NoPropagator>, "Error: Missing Propagator! Call .withPropagator()");
-        static_assert(!std::is_same_v<Backend, NoBackend>, "Error: Missing Backend! Call .withBackend()");
-        static_assert(!std::is_same_v<Map, NoMap>, "Error: Missing Map! Call .withMap()");
-
-        const auto unpacker = [&](auto&&... args)
+        if(!status)
         {
-            return SlamType<Propagator, Backend, Map, Frontends...>(
-                std::move(mPropagator), std::move(backend), std::move(mMap), std::forward<decltype(args)>(args)...);
-        };
+            mBuildError = status.error();
+            return *this;
+        }
 
-        return std::apply(unpacker, mFrontends);
+        mInitialStateSlots.push_back(produces(slot));
+        return *this;
+    }
+
+    SlamBuilder& addModule(std::unique_ptr<Module> module)
+    {
+        if(!module)
+        {
+            mBuildError = Error::invalidPipeline("Cannot add null module");
+            return *this;
+        }
+
+        mModules.push_back(std::move(module));
+        return *this;
+    }
+
+    SlamBuilder& setExecutor(std::unique_ptr<Executor> executor)
+    {
+        if(!executor)
+        {
+            mBuildError = Error::invalidPipeline("Cannot set null executor");
+            return *this;
+        }
+
+        mExecutor = std::move(executor);
+        return *this;
+    }
+
+    Expected<Slam> build()
+    {
+        if(mBuildError.has_value())
+        {
+            return std::unexpected(*mBuildError);
+        }
+
+        if(!mExecutor)
+        {
+            mExecutor = std::make_unique<mslam::SequentialExecutor>();
+        }
+
+        auto graph = detail::buildPipelineGraph(mModules, mExternalInputs, mInitialStateSlots);
+
+        if(!graph)
+        {
+            return std::unexpected(graph.error());
+        }
+
+        return Slam{std::move(mModules), std::move(*graph), std::move(mExecutor), std::move(mInitialState)};
     }
 
   private:
-    SlamBuilder(Propagator propagator, Backend backend, Map map, std::tuple<Frontends...> frontends)
-        : mPropagator(std::move(propagator)), backend(std::move(backend)), mMap(std::move(map)),
-          mFrontends(std::move(frontends))
-    {
-    }
+    std::vector<OutputSpec> mExternalInputs;
+    std::vector<OutputSpec> mInitialStateSlots;
 
-    Propagator mPropagator;
-    Backend backend;
-    Map mMap;
-    std::tuple<Frontends...> mFrontends;
+    std::vector<std::unique_ptr<Module>> mModules;
+    std::unique_ptr<Executor> mExecutor;
+
+    SlotStore mInitialState;
+
+    std::optional<Error> mBuildError;
 };
 
-} // namespace modular_slam
-
-#endif // MODULAR_SLAM_FEATURE_SLAM_BUILDER_HPP
+} // namespace mslam
+#endif // MODULAR_SLAM_SLAM_BUILDER_HPP

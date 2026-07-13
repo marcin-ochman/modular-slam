@@ -1,7 +1,7 @@
 #ifndef MODULAR_SLAM_CORE_VECTORS_HPP_
 #define MODULAR_SLAM_CORE_VECTORS_HPP_
 
-namespace modular_slam
+namespace mslam
 {
 
 template <typename T = float>
@@ -18,6 +18,6 @@ struct Vec2
 
 using Vec3d = Vec3<double>;
 using Vec3f = Vec3<float>;
-} // namespace modular_slam
+} // namespace mslam
 
 #endif // MODULAR_SLAM_CORE_VECTORS_HPP_
