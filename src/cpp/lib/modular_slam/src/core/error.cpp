@@ -48,8 +48,7 @@ Error Error::moduleFailed(std::string_view module, Error cause)
 
 Error Error::invalidPipeline(std::string message)
 {
-    return Error{
-        .code = ErrorCode::InvalidPipeline, .message = std::move(message), .slotName = {}, .moduleName = {}};
+    return Error{.code = ErrorCode::InvalidPipeline, .message = std::move(message), .slotName = {}, .moduleName = {}};
 }
 
 } // namespace mslam

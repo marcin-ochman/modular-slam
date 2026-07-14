@@ -21,7 +21,7 @@ struct ProducerInfo
 
 inline bool contains(const std::vector<std::size_t>& values, std::size_t value)
 {
-    return std::find(values.begin(), values.end(), value) != values.end();
+    return std::ranges::find(values, value) != values.end();
 }
 
 inline Status checkSameType(TypeToken expected, TypeToken actual, std::string_view slotName,
@@ -75,8 +75,7 @@ inline Status registerGlobalSlotType(std::unordered_map<SlotId, OutputSpec>& glo
 inline Status registerGlobalSlotType(std::unordered_map<SlotId, OutputSpec>& globalSlots, const InputSpec& slot,
                                      std::string_view moduleName = {})
 {
-    OutputSpec asOutput{
-        .id = slot.id, .name = slot.name, .type = slot.type, .mergePolicy = MergePolicy::SingleWriter};
+    OutputSpec asOutput{.id = slot.id, .name = slot.name, .type = slot.type, .mergePolicy = MergePolicy::SingleWriter};
 
     return registerGlobalSlotType(globalSlots, asOutput, moduleName);
 }

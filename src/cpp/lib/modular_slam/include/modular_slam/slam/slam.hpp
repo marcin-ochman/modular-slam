@@ -36,8 +36,10 @@ class Slam
     {
         if(!mExecutor)
         {
-            return std::unexpected(Error{
-                .code = ErrorCode::ExecutorFailed, .message = "Slam has no executor", .slotName = {}, .moduleName = {}});
+            return std::unexpected(Error{.code = ErrorCode::ExecutorFailed,
+                                         .message = "Slam has no executor",
+                                         .slotName = {},
+                                         .moduleName = {}});
         }
 
         StepInfo info{.index = mStepIndex++, .timestamp = timestamp};
