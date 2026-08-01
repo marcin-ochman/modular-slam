@@ -8,14 +8,14 @@
 #define MS_LOG_DEBUG(...) (void)0
 #define MS_LOG_TRACE(...) (void)0
 #else
-#define MS_LOG_DEBUG(...) ::modular_slam::log::debug(__VA_ARGS__)
-#define MS_LOG_TRACE(...) ::modular_slam::log::trace(__VA_ARGS__)
+#define MS_LOG_DEBUG(...) ::mslam::log::debug(__VA_ARGS__)
+#define MS_LOG_TRACE(...) ::mslam::log::trace(__VA_ARGS__)
 #endif
 
-#define MS_LOG_INFO(...) ::modular_slam::log::info(__VA_ARGS__)
-#define MS_LOG_ERROR(...) ::modular_slam::log::error(__VA_ARGS__)
+#define MS_LOG_INFO(...) ::mslam::log::info(__VA_ARGS__)
+#define MS_LOG_ERROR(...) ::mslam::log::error(__VA_ARGS__)
 
-namespace modular_slam::log
+namespace mslam::log
 {
 
 namespace impl
@@ -47,5 +47,5 @@ inline void error(spdlog::format_string_t<Args...> fmt, Args&&... args)
     impl::getLogger()->error(fmt, std::forward<Args>(args)...);
 }
 
-} // namespace modular_slam::log
+} // namespace mslam::log
 #endif

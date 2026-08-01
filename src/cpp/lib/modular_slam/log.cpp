@@ -3,7 +3,7 @@
 #include <print>
 #include <spdlog/sinks/basic_file_sink.h>
 
-namespace modular_slam::log::impl
+namespace mslam::log::impl
 {
 
 class LogManager
@@ -43,4 +43,4 @@ std::shared_ptr<spdlog::logger> getLogger()
     return LogManager::instance().getLogger();
 }
 
-} // namespace modular_slam::log::impl
+} // namespace mslam::log::impl

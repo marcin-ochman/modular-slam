@@ -14,6 +14,7 @@ class ModularSlamRecipe(ConanFile):
     def requirements(self):
         self.tool_requires("cmake/3.30.0")
         self.requires("spdlog/1.17.0")
+        self.requires("eigen/5.0.1")
         if self.options.testing:
             self.requires("catch2/3.11.0")
        

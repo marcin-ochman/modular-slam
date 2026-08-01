@@ -1,16 +1,20 @@
 find_package(spdlog REQUIRED)
+find_package(Eigen3 REQUIRED)
 
 modular_slam_add_library(
   modular_slam
   SOURCES
   modular_slam.cpp
-  log.cpp)
+  log.cpp
+  src/core/error.cpp
+  src/slam/slam_builder.cpp
+)
 target_include_directories(modular_slam PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
                                                "$<INSTALL_INTERFACE:include>")
 
 add_library(modular_slam::modular_slam ALIAS modular_slam)
 
-target_link_libraries(modular_slam PUBLIC spdlog::spdlog)
+target_link_libraries(modular_slam PUBLIC spdlog::spdlog Eigen3::Eigen)
 
 if(MODULAR_SLAM_BUILD_PYTHON_BINDINGS)
   find_package(pybind11 REQUIRED)

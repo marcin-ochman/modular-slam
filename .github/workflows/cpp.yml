@@ -10,18 +10,18 @@ jobs:
   build-and-test:
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest, windows-2022]
         compiler: [llvm-20, llvm-19, gcc-14]
         preset: [release-test-conan, relwithdebinfo-test-conan, coverage-conan]
         sanitizer: [none, asan, ubsan, tsan]
         exclude:
-          - os: windows-latest
+          - os: windows-2022
             compiler: gcc-14
-          - os: windows-latest
+          - os: windows-2022
             sanitizer: tsan
-          - os: windows-latest
+          - os: windows-2022
             sanitizer: ubsan
-          - os: windows-latest
+          - os: windows-2022
             sanitizer: asan
           - preset: Release
             sanitizer: asan
